@@ -8,16 +8,18 @@ import { Container } from "@/components/layout/container";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Crown, Zap } from "lucide-react";
+import { Check, Crown, Zap, AlertCircle } from "lucide-react";
 import { FAQList } from "@/components/ui/faq-list";
 import { faqs } from "@/data/faq";
 import { useAuth } from "@/lib/hooks/use-auth";
+import { useSubscription } from "@/lib/hooks/use-subscription";
 import { STRIPE_PRICES } from "@/lib/stripe/config";
 import { cn } from "@/lib/utils";
 
 const plans = [
   {
     id: "athlete_pro",
+    tier: "athlete_pro" as const,
     name: "Athlete Pro",
     icon: Zap,
     description: "Perfect for driven athletes looking to grow inside a structured system.",
@@ -35,6 +37,7 @@ const plans = [
   },
   {
     id: "fighter_elite",
+    tier: "fighter_elite" as const,
     name: "Fighter Elite +",
     icon: Crown,
     description: "Built for serious fighters seeking elite coaching input and tactical refinement.",
@@ -55,10 +58,16 @@ const plans = [
 export default function PricingPage() {
   const [interval, setInterval] = useState<"monthly" | "yearly">("monthly");
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
-  const { isLoggedIn } = useAuth();
+  const [error, setError] = useState<string | null>(null);
+  const { isLoggedIn, isLoading: isAuthLoading } = useAuth();
+  const { isActive, plan: currentPlan, openBillingPortal } = useSubscription();
   const router = useRouter();
 
   const handleSubscribe = async (priceId: string, planId: string) => {
+    setError(null);
+
+    if (isAuthLoading) return;
+
     if (!isLoggedIn) {
       router.push("/signup");
       return;
@@ -73,16 +82,26 @@ export default function PricingPage() {
       });
 
       const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Something went wrong. Please try again.");
+        setLoadingPlan(null);
+        return;
+      }
+
       if (data.url) {
         window.location.href = data.url;
       } else {
-        console.error("Checkout error:", data.error);
+        setError("Could not create checkout session. Please try again.");
         setLoadingPlan(null);
       }
     } catch {
+      setError("Network error. Please check your connection and try again.");
       setLoadingPlan(null);
     }
   };
+
+  const isCurrentPlan = (tier: string) => isActive && currentPlan === tier;
 
   return (
     <MainLayout>
@@ -124,41 +143,58 @@ export default function PricingPage() {
             </button>
           </div>
 
+          {/* Error Message */}
+          {error && (
+            <div className="max-w-2xl mx-auto mb-8 p-4 rounded-lg border border-destructive/50 bg-destructive/10 flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
+              <p className="text-sm text-destructive">{error}</p>
+            </div>
+          )}
+
           {/* Plan Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto mb-16">
             {plans.map((plan) => {
               const pricing = interval === "monthly" ? plan.monthly : plan.yearly;
               const Icon = plan.icon;
+              const isCurrent = isCurrentPlan(plan.tier);
 
               return (
                 <Card
                   key={plan.id}
                   className={cn(
                     "relative overflow-hidden transition-all",
-                    plan.highlighted && "border-primary shadow-xl shadow-primary/10"
+                    isCurrent && "border-green-500 shadow-xl shadow-green-500/10",
+                    !isCurrent && plan.highlighted && "border-primary shadow-xl shadow-primary/10"
                   )}
                 >
-                  {plan.highlighted && (
+                  {isCurrent && (
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-emerald-400" />
+                  )}
+                  {!isCurrent && plan.highlighted && (
                     <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-red-400" />
                   )}
                   <CardHeader className="pb-4">
                     <div className="flex items-center gap-3 mb-4">
                       <div className={cn(
                         "h-10 w-10 rounded-lg flex items-center justify-center",
-                        plan.highlighted ? "bg-primary/10" : "bg-muted"
+                        isCurrent ? "bg-green-500/10" : plan.highlighted ? "bg-primary/10" : "bg-muted"
                       )}>
                         <Icon className={cn(
                           "h-5 w-5",
-                          plan.highlighted ? "text-primary" : "text-muted-foreground"
+                          isCurrent ? "text-green-500" : plan.highlighted ? "text-primary" : "text-muted-foreground"
                         )} />
                       </div>
                       <div>
                         <h3 className="text-xl font-bold">{plan.name}</h3>
-                        {plan.highlighted && (
+                        {isCurrent ? (
+                          <Badge className="bg-green-500/20 text-green-500 border-green-500/30 text-[10px] mt-1">
+                            Your Current Plan
+                          </Badge>
+                        ) : plan.highlighted ? (
                           <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px] mt-1">
                             Most Popular
                           </Badge>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                     <p className="text-sm text-muted-foreground">{plan.description}</p>
@@ -183,28 +219,51 @@ export default function PricingPage() {
                     <ul className="space-y-3">
                       {plan.features.map((feature) => (
                         <li key={feature} className="flex items-start gap-3">
-                          <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                          <Check className={cn(
+                            "h-5 w-5 shrink-0 mt-0.5",
+                            isCurrent ? "text-green-500" : "text-primary"
+                          )} />
                           <span className="text-sm">{feature}</span>
                         </li>
                       ))}
                     </ul>
                   </CardContent>
                   <CardFooter className="pt-4">
-                    <Button
-                      className={cn(
-                        "w-full h-12 text-base font-bold",
-                        plan.highlighted
-                          ? "bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
-                          : ""
-                      )}
-                      variant={plan.highlighted ? "default" : "outline"}
-                      disabled={loadingPlan === plan.id}
-                      onClick={() => handleSubscribe(pricing.priceId, plan.id)}
-                    >
-                      {loadingPlan === plan.id
-                        ? "Redirecting..."
-                        : `Subscribe to ${plan.name}`}
-                    </Button>
+                    {isCurrent ? (
+                      <Button
+                        className="w-full h-12 text-base font-bold"
+                        variant="outline"
+                        onClick={openBillingPortal}
+                      >
+                        Manage Subscription
+                      </Button>
+                    ) : isActive ? (
+                      <Button
+                        className="w-full h-12 text-base font-bold"
+                        variant="outline"
+                        onClick={openBillingPortal}
+                      >
+                        Switch Plan
+                      </Button>
+                    ) : (
+                      <Button
+                        className={cn(
+                          "w-full h-12 text-base font-bold",
+                          plan.highlighted
+                            ? "bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
+                            : ""
+                        )}
+                        variant={plan.highlighted ? "default" : "outline"}
+                        disabled={loadingPlan === plan.id || isAuthLoading}
+                        onClick={() => handleSubscribe(pricing.priceId, plan.id)}
+                      >
+                        {loadingPlan === plan.id
+                          ? "Redirecting to checkout..."
+                          : isAuthLoading
+                          ? "Loading..."
+                          : `Subscribe to ${plan.name}`}
+                      </Button>
+                    )}
                   </CardFooter>
                 </Card>
               );

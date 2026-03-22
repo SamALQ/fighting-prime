@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Container } from "./container";
-import { LogOut, User, ChevronRight, Play } from "lucide-react";
+import { LogOut, User, ChevronRight, Play, LayoutDashboard, CreditCard, Settings } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useState, useRef } from "react";
 import { courses } from "@/data/courses";
@@ -174,19 +174,34 @@ export function NavBar() {
                         </Avatar>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="w-56">
                       {userEmail && (
                         <>
-                          <DropdownMenuLabel>{userEmail}</DropdownMenuLabel>
+                          <DropdownMenuLabel className="font-normal">
+                            <p className="text-sm font-medium">{userEmail}</p>
+                          </DropdownMenuLabel>
                           <DropdownMenuSeparator />
                         </>
                       )}
                       <DropdownMenuItem asChild>
                         <Link href="/dashboard">
-                          <User className="mr-2 h-4 w-4" />
+                          <LayoutDashboard className="mr-2 h-4 w-4" />
                           <span>Dashboard</span>
                         </Link>
                       </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/account">
+                          <Settings className="mr-2 h-4 w-4" />
+                          <span>Account Settings</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/pricing">
+                          <CreditCard className="mr-2 h-4 w-4" />
+                          <span>Subscription</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={logout}>
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Logout</span>
