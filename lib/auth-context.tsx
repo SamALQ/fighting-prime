@@ -10,72 +10,78 @@ import {
   type ReactNode,
 } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
+import type { AuthChangeEvent } from "@supabase/supabase-js";
 
 type UserRole = "user" | "instructor" | "admin";
 
-interface AuthContextValue {
-  user: User | null;
+interface UserData {
+  id: string;
+  email: string;
   role: UserRole;
+}
+
+interface SubscriptionData {
+  plan: "athlete_pro" | "fighter_elite" | null;
+  billing_interval: string | null;
+  status: string;
+  stripe_customer_id: string | null;
+  current_period_end: string | null;
+}
+
+interface AuthContextValue {
+  user: UserData | null;
   isLoggedIn: boolean;
   isLoading: boolean;
   userEmail: string | null;
+  role: UserRole;
+  subscription: SubscriptionData | null;
+  isSubscriptionLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
+  refreshData: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const supabase = useMemo(() => createClient(), []);
-  const [user, setUser] = useState<User | null>(null);
-  const [role, setRole] = useState<UserRole>("user");
+  const [user, setUser] = useState<UserData | null>(null);
+  const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(true);
 
-  const fetchRole = useCallback(
-    async (userId: string) => {
-      try {
-        const { data } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", userId)
-          .single();
-        if (data?.role) setRole(data.role as UserRole);
-      } catch {
-        // default role is fine
-      }
-    },
-    [supabase]
-  );
+  const fetchUserData = useCallback(async () => {
+    try {
+      const res = await fetch("/api/me");
+      if (!res.ok) throw new Error("Failed to fetch user data");
+      const data = await res.json();
+      setUser(data.user);
+      setSubscription(data.subscription);
+    } catch {
+      setUser(null);
+      setSubscription(null);
+    } finally {
+      setIsLoading(false);
+      setIsSubscriptionLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let isMounted = true;
+    fetchUserData();
 
-    // Use ONLY onAuthStateChange — it fires INITIAL_SESSION synchronously
-    // with the stored session. Do NOT also call getUser() as both will
-    // compete for the auth-token lock and cause failures.
+    // Listen for auth changes (login/logout/token refresh) to re-fetch
     const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
-      if (!isMounted) return;
-
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-
-      if (currentUser) {
-        await fetchRole(currentUser.id);
-      } else {
-        setRole("user");
+      data: { subscription: authSubscription },
+    } = supabase.auth.onAuthStateChange((event: AuthChangeEvent) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "TOKEN_REFRESHED") {
+        fetchUserData();
       }
-
-      setIsLoading(false);
     });
 
     return () => {
-      isMounted = false;
-      subscription.unsubscribe();
+      authSubscription.unsubscribe();
     };
-  }, [supabase, fetchRole]);
+  }, [supabase, fetchUserData]);
 
   const login = useCallback(
     async (email: string, password: string): Promise<boolean> => {
@@ -83,34 +89,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         password,
       });
+      if (!error) {
+        await fetchUserData();
+      }
       return !error;
     },
-    [supabase]
+    [supabase, fetchUserData]
   );
 
   const logout = useCallback(async () => {
     await supabase.auth.signOut();
     setUser(null);
-    setRole("user");
+    setSubscription(null);
   }, [supabase]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
-      role,
       isLoggedIn: !!user,
       isLoading,
       userEmail: user?.email ?? null,
+      role: user?.role ?? "user",
+      subscription,
+      isSubscriptionLoading,
       login,
       logout,
+      refreshData: fetchUserData,
     }),
-    [user, role, isLoading, login, logout]
+    [user, isLoading, subscription, isSubscriptionLoading, login, logout, fetchUserData]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth(): AuthContextValue {
+export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) {
     throw new Error("useAuth must be used within an AuthProvider");
