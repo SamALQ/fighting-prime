@@ -1,0 +1,78 @@
+"use client";
+
+import { useAuth } from "@/lib/hooks/use-auth";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { MainLayout } from "@/components/layout/main-layout";
+import { Section } from "@/components/layout/section";
+import { Container } from "@/components/layout/container";
+import { DashboardStats } from "@/components/ui/dashboard-stats";
+import { MyCourses } from "@/components/ui/my-courses";
+import { RecentActivity } from "@/components/ui/dashboard/recent-activity";
+import { AchievementsGrid } from "@/components/ui/dashboard/achievements-grid";
+import { useProgress } from "@/lib/hooks/use-progress";
+import { Button } from "@/components/ui/button";
+import { Sparkles } from "lucide-react";
+
+export default function DashboardPage() {
+  const { isLoggedIn, isLoading: isAuthLoading } = useAuth();
+  const { userStats, isLoading: isProgressLoading } = useProgress();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isAuthLoading && !isLoggedIn) {
+      router.push("/login");
+    }
+  }, [isLoggedIn, isAuthLoading, router]);
+
+  if (isAuthLoading || isProgressLoading) {
+    return null;
+  }
+
+  if (!isLoggedIn) {
+    return null;
+  }
+
+  return (
+    <MainLayout>
+      <Section className="pb-24">
+        <Container>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">My Training Dashboard</h1>
+              <p className="text-xl text-muted-foreground">
+                Track your progress and continue your Muay Thai journey
+              </p>
+            </div>
+            <Button variant="outline" className="gap-2 h-12 px-6 border-primary/20 bg-primary/5 hover:bg-primary/10">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Demo Achievement
+            </Button>
+          </div>
+
+          <div className="space-y-12">
+            {/* Stats Header */}
+            <DashboardStats />
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+              {/* Main Column */}
+              <div className="lg:col-span-8 space-y-12">
+                <MyCourses />
+                <AchievementsGrid unlockedIds={userStats.achievements} />
+              </div>
+
+              {/* Sidebar Column */}
+              <div className="lg:col-span-4 space-y-8">
+                <RecentActivity />
+              </div>
+            </div>
+          </div>
+        </Container>
+      </Section>
+    </MainLayout>
+  );
+}
+
+
+
+

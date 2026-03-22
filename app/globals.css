@@ -1,26 +1,230 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  /* Fighting Prime Brand Colors */
+  --color-bg: #FFFFFF;
+  --color-fg: #0B0B0B;
+  --color-primary: #D71212;
+  
+  /* Spacing Scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+  
+  /* Radius Scale */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  
+  /* Theme Variables - Light Mode */
+  --radius: 1rem;
+  --background: #FFFFFF;
+  --foreground: #0B0B0B;
+  --card: #FFFFFF;
+  --card-foreground: #0B0B0B;
+  --popover: #FFFFFF;
+  --popover-foreground: #0B0B0B;
+  --primary: #D71212;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F5F5F5;
+  --secondary-foreground: #0B0B0B;
+  --muted: #F5F5F5;
+  --muted-foreground: #737373;
+  --accent: #F5F5F5;
+  --accent-foreground: #0B0B0B;
+  --destructive: #D71212;
+  --border: #E5E5E5;
+  --input: #F5F5F5;
+  --ring: #D71212;
+}
+
+.dark {
+  /* Fighting Prime Brand Colors - Dark Mode */
+  --color-bg: #0B0B0B;
+  --color-fg: #FFFFFF;
+  --color-primary: #D71212;
+  
+  /* Theme Variables - Dark Mode */
+  --background: #0B0B0B;
+  --foreground: #FFFFFF;
+  --card: #1A1A1A;
+  --card-foreground: #FFFFFF;
+  --popover: #1A1A1A;
+  --popover-foreground: #FFFFFF;
+  --primary: #D71212;
+  --primary-foreground: #FFFFFF;
+  --secondary: #2A2A2A;
+  --secondary-foreground: #FFFFFF;
+  --muted: #2A2A2A;
+  --muted-foreground: #A0A0A0;
+  --accent: #2A2A2A;
+  --accent-foreground: #FFFFFF;
+  --destructive: #D71212;
+  --border: #2A2A2A;
+  --input: #2A2A2A;
+  --ring: #D71212;
+}
+
+@layer base {
+  /* Bruce Forever Font */
+  @font-face {
+    font-family: "Bruce Forever";
+    src: url("/fonts/BruceForeverRegular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-inter), system-ui, sans-serif;
+  }
+  
+  /* Apply Bruce Forever to all headings */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Bruce Forever", var(--font-inter), system-ui, sans-serif;
+    text-transform: uppercase;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  /* Lightning animation for completed episodes */
+  @keyframes lightning {
+    0%, 100% {
+      opacity: 0;
+    }
+    10%, 20%, 30%, 40%, 50%, 60%, 70%, 80%, 90% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes lightning-bolt {
+    0% {
+      opacity: 0;
+      transform: translateY(-100%);
+    }
+    5% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    10% {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes lightning-bolt-delayed {
+    0% {
+      opacity: 0;
+      transform: translateY(-100%);
+    }
+    15% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    20% {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes lightning-bolt-delayed-2 {
+    0% {
+      opacity: 0;
+      transform: translateY(-100%);
+    }
+    25% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    30% {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+  }
+
+  .animate-lightning {
+    animation: lightning 2s ease-in-out;
+  }
+
+  .animate-lightning-bolt {
+    animation: lightning-bolt 2s ease-in-out;
+  }
+
+  .animate-lightning-bolt-delayed {
+    animation: lightning-bolt-delayed 2s ease-in-out;
+  }
+
+  .animate-lightning-bolt-delayed-2 {
+    animation: lightning-bolt-delayed-2 2s ease-in-out;
+  }
+
+  .animate-shimmer {
+    animation: shimmer 1.5s ease-in-out;
+  }
 }
