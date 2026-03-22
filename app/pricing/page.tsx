@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check, Crown, Zap, AlertCircle } from "lucide-react";
 import { FAQList } from "@/components/ui/faq-list";
 import { faqs } from "@/data/faq";
-import { useAuth } from "@/lib/hooks/use-auth";
+import { useAuth } from "@/lib/auth-context";
 import { useSubscription } from "@/lib/hooks/use-subscription";
 import { STRIPE_PRICES } from "@/lib/stripe/config";
 import { cn } from "@/lib/utils";

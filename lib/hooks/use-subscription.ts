@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useAuth } from "./use-auth";
+import { useAuth } from "@/lib/auth-context";
 
 interface Subscription {
   plan: "athlete_pro" | "fighter_elite" | null;
@@ -27,21 +27,32 @@ export function useSubscription() {
       return;
     }
 
+    let cancelled = false;
+
     const fetchSubscription = async () => {
       const { data } = await supabase
         .from("subscriptions")
-        .select("plan, billing_interval, status, stripe_customer_id, current_period_end")
+        .select(
+          "plan, billing_interval, status, stripe_customer_id, current_period_end"
+        )
         .eq("user_id", user.id)
         .maybeSingle();
 
-      setSubscription(data);
-      setIsLoading(false);
+      if (!cancelled) {
+        setSubscription(data);
+        setIsLoading(false);
+      }
     };
 
     fetchSubscription();
-  }, [user, isAuthLoading]);
 
-  const isActive = subscription?.status === "active" || subscription?.status === "trialing";
+    return () => {
+      cancelled = true;
+    };
+  }, [user, isAuthLoading, supabase]);
+
+  const isActive =
+    subscription?.status === "active" || subscription?.status === "trialing";
   const isElite = isActive && subscription?.plan === "fighter_elite";
 
   const openBillingPortal = async () => {

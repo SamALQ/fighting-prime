@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { OrganizationJSONLD } from "@/components/seo/json-ld";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AuthProvider } from "@/lib/auth-context";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -46,8 +47,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <OrganizationJSONLD />
-          {children}
+          <AuthProvider>
+            <OrganizationJSONLD />
+            {children}
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

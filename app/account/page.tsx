@@ -6,7 +6,7 @@ import { Section } from "@/components/layout/section";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/lib/hooks/use-auth";
+import { useAuth } from "@/lib/auth-context";
 import { useSubscription } from "@/lib/hooks/use-subscription";
 import { createClient } from "@/lib/supabase/client";
 import {
