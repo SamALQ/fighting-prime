@@ -17,16 +17,19 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    
-    const success = login(email, password);
+    setIsSubmitting(true);
+
+    const success = await login(email, password);
     if (success) {
       router.push("/dashboard");
     } else {
       setError("Invalid email or password");
+      setIsSubmitting(false);
     }
   };
 
@@ -75,18 +78,23 @@ export default function LoginPage() {
                       {error}
                     </div>
                   )}
-                  <Button type="submit" className="w-full">
-                    Login
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? "Logging in..." : "Login"}
                   </Button>
-                  <p className="text-xs text-center text-muted-foreground">
-                    Test account: sam@alqdigital.com / S
-                  </p>
+                  <div className="text-center">
+                    <Link
+                      href="/forgot-password"
+                      className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      Forgot your password?
+                    </Link>
+                  </div>
                 </form>
                 <div className="mt-6 text-center">
                   <p className="text-sm text-muted-foreground">
-                    Don't have an account?{" "}
-                    <Link href="/pricing" className="text-primary hover:underline">
-                      View Pricing
+                    Don&apos;t have an account?{" "}
+                    <Link href="/signup" className="text-primary hover:underline font-medium">
+                      Sign Up
                     </Link>
                   </p>
                 </div>

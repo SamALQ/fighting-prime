@@ -22,10 +22,52 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import Link from "next/link";
+import { useSubscription } from "@/lib/hooks/use-subscription";
 
 export default function FighterEliteDashboard() {
   const [latestBreakdown] = useState<EliteBreakdown>(eliteBreakdowns[0]);
   const [isDragging, setIsDragging] = useState(false);
+  const { isElite, isActive, isLoading } = useSubscription();
+
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <Section className="pb-24 pt-12">
+          <Container>
+            <div className="h-96 bg-muted/50 animate-pulse rounded-2xl" />
+          </Container>
+        </Section>
+      </MainLayout>
+    );
+  }
+
+  if (!isElite) {
+    return (
+      <MainLayout>
+        <Section className="pb-24 pt-12">
+          <Container>
+            <div className="max-w-2xl mx-auto text-center space-y-6">
+              <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                <Crown className="h-10 w-10 text-primary" />
+              </div>
+              <h1 className="text-4xl md:text-5xl font-bold">Fighter Elite +</h1>
+              <p className="text-xl text-muted-foreground">
+                {isActive
+                  ? "Upgrade to Fighter Elite+ to unlock personalized video breakdowns from Jake Peacock."
+                  : "Subscribe to Fighter Elite+ to get personalized coaching and video analysis."}
+              </p>
+              <Link href="/pricing">
+                <Button className="h-12 px-8 text-base font-bold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
+                  {isActive ? "Upgrade Plan" : "View Plans"}
+                </Button>
+              </Link>
+            </div>
+          </Container>
+        </Section>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>

@@ -1,44 +1,70 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { createClient } from "@/lib/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
-// Test user credentials
-const TEST_USER = {
-  email: "sam@alqdigital.com",
-  password: "S",
-};
+type UserRole = "user" | "instructor" | "admin";
 
 export function useAuth() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [role, setRole] = useState<UserRole>("user");
   const [isLoading, setIsLoading] = useState(true);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const supabase = createClient();
+
+  const fetchRole = useCallback(async (userId: string) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .single();
+    if (data?.role) setRole(data.role as UserRole);
+  }, [supabase]);
 
   useEffect(() => {
-    const stored = localStorage.getItem("isLoggedIn");
-    const storedEmail = localStorage.getItem("userEmail");
-    setIsLoggedIn(stored === "true");
-    setUserEmail(storedEmail);
-    setIsLoading(false);
-  }, []);
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) await fetchRole(currentUser.id);
+      setIsLoading(false);
+    };
+    getSession();
 
-  const login = (email: string, password: string): boolean => {
-    // Validate credentials
-    if (email === TEST_USER.email && password === TEST_USER.password) {
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userEmail", email);
-      setIsLoggedIn(true);
-      setUserEmail(email);
-      return true;
-    }
-    return false;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        if (currentUser) {
+          await fetchRole(currentUser.id);
+        } else {
+          setRole("user");
+        }
+        setIsLoading(false);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, [supabase, fetchRole]);
+
+  const login = async (email: string, password: string): Promise<boolean> => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return !error;
   };
 
-  const logout = () => {
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("userEmail");
-    setIsLoggedIn(false);
-    setUserEmail(null);
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setRole("user");
   };
 
-  return { isLoggedIn, isLoading, login, logout, userEmail };
+  return {
+    isLoggedIn: !!user,
+    isLoading,
+    login,
+    logout,
+    userEmail: user?.email ?? null,
+    user,
+    role,
+  };
 }

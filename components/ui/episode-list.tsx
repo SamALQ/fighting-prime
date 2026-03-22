@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { Episode } from "@/data/episodes";
-import { useAuth } from "@/lib/hooks/use-auth";
+import { useSubscription } from "@/lib/hooks/use-subscription";
 import { useProgress } from "@/lib/hooks/use-progress";
 import { Lock, CheckCircle2, PlayCircle, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -19,7 +19,7 @@ interface EpisodeListProps {
 
 export function EpisodeList({ episodes, courseSlug, className }: EpisodeListProps) {
   const pathname = usePathname();
-  const { isLoggedIn } = useAuth();
+  const { isActive: hasSubscription } = useSubscription();
   const { getProgress, progress: progressData } = useProgress();
   const [completedEpisodes, setCompletedEpisodes] = useState<Set<string>>(new Set());
   const [animatingEpisodes, setAnimatingEpisodes] = useState<Set<string>>(new Set());
@@ -27,7 +27,7 @@ export function EpisodeList({ episodes, courseSlug, className }: EpisodeListProp
 
   const isLocked = (episode: Episode) => {
     if (episode.isFree) return false;
-    return !isLoggedIn;
+    return !hasSubscription;
   };
 
   // Track when episodes become completed

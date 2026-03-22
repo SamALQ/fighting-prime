@@ -6,7 +6,7 @@ import { useProgress } from "@/lib/hooks/use-progress";
 import { Episode } from "@/data/episodes";
 import { Play, Pause, Lock } from "lucide-react";
 import { Button } from "./button";
-import { useAuth } from "@/lib/hooks/use-auth";
+import { useSubscription } from "@/lib/hooks/use-subscription";
 import confetti from "canvas-confetti";
 import { cn } from "@/lib/utils";
 
@@ -20,11 +20,11 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
   const [currentTime, setCurrentTime] = useState(0);
   const [hasTriggeredConfetti, setHasTriggeredConfetti] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { isLoggedIn } = useAuth();
+  const { isActive } = useSubscription();
   const { updateProgress, updateWatchTime, getProgress } = useProgress();
 
   const progress = getProgress(episode.slug);
-  const locked = !episode.isFree && !isLoggedIn;
+  const locked = !episode.isFree && !isActive;
 
   useEffect(() => {
     const video = videoRef.current;

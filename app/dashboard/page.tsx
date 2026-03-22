@@ -1,8 +1,5 @@
 "use client";
 
-import { useAuth } from "@/lib/hooks/use-auth";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Section } from "@/components/layout/section";
 import { Container } from "@/components/layout/container";
@@ -10,26 +7,15 @@ import { DashboardStats } from "@/components/ui/dashboard-stats";
 import { MyCourses } from "@/components/ui/my-courses";
 import { RecentActivity } from "@/components/ui/dashboard/recent-activity";
 import { AchievementsGrid } from "@/components/ui/dashboard/achievements-grid";
+import { SubscriptionCard } from "@/components/ui/dashboard/subscription-card";
 import { useProgress } from "@/lib/hooks/use-progress";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 
 export default function DashboardPage() {
-  const { isLoggedIn, isLoading: isAuthLoading } = useAuth();
   const { userStats, isLoading: isProgressLoading } = useProgress();
-  const router = useRouter();
 
-  useEffect(() => {
-    if (!isAuthLoading && !isLoggedIn) {
-      router.push("/login");
-    }
-  }, [isLoggedIn, isAuthLoading, router]);
-
-  if (isAuthLoading || isProgressLoading) {
-    return null;
-  }
-
-  if (!isLoggedIn) {
+  if (isProgressLoading) {
     return null;
   }
 
@@ -63,6 +49,7 @@ export default function DashboardPage() {
 
               {/* Sidebar Column */}
               <div className="lg:col-span-4 space-y-8">
+                <SubscriptionCard />
                 <RecentActivity />
               </div>
             </div>
