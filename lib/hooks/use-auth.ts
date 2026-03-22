@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
@@ -12,42 +12,43 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<UserRole>("user");
   const [isLoading, setIsLoading] = useState(true);
-  const initialized = useRef(false);
+
+  const fetchRole = useCallback(async (userId: string) => {
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .single();
+      if (data?.role) setRole(data.role as UserRole);
+    } catch {
+      // Profile fetch failed — default role is fine
+    }
+  }, []);
 
   useEffect(() => {
-    if (initialized.current) return;
-    initialized.current = true;
+    let isMounted = true;
 
-    const fetchRole = async (userId: string) => {
+    const initialize = async () => {
       try {
-        const { data } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", userId)
-          .single();
-        if (data?.role) setRole(data.role as UserRole);
-      } catch {
-        // Profile fetch failed — default role is fine
-      }
-    };
-
-    const getSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const currentUser = session?.user ?? null;
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        if (!isMounted) return;
         setUser(currentUser);
         if (currentUser) await fetchRole(currentUser.id);
       } catch {
-        // Session fetch failed
+        // Auth check failed
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
 
-    getSession();
+    initialize();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
+        if (!isMounted) return;
+        if (event === "INITIAL_SESSION") return;
+
         const currentUser = session?.user ?? null;
         setUser(currentUser);
         if (currentUser) {
@@ -55,12 +56,14 @@ export function useAuth() {
         } else {
           setRole("user");
         }
-        setIsLoading(false);
       }
     );
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, [fetchRole]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
