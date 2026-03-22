@@ -51,37 +51,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let isMounted = true;
 
-    const initialize = async () => {
-      try {
-        const {
-          data: { user: currentUser },
-        } = await supabase.auth.getUser();
-        if (!isMounted) return;
-        setUser(currentUser);
-        if (currentUser) await fetchRole(currentUser.id);
-      } catch {
-        // auth check failed
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    };
-
-    initialize();
-
+    // Use ONLY onAuthStateChange — it fires INITIAL_SESSION synchronously
+    // with the stored session. Do NOT also call getUser() as both will
+    // compete for the auth-token lock and cause failures.
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(
-      async (_event: AuthChangeEvent, session: Session | null) => {
-        if (!isMounted) return;
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
-        if (currentUser) {
-          await fetchRole(currentUser.id);
-        } else {
-          setRole("user");
-        }
+    } = supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
+      if (!isMounted) return;
+
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+
+      if (currentUser) {
+        await fetchRole(currentUser.id);
+      } else {
+        setRole("user");
       }
-    );
+
+      setIsLoading(false);
+    });
 
     return () => {
       isMounted = false;
