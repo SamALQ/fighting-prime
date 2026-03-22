@@ -17,20 +17,24 @@ export async function POST(request: NextRequest) {
   const signature = request.headers.get("stripe-signature");
 
   if (!signature) {
-    return NextResponse.json({ error: "Missing signature" }, { status: 400 });
+    return NextResponse.json({ error: "Missing stripe-signature header" }, { status: 400 });
+  }
+
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    return NextResponse.json({ error: "STRIPE_WEBHOOK_SECRET env var is not set" }, { status: 500 });
   }
 
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
-    );
+    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (err) {
-    console.error("Webhook signature verification failed:", err);
-    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json(
+      { error: "Signature verification failed", detail: message },
+      { status: 400 }
+    );
   }
 
   const supabase = createAdminClient();
@@ -39,7 +43,9 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        if (session.mode !== "subscription" || !session.subscription) break;
+        if (session.mode !== "subscription" || !session.subscription) {
+          return NextResponse.json({ received: true, skipped: "not a subscription checkout" });
+        }
 
         const subscriptionId = typeof session.subscription === "string"
           ? session.subscription
@@ -52,13 +58,15 @@ export async function POST(request: NextRequest) {
           || subscription.metadata?.supabase_user_id;
 
         if (!userId) {
-          console.error("No supabase_user_id in metadata");
-          break;
+          return NextResponse.json(
+            { received: true, error: "No supabase_user_id found in session or subscription metadata" },
+            { status: 200 }
+          );
         }
 
         const period = extractPeriod(subscription);
 
-        await supabase.from("subscriptions").upsert(
+        const { error: upsertError } = await supabase.from("subscriptions").upsert(
           {
             user_id: userId,
             stripe_customer_id: typeof session.customer === "string" ? session.customer : session.customer?.id,
@@ -73,7 +81,15 @@ export async function POST(request: NextRequest) {
           },
           { onConflict: "user_id" }
         );
-        break;
+
+        if (upsertError) {
+          return NextResponse.json(
+            { error: "Supabase upsert failed", detail: upsertError.message, code: upsertError.code },
+            { status: 500 }
+          );
+        }
+
+        return NextResponse.json({ received: true, action: "subscription_created", userId });
       }
 
       case "customer.subscription.updated": {
@@ -93,7 +109,7 @@ export async function POST(request: NextRequest) {
           paused: "cancelled",
         };
 
-        await supabase
+        const { error: updateError } = await supabase
           .from("subscriptions")
           .update({
             stripe_price_id: priceId,
@@ -105,26 +121,44 @@ export async function POST(request: NextRequest) {
             updated_at: new Date().toISOString(),
           })
           .eq("stripe_subscription_id", subscription.id);
-        break;
+
+        if (updateError) {
+          return NextResponse.json(
+            { error: "Supabase update failed", detail: updateError.message },
+            { status: 500 }
+          );
+        }
+
+        return NextResponse.json({ received: true, action: "subscription_updated" });
       }
 
       case "customer.subscription.deleted": {
         const subscription = event.data.object as Stripe.Subscription;
 
-        await supabase
+        const { error: deleteError } = await supabase
           .from("subscriptions")
           .update({
             status: "cancelled",
             updated_at: new Date().toISOString(),
           })
           .eq("stripe_subscription_id", subscription.id);
-        break;
+
+        if (deleteError) {
+          return NextResponse.json(
+            { error: "Supabase update failed", detail: deleteError.message },
+            { status: 500 }
+          );
+        }
+
+        return NextResponse.json({ received: true, action: "subscription_deleted" });
       }
 
       case "invoice.paid": {
         const invoice = event.data.object as Stripe.Invoice;
         const subRef = invoice.parent?.subscription_details?.subscription;
-        if (!subRef) break;
+        if (!subRef) {
+          return NextResponse.json({ received: true, skipped: "no subscription on invoice" });
+        }
 
         const subscriptionId = typeof subRef === "string" ? subRef : subRef.id;
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
@@ -138,13 +172,16 @@ export async function POST(request: NextRequest) {
             updated_at: new Date().toISOString(),
           })
           .eq("stripe_subscription_id", subscriptionId);
-        break;
+
+        return NextResponse.json({ received: true, action: "invoice_paid" });
       }
 
       case "invoice.payment_failed": {
         const invoice = event.data.object as Stripe.Invoice;
         const subRef = invoice.parent?.subscription_details?.subscription;
-        if (!subRef) break;
+        if (!subRef) {
+          return NextResponse.json({ received: true, skipped: "no subscription on invoice" });
+        }
 
         const subscriptionId = typeof subRef === "string" ? subRef : subRef.id;
 
@@ -155,13 +192,18 @@ export async function POST(request: NextRequest) {
             updated_at: new Date().toISOString(),
           })
           .eq("stripe_subscription_id", subscriptionId);
-        break;
+
+        return NextResponse.json({ received: true, action: "invoice_payment_failed" });
       }
+
+      default:
+        return NextResponse.json({ received: true, skipped: `Unhandled event type: ${event.type}` });
     }
   } catch (error) {
-    console.error("Webhook handler error:", error);
-    return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json(
+      { error: "Webhook handler failed", detail: message },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json({ received: true });
 }
