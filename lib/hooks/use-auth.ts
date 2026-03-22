@@ -29,33 +29,20 @@ export function useAuth() {
   useEffect(() => {
     let isMounted = true;
 
-    const initialize = async () => {
-      try {
-        const { data: { user: currentUser } } = await supabase.auth.getUser();
-        if (!isMounted) return;
-        setUser(currentUser);
-        if (currentUser) await fetchRole(currentUser.id);
-      } catch {
-        // Auth check failed
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    };
-
-    initialize();
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!isMounted) return;
-        if (event === "INITIAL_SESSION") return;
 
         const currentUser = session?.user ?? null;
         setUser(currentUser);
+
         if (currentUser) {
           await fetchRole(currentUser.id);
         } else {
           setRole("user");
         }
+
+        setIsLoading(false);
       }
     );
 
