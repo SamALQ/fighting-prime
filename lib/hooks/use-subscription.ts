@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "./use-auth";
 
@@ -13,6 +13,7 @@ interface Subscription {
 }
 
 export function useSubscription() {
+  const supabase = useMemo(() => createClient(), []);
   const { user, isLoading: isAuthLoading } = useAuth();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,7 +28,6 @@ export function useSubscription() {
     }
 
     const fetchSubscription = async () => {
-      const supabase = createClient();
       const { data } = await supabase
         .from("subscriptions")
         .select("plan, billing_interval, status, stripe_customer_id, current_period_end")

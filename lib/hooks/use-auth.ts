@@ -1,14 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
+import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 type UserRole = "user" | "instructor" | "admin";
 
-const supabase = createClient();
-
 export function useAuth() {
+  const supabase = useMemo(() => createClient(), []);
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<UserRole>("user");
   const [isLoading, setIsLoading] = useState(true);
@@ -24,13 +23,13 @@ export function useAuth() {
     } catch {
       // Profile fetch failed — default role is fine
     }
-  }, []);
+  }, [supabase]);
 
   useEffect(() => {
     let isMounted = true;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (_event: AuthChangeEvent, session: Session | null) => {
         if (!isMounted) return;
 
         const currentUser = session?.user ?? null;
@@ -46,11 +45,17 @@ export function useAuth() {
       }
     );
 
+    // Safety timeout — if onAuthStateChange never fires, unblock the UI
+    const timeout = setTimeout(() => {
+      if (isMounted) setIsLoading(false);
+    }, 3000);
+
     return () => {
       isMounted = false;
+      clearTimeout(timeout);
       subscription.unsubscribe();
     };
-  }, [fetchRole]);
+  }, [supabase, fetchRole]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
