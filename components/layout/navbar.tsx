@@ -88,7 +88,7 @@ export function NavBar() {
   ];
 
   return (
-    <nav className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+    <nav className="bg-background/90 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70 sticky top-0 z-50 border-b border-foreground/[0.06]">
       <Container>
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center space-x-2">
