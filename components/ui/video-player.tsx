@@ -53,7 +53,8 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
   const lastNaturalTime = useRef(0);
 
   const { isActive } = useSubscription();
-  const { updateProgress, updateWatchTime, getProgress, flush } = useProgress();
+  const { updateProgress, updateWatchTime, trackWatchEvent, getProgress, flush } = useProgress();
+  const lastTickMs = useRef(0);
 
   const locked = !episode.isFree && !isActive;
 
@@ -99,6 +100,13 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
       const isComplete = updateProgress(episode.id, percent, episode.courseId);
       updateWatchTime(episode.id, seconds, episode.durationSeconds);
 
+      const now = performance.now();
+      if (lastTickMs.current > 0) {
+        const elapsed = (now - lastTickMs.current) / 1000;
+        trackWatchEvent(episode.id, episode.courseId, elapsed);
+      }
+      lastTickMs.current = now;
+
       if (isComplete && !hasTriggeredConfetti.current) {
         hasTriggeredConfetti.current = true;
         confetti({
@@ -110,12 +118,20 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
       }
     };
 
-    const handlePause = () => flush();
+    const handlePause = () => {
+      lastTickMs.current = 0;
+      flush();
+    };
+    const handlePlay = () => {
+      lastTickMs.current = 0;
+    };
     const handleSeeking = () => {
       isSeeking.current = true;
+      lastTickMs.current = 0;
     };
     const handleSeeked = () => {
       lastNaturalTime.current = video.currentTime;
+      lastTickMs.current = 0;
       setTimeout(() => {
         isSeeking.current = false;
       }, 300);
@@ -128,6 +144,7 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
     video.addEventListener("loadedmetadata", handleLoadedMetadata);
     video.addEventListener("timeupdate", handleTimeUpdate);
     video.addEventListener("pause", handlePause);
+    video.addEventListener("play", handlePlay);
     video.addEventListener("seeking", handleSeeking);
     video.addEventListener("seeked", handleSeeked);
     video.addEventListener("ended", handleEnded);
@@ -135,12 +152,13 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
       video.removeEventListener("loadedmetadata", handleLoadedMetadata);
       video.removeEventListener("timeupdate", handleTimeUpdate);
       video.removeEventListener("pause", handlePause);
+      video.removeEventListener("play", handlePlay);
       video.removeEventListener("seeking", handleSeeking);
       video.removeEventListener("seeked", handleSeeked);
       video.removeEventListener("ended", handleEnded);
       flush();
     };
-  }, [episode.id, episode.courseId, episode.durationSeconds, locked, isScrubbing, updateProgress, updateWatchTime, getProgress, flush]);
+  }, [episode.id, episode.courseId, episode.durationSeconds, locked, isScrubbing, updateProgress, updateWatchTime, trackWatchEvent, getProgress, flush]);
 
   useEffect(() => {
     const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);

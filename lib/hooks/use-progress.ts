@@ -31,6 +31,12 @@ interface PendingUpdate {
   courseId?: string;
 }
 
+interface WatchEventDelta {
+  episodeId: string;
+  courseId: string;
+  watchSeconds: number;
+}
+
 export function useProgress() {
   const { user } = useAuth();
   const [episodeMap, setEpisodeMap] = useState<Record<string, EpisodeCache>>({});
@@ -38,6 +44,7 @@ export function useProgress() {
   const [isLoading, setIsLoading] = useState(true);
 
   const pendingRef = useRef<Record<string, PendingUpdate>>({});
+  const watchEventRef = useRef<Record<string, WatchEventDelta>>({});
   const flushTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const savedEpisodesRef = useRef<Set<string>>(new Set());
   const episodeMapRef = useRef<Record<string, EpisodeCache>>({});
@@ -49,19 +56,43 @@ export function useProgress() {
   const flush = useCallback(async () => {
     const pending = { ...pendingRef.current };
     pendingRef.current = {};
-    const entries = Object.values(pending);
-    if (entries.length === 0) return;
+    const progressEntries = Object.values(pending);
 
-    await Promise.allSettled(
-      entries.map((u) =>
-        fetch("/api/progress", {
+    const watchDeltas = { ...watchEventRef.current };
+    watchEventRef.current = {};
+    const watchEntries = Object.values(watchDeltas).filter(
+      (e) => e.watchSeconds > 0.5
+    );
+
+    const promises: Promise<unknown>[] = [];
+
+    if (progressEntries.length > 0) {
+      promises.push(
+        ...progressEntries.map((u) =>
+          fetch("/api/progress", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(u),
+            keepalive: true,
+          })
+        )
+      );
+    }
+
+    if (watchEntries.length > 0) {
+      promises.push(
+        fetch("/api/watch-events", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(u),
+          body: JSON.stringify({ events: watchEntries }),
           keepalive: true,
         })
-      )
-    );
+      );
+    }
+
+    if (promises.length > 0) {
+      await Promise.allSettled(promises);
+    }
   }, []);
 
   useEffect(() => {
@@ -223,6 +254,19 @@ export function useProgress() {
     []
   );
 
+  const trackWatchEvent = useCallback(
+    (episodeId: string, courseId: string, deltaSec: number) => {
+      if (deltaSec <= 0 || deltaSec > 2) return;
+      const existing = watchEventRef.current[episodeId];
+      watchEventRef.current[episodeId] = {
+        episodeId,
+        courseId,
+        watchSeconds: (existing?.watchSeconds ?? 0) + deltaSec,
+      };
+    },
+    []
+  );
+
   const getCourseProgress = useCallback(
     (episodes: Episode[]): number => {
       const map = episodeMapRef.current;
@@ -259,6 +303,7 @@ export function useProgress() {
     isLoading,
     updateProgress,
     updateWatchTime,
+    trackWatchEvent,
     getProgress,
     getCourseProgress,
     getWatchTime,

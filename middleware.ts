@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const PROTECTED_ROUTES = ["/dashboard", "/fighter-elite", "/account"];
 const ADMIN_ROUTES = ["/admin"];
+const INSTRUCTOR_ROUTES = ["/instructor"];
 const AUTH_ROUTES = ["/login", "/signup", "/forgot-password"];
 
 export async function middleware(request: NextRequest) {
@@ -34,6 +35,7 @@ export async function middleware(request: NextRequest) {
 
   const isProtected = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
   const isAdmin = ADMIN_ROUTES.some((route) => pathname.startsWith(route));
+  const isInstructor = INSTRUCTOR_ROUTES.some((route) => pathname.startsWith(route));
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
 
   if (isProtected && !user) {
@@ -56,6 +58,26 @@ export async function middleware(request: NextRequest) {
       .single();
 
     if (profile?.role !== "admin") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/";
+      return NextResponse.redirect(url);
+    }
+  }
+
+  if (isInstructor) {
+    if (!user) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.role !== "instructor" && profile?.role !== "admin") {
       const url = request.nextUrl.clone();
       url.pathname = "/";
       return NextResponse.redirect(url);
