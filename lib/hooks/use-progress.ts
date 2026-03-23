@@ -40,6 +40,11 @@ export function useProgress() {
   const pendingRef = useRef<Record<string, PendingUpdate>>({});
   const flushTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const savedEpisodesRef = useRef<Set<string>>(new Set());
+  const episodeMapRef = useRef<Record<string, EpisodeCache>>({});
+  const coursesStartedRef = useRef<string[]>([]);
+
+  episodeMapRef.current = episodeMap;
+  coursesStartedRef.current = coursesStarted;
 
   const flush = useCallback(async () => {
     const pending = { ...pendingRef.current };
@@ -131,18 +136,19 @@ export function useProgress() {
   }, [episodeMap, coursesStarted]);
 
   const getProgress = useCallback(
-    (episodeId: string): number => episodeMap[episodeId]?.percent ?? 0,
-    [episodeMap]
+    (episodeId: string): number => episodeMapRef.current[episodeId]?.percent ?? 0,
+    []
   );
 
   const getWatchTime = useCallback(
-    (episodeId: string): number => episodeMap[episodeId]?.watchTime ?? 0,
-    [episodeMap]
+    (episodeId: string): number => episodeMapRef.current[episodeId]?.watchTime ?? 0,
+    []
   );
 
   const updateProgress = useCallback(
     (episodeId: string, percent: number, courseId?: string): boolean => {
-      const current = episodeMap[episodeId]?.percent ?? 0;
+      const map = episodeMapRef.current;
+      const current = map[episodeId]?.percent ?? 0;
       const newPercent = Math.min(100, Math.max(0, percent));
       const best = Math.max(current, newPercent);
 
@@ -163,18 +169,18 @@ export function useProgress() {
           percent: best,
           watchTimeSeconds:
             pendingRef.current[episodeId]?.watchTimeSeconds ??
-            episodeMap[episodeId]?.watchTime ??
+            map[episodeId]?.watchTime ??
             0,
           courseId: courseId ?? pendingRef.current[episodeId]?.courseId,
         };
 
         if (!savedEpisodesRef.current.has(episodeId)) {
           savedEpisodesRef.current.add(episodeId);
-          flush();
+          queueMicrotask(() => flush());
         }
       }
 
-      if (courseId && !coursesStarted.includes(courseId)) {
+      if (courseId && !coursesStartedRef.current.includes(courseId)) {
         setCoursesStarted((prev) =>
           prev.includes(courseId) ? prev : [...prev, courseId]
         );
@@ -182,13 +188,14 @@ export function useProgress() {
 
       return best >= 95;
     },
-    [episodeMap, coursesStarted, flush]
+    [flush]
   );
 
   const updateWatchTime = useCallback(
     (episodeId: string, seconds: number, episodeDuration: number) => {
+      const map = episodeMapRef.current;
       const actual = Math.min(seconds, episodeDuration);
-      const current = episodeMap[episodeId]?.watchTime ?? 0;
+      const current = map[episodeId]?.watchTime ?? 0;
       const best = Math.max(current, actual);
 
       if (best > current) {
@@ -207,17 +214,18 @@ export function useProgress() {
           episodeId,
           percent:
             pendingRef.current[episodeId]?.percent ??
-            episodeMap[episodeId]?.percent ??
+            map[episodeId]?.percent ??
             0,
           watchTimeSeconds: best,
         };
       }
     },
-    [episodeMap]
+    []
   );
 
   const getCourseProgress = useCallback(
     (episodes: Episode[]): number => {
+      const map = episodeMapRef.current;
       if (episodes.length === 0) return 0;
       const totalDuration = episodes.reduce(
         (sum, ep) => sum + ep.durationSeconds,
@@ -225,12 +233,12 @@ export function useProgress() {
       );
       if (totalDuration === 0) return 0;
       const totalWatched = episodes.reduce((sum, ep) => {
-        const watched = episodeMap[ep.id]?.watchTime ?? 0;
+        const watched = map[ep.id]?.watchTime ?? 0;
         return sum + Math.min(watched, ep.durationSeconds);
       }, 0);
       return Math.round((totalWatched / totalDuration) * 100);
     },
-    [episodeMap]
+    []
   );
 
   const formatWatchTime = (seconds: number): string => {

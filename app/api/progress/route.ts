@@ -85,10 +85,12 @@ export async function POST(request: NextRequest) {
     .eq("episode_id", episodeId)
     .maybeSingle();
 
-  const bestPercent = Math.max(percent ?? 0, existing?.percent_watched ?? 0);
-  const bestWatch = Math.max(
-    watchTimeSeconds ?? 0,
-    existing?.watch_time_seconds ?? 0
+  const bestPercent = Math.max(
+    Number(percent ?? 0),
+    Number(existing?.percent_watched ?? 0)
+  );
+  const bestWatch = Math.round(
+    Math.max(Number(watchTimeSeconds ?? 0), Number(existing?.watch_time_seconds ?? 0))
   );
   const wasCompleted = existing?.completed ?? false;
   const nowCompleted = completed || wasCompleted;

@@ -18,12 +18,11 @@ interface VideoPlayerProps {
 export function VideoPlayer({ episode, className }: VideoPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [hasTriggeredConfetti, setHasTriggeredConfetti] = useState(false);
+  const hasTriggeredConfetti = useRef(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { isActive } = useSubscription();
   const { updateProgress, updateWatchTime, getProgress, flush } = useProgress();
 
-  const progress = getProgress(episode.id);
   const locked = !episode.isFree && !isActive;
 
   useEffect(() => {
@@ -31,9 +30,10 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
     if (!video || locked) return;
 
     const handleLoadedMetadata = () => {
-      if (progress > 0 && video.duration) {
-        video.currentTime = (progress / 100) * video.duration;
-        setCurrentTime(progress);
+      const saved = getProgress(episode.id);
+      if (saved > 0 && video.duration) {
+        video.currentTime = (saved / 100) * video.duration;
+        setCurrentTime(saved);
       }
     };
 
@@ -46,8 +46,8 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
       const isComplete = updateProgress(episode.id, percent, episode.courseId);
       updateWatchTime(episode.id, video.currentTime, episode.durationSeconds);
 
-      if (isComplete && !hasTriggeredConfetti) {
-        setHasTriggeredConfetti(true);
+      if (isComplete && !hasTriggeredConfetti.current) {
+        hasTriggeredConfetti.current = true;
         confetti({
           particleCount: 100,
           spread: 70,
@@ -70,7 +70,7 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
       video.removeEventListener("pause", handlePause);
       flush();
     };
-  }, [episode.id, episode.courseId, episode.durationSeconds, progress, updateProgress, updateWatchTime, hasTriggeredConfetti, locked, flush]);
+  }, [episode.id, episode.courseId, episode.durationSeconds, locked, updateProgress, updateWatchTime, getProgress, flush]);
 
   const togglePlay = () => {
     if (locked) return;
