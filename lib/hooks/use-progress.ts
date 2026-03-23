@@ -1,211 +1,225 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Episode } from "@/data/episodes";
-
-export interface EpisodeProgress {
-  [episodeSlug: string]: number; // percentage watched (0-100)
-}
-
-export interface WatchTime {
-  [episodeSlug: string]: number; // seconds watched
-}
-
-export interface Achievement {
-  id: string;
-  title: string;
-  icon: string;
-  description: string;
-  unlocked: boolean;
-}
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useAuth } from "@/lib/auth-context";
+import type { Episode } from "@/data/episodes";
 
 export interface UserStats {
   level: number;
   points: number;
-  watchTime: number; // total seconds watched
-  assignmentsCompleted: number; // number of completed episodes
-  coursesStarted: string[]; // course IDs
-  achievements: string[]; // unlocked achievement IDs
+  watchTime: number;
+  assignmentsCompleted: number;
+  coursesStarted: string[];
+  achievements: string[];
 }
 
 const POINTS_PER_LEVEL = 1000;
 const POINTS_PER_SECOND = 0.5;
 const POINTS_PER_COMPLETION = 100;
+const FLUSH_INTERVAL_MS = 10_000;
+
+interface EpisodeCache {
+  percent: number;
+  watchTime: number;
+  completed: boolean;
+}
+
+interface PendingUpdate {
+  episodeId: string;
+  percent: number;
+  watchTimeSeconds: number;
+  courseId?: string;
+}
 
 export function useProgress() {
-  const [progress, setProgress] = useState<EpisodeProgress>({});
-  const [watchTime, setWatchTime] = useState<WatchTime>({});
-  const [userStats, setUserStats] = useState<UserStats>({
-    level: 1,
-    points: 0,
-    watchTime: 0,
-    assignmentsCompleted: 0,
-    coursesStarted: [],
-    achievements: ["into-the-box"], // Default starting achievement
-  });
+  const { user } = useAuth();
+  const [episodeMap, setEpisodeMap] = useState<Record<string, EpisodeCache>>({});
+  const [coursesStarted, setCoursesStarted] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const calculateLevel = (points: number) => {
-    return Math.floor(points / POINTS_PER_LEVEL) + 1;
-  };
+  const pendingRef = useRef<Record<string, PendingUpdate>>({});
+  const flushTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const flush = useCallback(async () => {
+    const pending = { ...pendingRef.current };
+    pendingRef.current = {};
+    const entries = Object.values(pending);
+    if (entries.length === 0) return;
+
+    await Promise.allSettled(
+      entries.map((u) =>
+        fetch("/api/progress", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(u),
+        })
+      )
+    );
+  }, []);
 
   useEffect(() => {
-    // Load episode progress
-    const storedProgress = localStorage.getItem("episodeProgress");
-    if (storedProgress) {
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
       try {
-        setProgress(JSON.parse(storedProgress));
+        const res = await fetch("/api/progress");
+        if (!res.ok) throw new Error("fetch failed");
+        const data = await res.json();
+        if (cancelled) return;
+
+        setEpisodeMap(data.episodes ?? {});
+        setCoursesStarted(data.stats?.coursesStarted ?? []);
       } catch {
-        setProgress({});
+        // leave empty on error
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    flushTimerRef.current = setInterval(flush, FLUSH_INTERVAL_MS);
+
+    return () => {
+      if (flushTimerRef.current) clearInterval(flushTimerRef.current);
+      flush();
+    };
+  }, [user, flush]);
+
+  const calculateLevel = (points: number) =>
+    Math.floor(points / POINTS_PER_LEVEL) + 1;
+
+  const computeStats = useCallback((): UserStats => {
+    let totalWatchTime = 0;
+    let completedCount = 0;
+
+    for (const ep of Object.values(episodeMap)) {
+      totalWatchTime += ep.watchTime;
+      if (ep.completed) completedCount++;
     }
 
-    // Load watch time
-    const storedWatchTime = localStorage.getItem("watchTime");
-    let currentWT: WatchTime = {};
-    if (storedWatchTime) {
-      try {
-        currentWT = JSON.parse(storedWatchTime);
-        setWatchTime(currentWT);
-      } catch {
-        setWatchTime({});
-      }
-    }
-
-    // Load assignments completed
-    const storedAssignments = localStorage.getItem("assignmentsCompleted");
-    let completedEpisodes: string[] = [];
-    if (storedAssignments) {
-      try {
-        completedEpisodes = JSON.parse(storedAssignments);
-      } catch {}
-    }
-
-    // Load courses started
-    const storedCourses = localStorage.getItem("coursesStarted");
-    let courses: string[] = [];
-    if (storedCourses) {
-      try {
-        courses = JSON.parse(storedCourses);
-      } catch {}
-    }
-
-    // Calculate initial stats
-    const totalWatchTime = Object.values(currentWT).reduce((sum: number, seconds: number) => sum + seconds, 0);
     const watchPoints = Math.floor(totalWatchTime * POINTS_PER_SECOND);
-    const completionPoints = completedEpisodes.length * POINTS_PER_COMPLETION;
+    const completionPoints = completedCount * POINTS_PER_COMPLETION;
     const totalPoints = watchPoints + completionPoints;
 
-    setUserStats({
+    return {
       level: calculateLevel(totalPoints),
       points: totalPoints,
       watchTime: totalWatchTime,
-      assignmentsCompleted: completedEpisodes.length,
-      coursesStarted: courses,
-      achievements: ["into-the-box"], // Keep simple for now
-    });
+      assignmentsCompleted: completedCount,
+      coursesStarted,
+      achievements: ["into-the-box"],
+    };
+  }, [episodeMap, coursesStarted]);
 
-    setIsLoading(false);
-  }, []);
+  const getProgress = useCallback(
+    (episodeId: string): number => episodeMap[episodeId]?.percent ?? 0,
+    [episodeMap]
+  );
 
-  const updateProgress = (episodeSlug: string, percent: number, courseId?: string) => {
-    const currentProgress = progress[episodeSlug] || 0;
-    const newPercent = Math.min(100, Math.max(0, percent));
-    const maxProgress = Math.max(currentProgress, newPercent);
-    
-    if (maxProgress > currentProgress) {
-      const newProgress = { ...progress, [episodeSlug]: maxProgress };
-      setProgress(newProgress);
-      localStorage.setItem("episodeProgress", JSON.stringify(newProgress));
-      
-      const isNewlyComplete = maxProgress >= 95 && currentProgress < 95;
-      
-      if (isNewlyComplete) {
-        const storedAssignments = localStorage.getItem("assignmentsCompleted");
-        let completed: string[] = [];
-        if (storedAssignments) {
-          try {
-            completed = JSON.parse(storedAssignments);
-          } catch {}
-        }
-        if (!completed.includes(episodeSlug)) {
-          completed.push(episodeSlug);
-          localStorage.setItem("assignmentsCompleted", JSON.stringify(completed));
-          
-          setUserStats((prev) => {
-            const nextPoints = prev.points + POINTS_PER_COMPLETION;
-            return {
-              ...prev,
-              assignmentsCompleted: completed.length,
-              points: nextPoints,
-              level: calculateLevel(nextPoints),
-            };
-          });
-        }
-      }
-    }
-    
-    // Track course as started
-    if (courseId) {
-      const storedCourses = localStorage.getItem("coursesStarted");
-      let coursesStarted: string[] = [];
-      if (storedCourses) {
-        try {
-          coursesStarted = JSON.parse(storedCourses);
-        } catch {}
-      }
-      if (!coursesStarted.includes(courseId)) {
-        coursesStarted.push(courseId);
-        localStorage.setItem("coursesStarted", JSON.stringify(coursesStarted));
-        setUserStats((prev) => ({ ...prev, coursesStarted }));
-      }
-    }
+  const getWatchTime = useCallback(
+    (episodeId: string): number => episodeMap[episodeId]?.watchTime ?? 0,
+    [episodeMap]
+  );
 
-    return maxProgress >= 95;
-  };
+  const updateProgress = useCallback(
+    (episodeId: string, percent: number, courseId?: string): boolean => {
+      const current = episodeMap[episodeId]?.percent ?? 0;
+      const newPercent = Math.min(100, Math.max(0, percent));
+      const best = Math.max(current, newPercent);
 
-  const updateWatchTime = (episodeSlug: string, seconds: number, episodeDuration: number) => {
-    const actualSeconds = Math.min(seconds, episodeDuration);
-    const currentWatchTime = watchTime[episodeSlug] || 0;
-    const maxWatchTime = Math.max(currentWatchTime, actualSeconds);
-    
-    if (maxWatchTime > currentWatchTime) {
-      const diff = maxWatchTime - currentWatchTime;
-      const newWatchTime = { ...watchTime, [episodeSlug]: maxWatchTime };
-      setWatchTime(newWatchTime);
-      localStorage.setItem("watchTime", JSON.stringify(newWatchTime));
-      
-      setUserStats((prev) => {
-        const addedPoints = Math.floor(diff * POINTS_PER_SECOND);
-        const nextPoints = prev.points + addedPoints;
-        return {
+      if (best > current) {
+        setEpisodeMap((prev) => ({
           ...prev,
-          watchTime: prev.watchTime + diff,
-          points: nextPoints,
-          level: calculateLevel(nextPoints),
+          [episodeId]: {
+            ...prev[episodeId],
+            percent: best,
+            watchTime: prev[episodeId]?.watchTime ?? 0,
+            completed: best >= 95,
+          },
+        }));
+
+        pendingRef.current[episodeId] = {
+          ...pendingRef.current[episodeId],
+          episodeId,
+          percent: best,
+          watchTimeSeconds:
+            pendingRef.current[episodeId]?.watchTimeSeconds ??
+            episodeMap[episodeId]?.watchTime ??
+            0,
+          courseId: courseId ?? pendingRef.current[episodeId]?.courseId,
         };
-      });
-    }
-  };
+      }
 
-  const getProgress = (episodeSlug: string): number => {
-    return progress[episodeSlug] || 0;
-  };
+      if (courseId && !coursesStarted.includes(courseId)) {
+        setCoursesStarted((prev) =>
+          prev.includes(courseId) ? prev : [...prev, courseId]
+        );
+      }
 
-  const getCourseProgress = (episodes: Episode[]): number => {
-    if (episodes.length === 0) return 0;
-    const totalDuration = episodes.reduce((sum, episode) => sum + episode.durationSeconds, 0);
-    if (totalDuration === 0) return 0;
-    const totalWatched = episodes.reduce((sum, episode) => {
-      const watched = getWatchTime(episode.slug);
-      return sum + Math.min(watched, episode.durationSeconds);
-    }, 0);
-    return Math.round((totalWatched / totalDuration) * 100);
-  };
+      return best >= 95;
+    },
+    [episodeMap, coursesStarted]
+  );
 
-  const getWatchTime = (episodeSlug: string): number => {
-    return watchTime[episodeSlug] || 0;
-  };
+  const updateWatchTime = useCallback(
+    (episodeId: string, seconds: number, episodeDuration: number) => {
+      const actual = Math.min(seconds, episodeDuration);
+      const current = episodeMap[episodeId]?.watchTime ?? 0;
+      const best = Math.max(current, actual);
+
+      if (best > current) {
+        setEpisodeMap((prev) => ({
+          ...prev,
+          [episodeId]: {
+            ...prev[episodeId],
+            percent: prev[episodeId]?.percent ?? 0,
+            watchTime: best,
+            completed: prev[episodeId]?.completed ?? false,
+          },
+        }));
+
+        pendingRef.current[episodeId] = {
+          ...pendingRef.current[episodeId],
+          episodeId,
+          percent:
+            pendingRef.current[episodeId]?.percent ??
+            episodeMap[episodeId]?.percent ??
+            0,
+          watchTimeSeconds: best,
+        };
+      }
+    },
+    [episodeMap]
+  );
+
+  const getCourseProgress = useCallback(
+    (episodes: Episode[]): number => {
+      if (episodes.length === 0) return 0;
+      const totalDuration = episodes.reduce(
+        (sum, ep) => sum + ep.durationSeconds,
+        0
+      );
+      if (totalDuration === 0) return 0;
+      const totalWatched = episodes.reduce((sum, ep) => {
+        const watched = episodeMap[ep.id]?.watchTime ?? 0;
+        return sum + Math.min(watched, ep.durationSeconds);
+      }, 0);
+      return Math.round((totalWatched / totalDuration) * 100);
+    },
+    [episodeMap]
+  );
 
   const formatWatchTime = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
@@ -215,9 +229,13 @@ export function useProgress() {
   };
 
   return {
-    progress,
-    watchTime,
-    userStats,
+    progress: Object.fromEntries(
+      Object.entries(episodeMap).map(([id, ep]) => [id, ep.percent])
+    ),
+    watchTime: Object.fromEntries(
+      Object.entries(episodeMap).map(([id, ep]) => [id, ep.watchTime])
+    ),
+    userStats: computeStats(),
     isLoading,
     updateProgress,
     updateWatchTime,

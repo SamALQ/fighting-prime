@@ -1,10 +1,12 @@
 import { MainLayout } from "@/components/layout/main-layout";
 import { Section } from "@/components/layout/section";
 import { FAQList } from "@/components/ui/faq-list";
-import { faqs } from "@/data/faq";
+import { fetchFaqs } from "@/lib/db";
 import { FAQJSONLD } from "@/components/seo/json-ld";
 
-export default function FAQPage() {
+export default async function FAQPage() {
+  const faqs = await fetchFaqs();
+
   return (
     <MainLayout>
       <FAQJSONLD faqs={faqs.map((f) => ({ question: f.question, answer: f.answer }))} />

@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Section } from "@/components/layout/section";
-import { getCourseBySlug } from "@/data/courses";
-import { getEpisodeBySlug, getEpisodesByCourseId } from "@/data/episodes";
+import { fetchCourseBySlug, fetchEpisodeBySlug, fetchEpisodesByCourseId } from "@/lib/db";
 import { VideoPlayer } from "@/components/ui/video-player";
 import { EpisodeList } from "@/components/ui/episode-list";
 import { Button } from "@/components/ui/button";
@@ -16,14 +15,14 @@ interface EpisodeDetailPageProps {
 
 export default async function EpisodeDetailPage({ params }: EpisodeDetailPageProps) {
   const { slug, episodeSlug } = await params;
-  const course = getCourseBySlug(slug);
-  const episode = getEpisodeBySlug(episodeSlug);
+  const course = await fetchCourseBySlug(slug);
+  const episode = await fetchEpisodeBySlug(episodeSlug);
 
   if (!course || !episode || episode.courseId !== course.id) {
     notFound();
   }
 
-  const episodes = getEpisodesByCourseId(course.id);
+  const episodes = await fetchEpisodesByCourseId(course.id);
   const currentIndex = episodes.findIndex((e) => e.slug === episodeSlug);
   const prevEpisode = currentIndex > 0 ? episodes[currentIndex - 1] : null;
   const nextEpisode = currentIndex < episodes.length - 1 ? episodes[currentIndex + 1] : null;
@@ -43,12 +42,9 @@ export default async function EpisodeDetailPage({ params }: EpisodeDetailPagePro
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
-              {/* Video Player */}
               <VideoPlayer episode={episode} />
 
-              {/* Episode Info */}
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-sm font-medium text-muted-foreground">
@@ -66,7 +62,6 @@ export default async function EpisodeDetailPage({ params }: EpisodeDetailPagePro
                 </p>
               </div>
 
-              {/* Key Takeaways */}
               <div>
                 <h2 className="text-xl font-semibold mb-4">Key Takeaways</h2>
                 <ul className="space-y-3">
@@ -79,7 +74,6 @@ export default async function EpisodeDetailPage({ params }: EpisodeDetailPagePro
                 </ul>
               </div>
 
-              {/* Assignment Placeholder */}
               <div className="bg-card border border-border rounded-xl p-6">
                 <h2 className="text-xl font-semibold mb-2">Assignment</h2>
                 <p className="text-muted-foreground mb-4">
@@ -90,7 +84,6 @@ export default async function EpisodeDetailPage({ params }: EpisodeDetailPagePro
                 </Button>
               </div>
 
-              {/* Navigation */}
               <div className="flex items-center justify-between pt-6 border-t border-border">
                 {prevEpisode ? (
                   <Link href={`/courses/${course.slug}/${prevEpisode.slug}`}>
@@ -115,7 +108,6 @@ export default async function EpisodeDetailPage({ params }: EpisodeDetailPagePro
               </div>
             </div>
 
-            {/* Sidebar */}
             <div className="lg:col-span-1">
               <div className="sticky top-24">
                 <div className="bg-card border border-border rounded-xl p-6">

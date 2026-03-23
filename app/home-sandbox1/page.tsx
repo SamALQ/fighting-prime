@@ -1,8 +1,6 @@
 import { Section } from "@/components/layout/section";
-import { CourseCard } from "@/components/ui/course-card";
 import { Testimonial } from "@/components/ui/testimonial";
-import { courses } from "@/data/courses";
-import { testimonials } from "@/data/testimonials";
+import { fetchCourses, fetchTestimonials } from "@/lib/db";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -10,7 +8,11 @@ import { Play, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
-export default function HomeSandbox1() {
+export default async function HomeSandbox1() {
+  const [courses, testimonials] = await Promise.all([
+    fetchCourses(),
+    fetchTestimonials(),
+  ]);
   const featuredCourse = courses.find((c) => c.featured);
 
   return (

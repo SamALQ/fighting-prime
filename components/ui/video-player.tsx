@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useProgress } from "@/lib/hooks/use-progress";
-import { Episode } from "@/data/episodes";
+import type { Episode } from "@/data/episodes";
 import { Play, Pause, Lock } from "lucide-react";
 import { Button } from "./button";
 import { useSubscription } from "@/lib/hooks/use-subscription";
@@ -23,14 +23,13 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
   const { isActive } = useSubscription();
   const { updateProgress, updateWatchTime, getProgress } = useProgress();
 
-  const progress = getProgress(episode.slug);
+  const progress = getProgress(episode.id);
   const locked = !episode.isFree && !isActive;
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video || locked) return;
 
-    // Restore previous progress when metadata is loaded
     const handleLoadedMetadata = () => {
       if (progress > 0 && video.duration) {
         video.currentTime = (progress / 100) * video.duration;
@@ -40,16 +39,13 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
 
     const handleTimeUpdate = () => {
       if (!video.duration) return;
-      
+
       const percent = (video.currentTime / video.duration) * 100;
       setCurrentTime(percent);
-      
-      // Update progress and track course as started
-      const isComplete = updateProgress(episode.slug, percent, episode.courseId);
-      
-      // Update watch time
-      updateWatchTime(episode.slug, video.currentTime, episode.durationSeconds);
-      
+
+      const isComplete = updateProgress(episode.id, percent, episode.courseId);
+      updateWatchTime(episode.id, video.currentTime, episode.durationSeconds);
+
       if (isComplete && !hasTriggeredConfetti) {
         setHasTriggeredConfetti(true);
         confetti({
@@ -67,7 +63,7 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
       video.removeEventListener("loadedmetadata", handleLoadedMetadata);
       video.removeEventListener("timeupdate", handleTimeUpdate);
     };
-  }, [episode.slug, episode.courseId, episode.durationSeconds, progress, updateProgress, updateWatchTime, hasTriggeredConfetti, locked]);
+  }, [episode.id, episode.courseId, episode.durationSeconds, progress, updateProgress, updateWatchTime, hasTriggeredConfetti, locked]);
 
   const togglePlay = () => {
     if (locked) return;
@@ -112,8 +108,7 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
       />
-      
-      {/* Thumbnail with play button - shown when video is not playing */}
+
       {!isPlaying && (
         <div className="absolute inset-0">
           {episode.thumbnail ? (
@@ -129,8 +124,7 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
               <div className="text-6xl font-bold text-primary/30">{episode.title.charAt(0)}</div>
             </div>
           )}
-          
-          {/* Play button overlay */}
+
           <div className="absolute inset-0 flex items-center justify-center bg-black/30">
             <Button
               size="lg"
@@ -144,7 +138,6 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
         </div>
       )}
 
-      {/* Play/Pause button overlay - shown when video is playing */}
       {isPlaying && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/20 transition-colors group">
           <Button
@@ -158,7 +151,6 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
         </div>
       )}
 
-      {/* Progress bar */}
       <div className="absolute bottom-0 left-0 right-0 h-1 bg-background/20">
         <div
           className="h-full bg-primary transition-all"

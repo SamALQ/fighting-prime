@@ -15,8 +15,8 @@ import {
 import { Container } from "./container";
 import { LogOut, User, ChevronRight, Play, LayoutDashboard, CreditCard, Settings } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { useState, useRef } from "react";
-import { courses } from "@/data/courses";
+import { useState, useRef, useEffect } from "react";
+import type { Course } from "@/data/courses";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
@@ -24,6 +24,16 @@ export function NavBar() {
   const { isLoggedIn, isLoading, logout, userEmail } = useAuth();
   const [isCoursesHovered, setIsCoursesHovered] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [featuredCourses, setFeaturedCourses] = useState<Course[]>([]);
+
+  useEffect(() => {
+    fetch("/api/courses")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) setFeaturedCourses(data.slice(0, 3));
+      })
+      .catch(() => {});
+  }, []);
 
   const handleMouseEnter = () => {
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
@@ -40,8 +50,6 @@ export function NavBar() {
     await logout();
     window.location.href = "/";
   };
-
-  const featuredCourses = courses.slice(0, 3);
 
   return (
     <nav className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
@@ -86,7 +94,6 @@ export function NavBar() {
                 Courses
               </Link>
 
-              {/* Mega Dropdown */}
               <div
                 className={cn(
                   "absolute top-[calc(100%-1px)] left-1/2 -translate-x-1/2 w-[600px] bg-background border border-border rounded-b-2xl shadow-2xl transition-all duration-300 origin-top z-50 overflow-hidden",
@@ -131,7 +138,7 @@ export function NavBar() {
                           {course.title}
                         </h4>
                         <p className="text-[10px] text-muted-foreground line-clamp-1 capitalize">
-                          {course.difficulty} • {course.durationWeeks} Weeks
+                          {course.difficulty} &bull; {course.durationWeeks} Weeks
                         </p>
                       </div>
                     </Link>
@@ -166,7 +173,6 @@ export function NavBar() {
 
             <ThemeToggle />
 
-            {/* Auth area: fixed-width container prevents layout shift */}
             <div className="w-8 h-8 flex items-center justify-center">
               {isLoading ? (
                 <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />

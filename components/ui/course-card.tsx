@@ -6,17 +6,17 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { ProgressRing } from "./progress-ring";
 import { useProgress } from "@/lib/hooks/use-progress";
-import { Course } from "@/data/courses";
-import { getEpisodesByCourseId } from "@/data/episodes";
+import type { Course } from "@/data/courses";
+import type { Episode } from "@/data/episodes";
 import { cn } from "@/lib/utils";
 
 interface CourseCardProps {
   course: Course;
+  episodes: Episode[];
   className?: string;
 }
 
-export function CourseCard({ course, className }: CourseCardProps) {
-  const episodes = getEpisodesByCourseId(course.id);
+export function CourseCard({ course, episodes, className }: CourseCardProps) {
   const { getCourseProgress } = useProgress();
   const progress = getCourseProgress(episodes);
 
@@ -69,7 +69,7 @@ export function CourseCard({ course, className }: CourseCardProps) {
         <CardContent className="flex-1">
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span>{course.durationWeeks} weeks</span>
-            <span>•</span>
+            <span>&bull;</span>
             <span>{episodes.length} episodes</span>
           </div>
         </CardContent>

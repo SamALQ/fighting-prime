@@ -1,17 +1,20 @@
 import { MainLayout } from "@/components/layout/main-layout";
 import { Hero } from "@/components/ui/hero";
 import { Section } from "@/components/layout/section";
-import { CourseCard } from "@/components/ui/course-card";
 import { Testimonial } from "@/components/ui/testimonial";
-import { courses } from "@/data/courses";
-import { testimonials } from "@/data/testimonials";
+import { fetchCourses, fetchTestimonials } from "@/lib/db";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export default function Home() {
+export default async function Home() {
+  const [courses, testimonials] = await Promise.all([
+    fetchCourses(),
+    fetchTestimonials(),
+  ]);
+
   const featuredCourse = courses.find((c) => c.featured);
 
   return (
@@ -89,7 +92,7 @@ export default function Home() {
         </Section>
       )}
 
-      {/* Track Your Progress (Dashboard) Feature Section */}
+      {/* Track Your Progress */}
       <Section>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="space-y-8">
@@ -127,9 +130,7 @@ export default function Home() {
 
           <div className="relative group">
             <div className="absolute -inset-4 bg-primary/10 rounded-[2rem] blur-2xl group-hover:bg-primary/20 transition-all duration-500" />
-            {/* Minified Dashboard Mock UI */}
             <div className="relative bg-background border border-border rounded-2xl shadow-2xl overflow-hidden transform group-hover:translate-y-2 transition-transform duration-500">
-              {/* Header */}
               <div className="p-4 border-b border-border bg-muted/30 flex items-center justify-between">
                 <div className="h-4 w-32 bg-muted rounded-full" />
                 <div className="flex gap-2">
@@ -137,9 +138,7 @@ export default function Home() {
                   <div className="h-6 w-16 bg-muted rounded-full" />
                 </div>
               </div>
-              
               <div className="p-6 space-y-6">
-                {/* Stats Cards */}
                 <div className="grid grid-cols-4 gap-2">
                   {[1, 2, 3, 4].map((i) => (
                     <div key={i} className="h-12 bg-muted/50 rounded-lg border border-border/50 flex items-center justify-center p-2">
@@ -150,11 +149,8 @@ export default function Home() {
                     </div>
                   ))}
                 </div>
-
                 <div className="grid grid-cols-12 gap-6">
-                  {/* Main */}
                   <div className="col-span-8 space-y-6">
-                    {/* Course Card */}
                     <div className="border border-border rounded-xl p-4 space-y-3 bg-muted/10">
                       <div className="flex gap-3">
                         <div className="h-12 w-12 rounded-lg bg-muted shrink-0" />
@@ -173,7 +169,6 @@ export default function Home() {
                         </div>
                       </div>
                     </div>
-                    {/* Achievements */}
                     <div className="space-y-3">
                       <div className="h-3 w-24 bg-muted rounded" />
                       <div className="grid grid-cols-6 gap-2">
@@ -188,7 +183,6 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
-                  {/* Sidebar */}
                   <div className="col-span-4 space-y-4">
                     <div className="h-3 w-full bg-muted rounded" />
                     <div className="space-y-3">
@@ -215,7 +209,6 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="order-2 lg:order-1 relative group">
             <div className="absolute -inset-4 bg-primary/10 rounded-[2rem] blur-2xl group-hover:bg-primary/20 transition-all duration-500" />
-            {/* Minified Mock UI */}
             <div className="relative bg-background border border-border rounded-2xl shadow-2xl overflow-hidden transform group-hover:-translate-y-2 transition-transform duration-500">
               <div className="p-3 border-b border-border bg-muted/30 flex items-center gap-2">
                 <div className="flex gap-1">

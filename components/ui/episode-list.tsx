@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
-import { Episode } from "@/data/episodes";
+import type { Episode } from "@/data/episodes";
 import { useSubscription } from "@/lib/hooks/use-subscription";
 import { useProgress } from "@/lib/hooks/use-progress";
 import { Lock, CheckCircle2, PlayCircle, Zap } from "lucide-react";
@@ -21,7 +21,6 @@ export function EpisodeList({ episodes, courseSlug, className }: EpisodeListProp
   const pathname = usePathname();
   const { isActive: hasSubscription } = useSubscription();
   const { getProgress, progress: progressData } = useProgress();
-  const [completedEpisodes, setCompletedEpisodes] = useState<Set<string>>(new Set());
   const [animatingEpisodes, setAnimatingEpisodes] = useState<Set<string>>(new Set());
   const prevProgressRef = useRef<Record<string, number>>({});
 
@@ -30,41 +29,37 @@ export function EpisodeList({ episodes, courseSlug, className }: EpisodeListProp
     return !hasSubscription;
   };
 
-  // Track when episodes become completed
   useEffect(() => {
     episodes.forEach((episode) => {
-      const progress = getProgress(episode.slug);
-      const prevProgress = prevProgressRef.current[episode.slug] || 0;
+      const progress = getProgress(episode.id);
+      const prevProgress = prevProgressRef.current[episode.id] || 0;
       const wasComplete = prevProgress >= 95;
       const isComplete = progress >= 95;
 
-      // If episode just became complete, trigger animation
       if (!wasComplete && isComplete && progress > 0) {
-        setCompletedEpisodes((prev) => new Set(prev).add(episode.slug));
-        setAnimatingEpisodes((prev) => new Set(prev).add(episode.slug));
-        
-        // Remove animation class after animation completes
+        setAnimatingEpisodes((prev) => new Set(prev).add(episode.id));
+
         setTimeout(() => {
           setAnimatingEpisodes((prev) => {
             const next = new Set(prev);
-            next.delete(episode.slug);
+            next.delete(episode.id);
             return next;
           });
-        }, 2000); // Animation duration
+        }, 2000);
       }
 
-      prevProgressRef.current[episode.slug] = progress;
+      prevProgressRef.current[episode.id] = progress;
     });
   }, [episodes, progressData, getProgress]);
 
   return (
     <div className={cn("space-y-2", className)}>
-      {episodes.map((episode, index) => {
+      {episodes.map((episode) => {
         const locked = isLocked(episode);
-        const progress = getProgress(episode.slug);
+        const progress = getProgress(episode.id);
         const isActive = pathname === `/courses/${courseSlug}/${episode.slug}`;
         const isComplete = progress >= 95;
-        const isAnimating = animatingEpisodes.has(episode.slug);
+        const isAnimating = animatingEpisodes.has(episode.id);
 
         return (
           <Link
@@ -88,7 +83,6 @@ export function EpisodeList({ episodes, courseSlug, className }: EpisodeListProp
               }
             }}
           >
-            {/* Lightning animation overlay */}
             {isAnimating && (
               <div className="absolute inset-0 pointer-events-none">
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-400/50 to-transparent animate-shimmer" />
@@ -135,10 +129,10 @@ export function EpisodeList({ episodes, courseSlug, className }: EpisodeListProp
 
             {!locked && progress > 0 && (
               <div className="flex-shrink-0 relative z-10">
-                <ProgressRing 
-                  progress={progress} 
-                  size={36} 
-                  strokeWidth={3} 
+                <ProgressRing
+                  progress={progress}
+                  size={36}
+                  strokeWidth={3}
                   color={isComplete ? "text-green-500" : "text-primary"}
                 />
               </div>

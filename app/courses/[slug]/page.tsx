@@ -2,8 +2,7 @@ import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Section } from "@/components/layout/section";
-import { getCourseBySlug } from "@/data/courses";
-import { getEpisodesByCourseId } from "@/data/episodes";
+import { fetchCourseBySlug, fetchEpisodesByCourseId } from "@/lib/db";
 import { EpisodeList } from "@/components/ui/episode-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,7 @@ interface CourseDetailPageProps {
 
 export async function generateMetadata({ params }: CourseDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const course = getCourseBySlug(slug);
+  const course = await fetchCourseBySlug(slug);
 
   if (!course) {
     return {};
@@ -36,13 +35,13 @@ export async function generateMetadata({ params }: CourseDetailPageProps): Promi
 
 export default async function CourseDetailPage({ params }: CourseDetailPageProps) {
   const { slug } = await params;
-  const course = getCourseBySlug(slug);
+  const course = await fetchCourseBySlug(slug);
 
   if (!course) {
     notFound();
   }
 
-  const episodes = getEpisodesByCourseId(course.id);
+  const episodes = await fetchEpisodesByCourseId(course.id);
   const freeEpisodes = episodes.filter((e) => e.isFree).length;
 
   const difficultyColors = {
@@ -57,16 +56,14 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
       <CourseJSONLD course={course} />
       <Section>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Hero */}
             <div>
               <div className="flex items-center gap-4 mb-4">
                 <Badge className={difficultyColors[course.difficulty]}>
                   {course.difficulty}
                 </Badge>
                 <span className="text-sm text-muted-foreground">
-                  {course.durationWeeks} weeks • {episodes.length} episodes
+                  {course.durationWeeks} weeks &bull; {episodes.length} episodes
                 </span>
               </div>
               <h1 className="text-4xl font-bold mb-4">{course.title}</h1>
@@ -90,9 +87,8 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
               </Link>
             </div>
 
-            {/* Learning Outcomes */}
             <div>
-              <h2 className="text-2xl font-bold mb-4">What You'll Learn</h2>
+              <h2 className="text-2xl font-bold mb-4">What You&apos;ll Learn</h2>
               <ul className="space-y-3">
                 {course.learningOutcomes.map((outcome, index) => (
                   <li key={index} className="flex items-start gap-3">
@@ -104,7 +100,6 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
             </div>
           </div>
 
-          {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="sticky top-24">
               <div className="bg-card border border-border rounded-xl p-6">

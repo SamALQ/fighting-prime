@@ -1,5 +1,5 @@
 import Script from "next/script";
-import { courses } from "@/data/courses";
+import type { Course } from "@/data/courses";
 
 export function OrganizationJSONLD() {
   const jsonLd = {
@@ -25,7 +25,7 @@ export function OrganizationJSONLD() {
   );
 }
 
-export function CourseJSONLD({ course }: { course: typeof courses[0] }) {
+export function CourseJSONLD({ course }: { course: Course }) {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Course",
