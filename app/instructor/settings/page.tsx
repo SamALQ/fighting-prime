@@ -69,8 +69,8 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 bg-muted rounded w-48 animate-pulse" />
-        <div className="h-64 bg-muted rounded-xl animate-pulse" />
+        <div className="h-8 bg-foreground/[0.04] rounded w-48 animate-pulse" />
+        <div className="h-64 bg-foreground/[0.04] rounded-xl animate-pulse" />
       </div>
     );
   }
@@ -79,7 +79,7 @@ export default function SettingsPage() {
     return (
       <div>
         <h1 className="text-2xl font-bold mb-2">Settings</h1>
-        <p className="text-muted-foreground">Unable to load profile.</p>
+        <p className="text-foreground/40">Unable to load profile.</p>
       </div>
     );
   }
@@ -93,14 +93,14 @@ export default function SettingsPage() {
     <div className="space-y-8 max-w-2xl">
       <div>
         <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-muted-foreground text-sm mt-1">
+        <p className="text-foreground/40 text-sm mt-1">
           Manage your instructor profile and payout information
         </p>
       </div>
 
       {/* Profile section */}
-      <div className="border border-border rounded-xl bg-card">
-        <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
+      <div className="border border-foreground/[0.06] rounded-xl bg-foreground/[0.02]">
+        <div className="flex items-center gap-2 px-5 py-4 border-b border-foreground/[0.06]">
           <Settings className="h-4 w-4 text-primary" />
           <h2 className="font-semibold text-sm">Instructor Profile</h2>
         </div>
@@ -108,13 +108,13 @@ export default function SettingsPage() {
           {/* Account info (read-only) */}
           <div className="flex items-center justify-between py-2">
             <div className="flex items-center gap-3">
-              <Mail className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Account Email</span>
+              <Mail className="h-4 w-4 text-foreground/40" />
+              <span className="text-sm text-foreground/40">Account Email</span>
             </div>
             <span className="text-sm font-medium">{email}</span>
           </div>
           <div className="flex items-center justify-between py-2">
-            <span className="text-sm text-muted-foreground">Status</span>
+            <span className="text-sm text-foreground/40">Status</span>
             {profile.approved ? (
               <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 font-medium">
                 Approved
@@ -125,28 +125,28 @@ export default function SettingsPage() {
               </span>
             )}
           </div>
-          <div className="flex items-center justify-between py-2 border-b border-border pb-5">
-            <span className="text-sm text-muted-foreground">Member since</span>
+          <div className="flex items-center justify-between py-2 border-b border-foreground/[0.06] pb-5">
+            <span className="text-sm text-foreground/40">Member since</span>
             <span className="text-sm">{memberSince}</span>
           </div>
 
           {/* Editable fields */}
           <div>
             <label className="flex items-center gap-2 text-sm font-medium mb-1.5">
-              <User className="h-3.5 w-3.5 text-muted-foreground" />
+              <User className="h-3.5 w-3.5 text-foreground/40" />
               Display Name
             </label>
             <input
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="w-full px-3 py-2 rounded-lg border border-foreground/[0.06] bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
           </div>
 
           <div>
             <label className="flex items-center gap-2 text-sm font-medium mb-1.5">
-              <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+              <FileText className="h-3.5 w-3.5 text-foreground/40" />
               Bio
             </label>
             <textarea
@@ -154,13 +154,13 @@ export default function SettingsPage() {
               onChange={(e) => setBio(e.target.value)}
               rows={4}
               placeholder="Tell viewers about your martial arts background and teaching style..."
-              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+              className="w-full px-3 py-2 rounded-lg border border-foreground/[0.06] bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
             />
           </div>
 
           <div>
             <label className="flex items-center gap-2 text-sm font-medium mb-1.5">
-              <Image className="h-3.5 w-3.5 text-muted-foreground" />
+              <Image className="h-3.5 w-3.5 text-foreground/40" />
               Avatar URL
             </label>
             <input
@@ -168,13 +168,13 @@ export default function SettingsPage() {
               value={avatarUrl}
               onChange={(e) => setAvatarUrl(e.target.value)}
               placeholder="https://..."
-              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="w-full px-3 py-2 rounded-lg border border-foreground/[0.06] bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
           </div>
 
           <div>
             <label className="flex items-center gap-2 text-sm font-medium mb-1.5">
-              <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+              <Mail className="h-3.5 w-3.5 text-foreground/40" />
               Payout Email
             </label>
             <input
@@ -182,9 +182,9 @@ export default function SettingsPage() {
               value={payoutEmail}
               onChange={(e) => setPayoutEmail(e.target.value)}
               placeholder="paypal@example.com"
-              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="w-full px-3 py-2 rounded-lg border border-foreground/[0.06] bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-foreground/40 mt-1">
               Used for payout notifications and payment processing
             </p>
           </div>

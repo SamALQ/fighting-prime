@@ -40,15 +40,15 @@ function StatCard({
   sub?: string;
 }) {
   return (
-    <div className="p-5 rounded-xl border border-border bg-card">
+    <div className="p-5 rounded-xl border border-foreground/[0.06] bg-foreground/[0.02]">
       <div className="flex items-center gap-3 mb-3">
-        <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+        <div className="h-9 w-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
           <Icon className="h-4 w-4 text-primary" />
         </div>
-        <span className="text-sm text-muted-foreground">{label}</span>
+        <span className="text-sm text-foreground/40">{label}</span>
       </div>
       <p className="text-2xl font-bold">{value}</p>
-      {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
+      {sub && <p className="text-xs text-foreground/30 mt-1">{sub}</p>}
     </div>
   );
 }
@@ -56,7 +56,7 @@ function StatCard({
 function MiniChart({ data }: { data: { date: string; seconds: number }[] }) {
   if (data.length === 0) {
     return (
-      <div className="h-32 flex items-center justify-center text-muted-foreground text-sm">
+      <div className="h-32 flex items-center justify-center text-foreground/40 text-sm">
         Watch time data will appear here as viewers engage with your content.
       </div>
     );
@@ -75,7 +75,7 @@ function MiniChart({ data }: { data: { date: string; seconds: number }[] }) {
             className="w-full bg-primary/70 hover:bg-primary rounded-t-sm transition-colors min-h-[2px]"
             style={{ height: `${Math.max((d.seconds / maxVal) * 100, 2)}%` }}
           />
-          <div className="absolute -top-9 left-1/2 -translate-x-1/2 hidden group-hover:block bg-popover border border-border rounded px-2 py-1 text-[10px] whitespace-nowrap shadow-lg z-10">
+          <div className="absolute -top-9 left-1/2 -translate-x-1/2 hidden group-hover:block bg-background border border-foreground/[0.08] rounded px-2 py-1 text-[10px] whitespace-nowrap shadow-lg z-10">
             {d.date.slice(5)}: {formatDuration(d.seconds)}
           </div>
         </div>
@@ -99,10 +99,10 @@ export default function InstructorOverview() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 bg-muted rounded w-64 animate-pulse" />
+        <div className="h-8 bg-foreground/[0.04] rounded w-64 animate-pulse" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-28 bg-muted rounded-xl animate-pulse" />
+            <div key={i} className="h-28 bg-foreground/[0.03] rounded-xl animate-pulse border border-foreground/[0.06]" />
           ))}
         </div>
       </div>
@@ -113,7 +113,7 @@ export default function InstructorOverview() {
     return (
       <div>
         <h1 className="text-2xl font-bold mb-2">Overview</h1>
-        <p className="text-muted-foreground">Unable to load dashboard data.</p>
+        <p className="text-foreground/40">Unable to load dashboard data.</p>
       </div>
     );
   }
@@ -135,7 +135,7 @@ export default function InstructorOverview() {
         <h1 className="text-2xl font-bold">
           Welcome back, {stats.instructor.display_name}
         </h1>
-        <p className="text-muted-foreground mt-1">
+        <p className="text-foreground/40 mt-1">
           Here&apos;s how your content is performing
         </p>
         {!stats.instructor.approved && (
@@ -171,41 +171,41 @@ export default function InstructorOverview() {
       </div>
 
       {/* Watch time chart */}
-      <div className="border border-border rounded-xl p-5 bg-card">
+      <div className="border border-foreground/[0.06] rounded-xl p-5 bg-foreground/[0.02]">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-primary" />
             <h2 className="font-semibold text-sm">Daily Watch Time</h2>
           </div>
-          <span className="text-xs text-muted-foreground">Last 30 days</span>
+          <span className="text-xs text-foreground/30">Last 30 days</span>
         </div>
         <MiniChart data={stats.timeline} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top episodes */}
-        <div className="border border-border rounded-xl bg-card">
-          <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
+        <div className="border border-foreground/[0.06] rounded-xl bg-foreground/[0.02]">
+          <div className="flex items-center gap-2 px-5 py-4 border-b border-foreground/[0.06]">
             <Trophy className="h-4 w-4 text-primary" />
             <h2 className="font-semibold text-sm">Top Episodes</h2>
           </div>
           {topEpisodes.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground text-sm">
+            <div className="p-8 text-center text-foreground/40 text-sm">
               No episode data yet.
             </div>
           ) : (
-            <div className="divide-y divide-border">
+            <div className="divide-y divide-foreground/[0.06]">
               {topEpisodes.map((ep, i) => (
                 <div
                   key={ep.id}
                   className="flex items-center gap-4 px-5 py-3.5"
                 >
-                  <span className="text-lg font-bold text-muted-foreground/50 w-6 text-center">
+                  <span className="text-lg font-bold text-foreground/20 w-6 text-center">
                     {i + 1}
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{ep.title}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-foreground/30">
                       {ep.courseName}
                     </p>
                   </div>
@@ -213,7 +213,7 @@ export default function InstructorOverview() {
                     <p className="text-sm font-semibold">
                       {formatDuration(ep.watchSeconds)}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-foreground/30">
                       {ep.viewers} viewer{ep.viewers !== 1 ? "s" : ""}
                     </p>
                   </div>
@@ -224,16 +224,16 @@ export default function InstructorOverview() {
         </div>
 
         {/* Recent activity */}
-        <div className="border border-border rounded-xl bg-card">
-          <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
+        <div className="border border-foreground/[0.06] rounded-xl bg-foreground/[0.02]">
+          <div className="flex items-center gap-2 px-5 py-4 border-b border-foreground/[0.06]">
             <Play className="h-4 w-4 text-primary" />
             <h2 className="font-semibold text-sm">Recent Activity</h2>
           </div>
           <div className="p-8 text-center">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-foreground/40">
               Viewer activity feed coming soon.
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-foreground/30 mt-1">
               See completions, milestones, and engagement as they happen.
             </p>
           </div>

@@ -7,7 +7,7 @@ import { CourseCard } from "@/components/ui/course-card";
 import type { Course, Difficulty } from "@/data/courses";
 import type { Episode } from "@/data/episodes";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface CoursesClientProps {
   courses: Course[];
@@ -35,12 +35,17 @@ export function CoursesClient({ courses, episodes }: CoursesClientProps) {
     return matchesDifficulty && matchesSearch;
   });
 
+  const difficulties = ["All", "Beginner", "Intermediate", "Advanced", "Professional"] as const;
+
   return (
     <MainLayout>
       <Section>
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4">All Courses</h1>
-          <p className="text-muted-foreground">
+        <div className="mb-12">
+          <span className="text-xs font-bold tracking-[0.3em] text-primary/80 uppercase mb-4 block">
+            Training Library
+          </span>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">All Courses</h1>
+          <p className="text-foreground/50 text-lg">
             Master Muay Thai with structured courses from beginner to advanced
           </p>
         </div>
@@ -50,20 +55,24 @@ export function CoursesClient({ courses, episodes }: CoursesClientProps) {
             placeholder="Search courses..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="max-w-md"
+            className="max-w-md h-11"
           />
         </div>
 
-        <div className="flex flex-wrap gap-2 mb-8">
-          {(["All", "Beginner", "Intermediate", "Advanced", "Professional"] as const).map((difficulty) => (
-            <Badge
+        <div className="flex flex-wrap gap-2 mb-10">
+          {difficulties.map((difficulty) => (
+            <button
               key={difficulty}
-              variant={selectedDifficulty === difficulty ? "default" : "outline"}
-              className="cursor-pointer"
               onClick={() => setSelectedDifficulty(difficulty)}
+              className={cn(
+                "px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all",
+                selectedDifficulty === difficulty
+                  ? "bg-primary text-white shadow-lg shadow-primary/25"
+                  : "border border-foreground/[0.08] text-foreground/50 hover:text-foreground hover:border-foreground/20"
+              )}
             >
               {difficulty}
-            </Badge>
+            </button>
           ))}
         </div>
 
@@ -78,8 +87,8 @@ export function CoursesClient({ courses, episodes }: CoursesClientProps) {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No courses found matching your criteria.</p>
+          <div className="text-center py-16 border border-dashed border-foreground/[0.08] rounded-2xl">
+            <p className="text-foreground/40">No courses found matching your criteria.</p>
           </div>
         )}
       </Section>

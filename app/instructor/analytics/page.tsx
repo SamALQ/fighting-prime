@@ -117,8 +117,8 @@ export default function AnalyticsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 bg-muted rounded w-48 animate-pulse" />
-        <div className="h-64 bg-muted rounded-xl animate-pulse" />
+        <div className="h-8 bg-foreground/[0.04] rounded w-48 animate-pulse" />
+        <div className="h-64 bg-foreground/[0.04] rounded-xl animate-pulse" />
       </div>
     );
   }
@@ -127,7 +127,7 @@ export default function AnalyticsPage() {
     return (
       <div>
         <h1 className="text-2xl font-bold mb-2">Analytics</h1>
-        <p className="text-muted-foreground">Unable to load analytics data.</p>
+        <p className="text-foreground/40">Unable to load analytics data.</p>
       </div>
     );
   }
@@ -151,11 +151,11 @@ export default function AnalyticsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Analytics</h1>
-          <p className="text-muted-foreground text-sm mt-1">
+          <p className="text-foreground/40 text-sm mt-1">
             Deep dive into your content performance
           </p>
         </div>
-        <div className="flex rounded-lg border border-border overflow-hidden">
+        <div className="flex rounded-lg border border-foreground/[0.06] overflow-hidden">
           {(["7d", "30d", "90d", "all"] as Range[]).map((r) => (
             <button
               key={r}
@@ -164,7 +164,7 @@ export default function AnalyticsPage() {
                 "px-3 py-1.5 text-xs font-medium transition-colors",
                 range === r
                   ? "bg-primary text-primary-foreground"
-                  : "bg-card hover:bg-muted text-muted-foreground"
+                  : "bg-foreground/[0.02] hover:bg-foreground/[0.04] text-foreground/40"
               )}
             >
               {r === "all" ? "All" : r.toUpperCase()}
@@ -175,33 +175,33 @@ export default function AnalyticsPage() {
 
       {/* Period summary */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="p-4 rounded-xl border border-border bg-card flex items-center gap-4">
+        <div className="p-4 rounded-xl border border-foreground/[0.06] bg-foreground/[0.02] flex items-center gap-4">
           <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
             <Clock className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Period Watch Time</p>
+            <p className="text-xs text-foreground/40">Period Watch Time</p>
             <p className="text-xl font-bold">{formatDuration(rangeStats.seconds)}</p>
           </div>
         </div>
-        <div className="p-4 rounded-xl border border-border bg-card flex items-center gap-4">
+        <div className="p-4 rounded-xl border border-foreground/[0.06] bg-foreground/[0.02] flex items-center gap-4">
           <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
             <Eye className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Period Views</p>
+            <p className="text-xs text-foreground/40">Period Views</p>
             <p className="text-xl font-bold">{rangeStats.viewers.toLocaleString()}</p>
           </div>
         </div>
       </div>
 
       {/* Watch time chart */}
-      <div className="border border-border rounded-xl p-5 bg-card">
+      <div className="border border-foreground/[0.06] rounded-xl p-5 bg-foreground/[0.02]">
         <div className="flex items-center gap-2 mb-1">
           <TrendingUp className="h-4 w-4 text-primary" />
           <h2 className="font-semibold text-sm">Watch Time & Viewers</h2>
         </div>
-        <div className="flex items-center gap-4 mb-4 text-xs text-muted-foreground">
+        <div className="flex items-center gap-4 mb-4 text-xs text-foreground/40">
           <span className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-primary" /> Watch Time
           </span>
@@ -210,7 +210,7 @@ export default function AnalyticsPage() {
           </span>
         </div>
         {filteredTimeline.length === 0 ? (
-          <div className="h-40 flex items-center justify-center text-muted-foreground text-sm">
+          <div className="h-40 flex items-center justify-center text-foreground/40 text-sm">
             No data for this period.
           </div>
         ) : (
@@ -233,7 +233,7 @@ export default function AnalyticsPage() {
                     height: `${Math.max((d.seconds / maxTimelineVal) * 100, 2)}%`,
                   }}
                 />
-                <div className="absolute -top-10 left-1/2 -translate-x-1/2 hidden group-hover:block bg-popover border border-border rounded px-2 py-1 text-[10px] whitespace-nowrap shadow-lg z-10">
+                <div className="absolute -top-10 left-1/2 -translate-x-1/2 hidden group-hover:block bg-popover border border-foreground/[0.06] rounded px-2 py-1 text-[10px] whitespace-nowrap shadow-lg z-10">
                   {d.date.slice(5)}: {formatDuration(d.seconds)} / {d.viewers} viewers
                 </div>
               </div>
@@ -243,13 +243,13 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Course comparison */}
-      <div className="border border-border rounded-xl p-5 bg-card">
+      <div className="border border-foreground/[0.06] rounded-xl p-5 bg-foreground/[0.02]">
         <div className="flex items-center gap-2 mb-4">
           <Layers className="h-4 w-4 text-primary" />
           <h2 className="font-semibold text-sm">Course Comparison</h2>
         </div>
         {stats.courses.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No courses assigned.</p>
+          <p className="text-sm text-foreground/40">No courses assigned.</p>
         ) : (
           <div className="space-y-3">
             {stats.courses.map((course) => {
@@ -259,11 +259,11 @@ export default function AnalyticsPage() {
                 <div key={course.id}>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-medium">{course.title}</span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-foreground/40">
                       {formatDuration(w)}
                     </span>
                   </div>
-                  <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+                  <div className="h-2.5 rounded-full bg-foreground/[0.04] overflow-hidden">
                     <div
                       className="h-full bg-primary rounded-full transition-all"
                       style={{
@@ -279,19 +279,19 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Episode heatmap table */}
-      <div className="border border-border rounded-xl bg-card overflow-hidden">
-        <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
+      <div className="border border-foreground/[0.06] rounded-xl bg-foreground/[0.02] overflow-hidden">
+        <div className="flex items-center gap-2 px-5 py-4 border-b border-foreground/[0.06]">
           <BarChart3 className="h-4 w-4 text-primary" />
           <h2 className="font-semibold text-sm">Episode Breakdown</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-muted/30 border-b border-border text-left">
-                <th className="px-4 py-3 font-medium text-muted-foreground">Episode</th>
-                <th className="px-4 py-3 font-medium text-muted-foreground">Course</th>
+              <tr className="bg-foreground/[0.03] border-b border-foreground/[0.06] text-left">
+                <th className="px-4 py-3 font-medium text-foreground/40">Episode</th>
+                <th className="px-4 py-3 font-medium text-foreground/40">Course</th>
                 <th
-                  className="px-4 py-3 font-medium text-muted-foreground text-right cursor-pointer select-none"
+                  className="px-4 py-3 font-medium text-foreground/40 text-right cursor-pointer select-none"
                   onClick={() => toggleSort("duration")}
                 >
                   <span className="inline-flex items-center gap-1">
@@ -300,7 +300,7 @@ export default function AnalyticsPage() {
                   </span>
                 </th>
                 <th
-                  className="px-4 py-3 font-medium text-muted-foreground text-right cursor-pointer select-none"
+                  className="px-4 py-3 font-medium text-foreground/40 text-right cursor-pointer select-none"
                   onClick={() => toggleSort("watchTime")}
                 >
                   <span className="inline-flex items-center gap-1">
@@ -309,7 +309,7 @@ export default function AnalyticsPage() {
                   </span>
                 </th>
                 <th
-                  className="px-4 py-3 font-medium text-muted-foreground text-right cursor-pointer select-none"
+                  className="px-4 py-3 font-medium text-foreground/40 text-right cursor-pointer select-none"
                   onClick={() => toggleSort("viewers")}
                 >
                   <span className="inline-flex items-center gap-1">
@@ -319,19 +319,19 @@ export default function AnalyticsPage() {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y divide-foreground/[0.06]">
               {sortedEpisodes.map((ep) => (
-                <tr key={ep.id} className="hover:bg-muted/20">
+                <tr key={ep.id} className="hover:bg-foreground/[0.03]">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground w-5">
+                      <span className="text-xs text-foreground/40 w-5">
                         {ep.episode_order}
                       </span>
                       <span className="font-medium">{ep.title}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">{ep.courseName}</td>
-                  <td className="px-4 py-3 text-right text-muted-foreground">
+                  <td className="px-4 py-3 text-foreground/40">{ep.courseName}</td>
+                  <td className="px-4 py-3 text-right text-foreground/40">
                     {formatDuration(ep.duration_seconds)}
                   </td>
                   <td className="px-4 py-3 text-right font-medium">
@@ -348,7 +348,7 @@ export default function AnalyticsPage() {
                 <tr>
                   <td
                     colSpan={5}
-                    className="px-4 py-8 text-center text-muted-foreground"
+                    className="px-4 py-8 text-center text-foreground/40"
                   >
                     No episode data yet.
                   </td>
@@ -360,9 +360,9 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Retention placeholder */}
-      <div className="border border-dashed border-border rounded-xl p-8 text-center bg-card/50">
+      <div className="border border-dashed border-foreground/[0.06] rounded-xl p-8 text-center bg-foreground/[0.01]">
         <p className="font-medium text-sm mb-1">Viewer Retention</p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-foreground/40">
           Coming soon -- see where viewers drop off in each episode to optimize
           your content structure.
         </p>

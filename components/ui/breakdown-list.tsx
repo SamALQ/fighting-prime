@@ -14,7 +14,7 @@ interface BreakdownListProps {
 export function BreakdownList({ breakdowns, selectedId, onSelect }: BreakdownListProps) {
   return (
     <div className="space-y-4">
-      <h3 className="text-xl font-bold mb-6">Past Breakdowns</h3>
+      <h3 className="text-lg font-bold uppercase tracking-wider mb-6">Past Breakdowns</h3>
       <div className="space-y-3">
         {breakdowns.map((breakdown) => {
           const isSelected = breakdown.id === selectedId;
@@ -25,8 +25,8 @@ export function BreakdownList({ breakdowns, selectedId, onSelect }: BreakdownLis
               className={cn(
                 "w-full text-left group flex flex-col gap-3 p-3 rounded-xl border transition-all overflow-hidden relative",
                 isSelected
-                  ? "border-primary bg-primary/5 ring-1 ring-primary"
-                  : "border-border bg-card hover:border-primary/50"
+                  ? "border-primary/40 bg-primary/5 ring-1 ring-primary/30"
+                  : "border-foreground/[0.06] bg-foreground/[0.02] hover:border-primary/30"
               )}
             >
               <div className="relative aspect-video w-full rounded-lg overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-500">
@@ -47,7 +47,7 @@ export function BreakdownList({ breakdowns, selectedId, onSelect }: BreakdownLis
                 )}>
                   {breakdown.title}
                 </h4>
-                <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                <div className="flex items-center gap-3 text-[10px] text-foreground/30">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
                     {new Date(breakdown.releaseDate).toLocaleDateString()}
@@ -65,7 +65,3 @@ export function BreakdownList({ breakdowns, selectedId, onSelect }: BreakdownLis
     </div>
   );
 }
-
-
-
-

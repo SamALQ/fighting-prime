@@ -70,30 +70,30 @@ export default function CommunityPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold">Community</h1>
-        <p className="text-muted-foreground text-sm mt-1">
+        <p className="text-foreground/40 text-sm mt-1">
           See what your students are saying about your content
         </p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-4 rounded-xl border border-border bg-card flex items-center gap-3">
+        <div className="p-4 rounded-xl border border-foreground/[0.06] bg-foreground/[0.02] flex items-center gap-3">
           <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
             <MessageSquare className="h-4 w-4 text-primary" />
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Total Comments</p>
+            <p className="text-xs text-foreground/40">Total Comments</p>
             <p className="text-lg font-bold">
               {loading ? "..." : comments.length}
             </p>
           </div>
         </div>
-        <div className="p-4 rounded-xl border border-border bg-card flex items-center gap-3">
+        <div className="p-4 rounded-xl border border-foreground/[0.06] bg-foreground/[0.02] flex items-center gap-3">
           <div className="h-9 w-9 rounded-lg bg-blue-500/10 flex items-center justify-center">
             <Users className="h-4 w-4 text-blue-500" />
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Unique Commenters</p>
+            <p className="text-xs text-foreground/40">Unique Commenters</p>
             <p className="text-lg font-bold">
               {loading
                 ? "..."
@@ -101,12 +101,12 @@ export default function CommunityPage() {
             </p>
           </div>
         </div>
-        <div className="p-4 rounded-xl border border-border bg-card flex items-center gap-3">
+        <div className="p-4 rounded-xl border border-foreground/[0.06] bg-foreground/[0.02] flex items-center gap-3">
           <div className="h-9 w-9 rounded-lg bg-green-500/10 flex items-center justify-center">
             <MessagesSquare className="h-4 w-4 text-green-500" />
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Replies</p>
+            <p className="text-xs text-foreground/40">Replies</p>
             <p className="text-lg font-bold">
               {loading
                 ? "..."
@@ -117,29 +117,29 @@ export default function CommunityPage() {
       </div>
 
       {/* Recent comments */}
-      <div className="border border-border rounded-xl bg-card overflow-hidden">
-        <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
+      <div className="border border-foreground/[0.06] rounded-xl bg-foreground/[0.02] overflow-hidden">
+        <div className="flex items-center gap-2 px-5 py-4 border-b border-foreground/[0.06]">
           <MessageSquare className="h-4 w-4 text-primary" />
           <h2 className="font-semibold text-sm">Recent Comments</h2>
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            <Loader2 className="h-5 w-5 animate-spin text-foreground/40" />
           </div>
         ) : comments.length === 0 ? (
           <div className="p-12 text-center">
-            <MessageSquare className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-sm font-medium text-muted-foreground">
+            <MessageSquare className="h-10 w-10 text-foreground/[0.12] mx-auto mb-3" />
+            <p className="text-sm font-medium text-foreground/40">
               No comments yet
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-foreground/40 mt-1">
               Comments from your students will appear here as they engage with
               your episodes.
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-foreground/[0.06]">
             {comments.map((comment) => {
               const isInstructor =
                 comment.userRole === "instructor" ||
@@ -153,7 +153,7 @@ export default function CommunityPage() {
                           "text-xs",
                           isInstructor
                             ? "bg-primary/20 text-primary"
-                            : "bg-muted text-muted-foreground"
+                            : "bg-foreground/[0.04] text-foreground/40"
                         )}
                       >
                         {getInitials(comment.userName)}
@@ -170,19 +170,19 @@ export default function CommunityPage() {
                             Instructor
                           </span>
                         )}
-                        <span className="text-[11px] text-muted-foreground">
+                        <span className="text-[11px] text-foreground/40">
                           {timeAgo(comment.createdAt)}
                         </span>
                       </div>
                       <p className="text-sm text-foreground/80 mt-1">
                         {comment.content}
                       </p>
-                      <div className="flex items-center gap-1.5 mt-2 text-[11px] text-muted-foreground">
+                      <div className="flex items-center gap-1.5 mt-2 text-[11px] text-foreground/40">
                         <Film className="h-3 w-3" />
                         <span>
                           {comment.episodeName}
                           {comment.courseName && (
-                            <span className="text-muted-foreground/60">
+                            <span className="text-foreground/25">
                               {" "}
                               &middot; {comment.courseName}
                             </span>
@@ -200,18 +200,18 @@ export default function CommunityPage() {
 
       {/* Upcoming features */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="border border-dashed border-border rounded-xl p-5 bg-card/50">
-          <Heart className="h-5 w-5 text-muted-foreground mb-3" />
+        <div className="border border-dashed border-foreground/[0.06] rounded-xl p-5 bg-foreground/[0.01]">
+          <Heart className="h-5 w-5 text-foreground/40 mb-3" />
           <h3 className="font-semibold text-sm mb-1">Course Forums</h3>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-foreground/40">
             Coming soon -- dedicated discussion threads for each course. Share
             drills, answer technique questions, and foster a training community.
           </p>
         </div>
-        <div className="border border-dashed border-border rounded-xl p-5 bg-card/50">
-          <Users className="h-5 w-5 text-muted-foreground mb-3" />
+        <div className="border border-dashed border-foreground/[0.06] rounded-xl p-5 bg-foreground/[0.01]">
+          <Users className="h-5 w-5 text-foreground/40 mb-3" />
           <h3 className="font-semibold text-sm mb-1">Student Highlights</h3>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-foreground/40">
             Coming soon -- see your most engaged students, celebrate their
             milestones, and build lasting relationships with your audience.
           </p>

@@ -19,7 +19,7 @@ export function FAQList({ faqs, className }: FAQListProps) {
       {faqs.map((faq) => (
         <AccordionItem key={faq.id} value={faq.id}>
           <AccordionTrigger className="text-left">{faq.question}</AccordionTrigger>
-          <AccordionContent className="text-muted-foreground">
+          <AccordionContent className="text-foreground/50">
             {faq.answer}
           </AccordionContent>
         </AccordionItem>

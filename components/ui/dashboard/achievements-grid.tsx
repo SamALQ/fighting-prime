@@ -9,7 +9,6 @@ import {
   Heart,
   Flame,
   BookOpen,
-  BicepsFlexed,
   Star,
   Award,
   Box
@@ -33,7 +32,7 @@ const ACHIEVEMENTS: Achievement[] = [
   { id: "defense-guru", title: "Defense Guru", icon: <Shield className="h-6 w-6" />, unlocked: false },
   { id: "endurance-beast", title: "Endurance Beast", icon: <Heart className="h-6 w-6" />, unlocked: false },
   { id: "sparring-ready", title: "Sparring Ready", icon: <Flame className="h-6 w-6" />, unlocked: false },
-  { id: "technique-scholar", title: "Technique Scholar", icon: <BookOpen className="h-6 w-6" />, unlocked: false },
+  { id: "technique-scholar", title: "Technique Scholar", icon: <Zap className="h-4 w-4" />, unlocked: false },
   { id: "chainsaw", title: "Chainsaw", icon: <Zap className="h-4 w-4" />, unlocked: false },
   { id: "ring-warrior", title: "Ring Warrior", icon: <Star className="h-6 w-6" />, unlocked: false },
   { id: "fight-camp-veteran", title: "Fight Camp", icon: <Award className="h-6 w-6" />, unlocked: false },
@@ -48,7 +47,7 @@ export function AchievementsGrid({ unlockedIds = ["into-the-box"] }: { unlockedI
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-bold">Achievements</h3>
-        <span className="text-xs text-muted-foreground">{unlockedCount}/{ACHIEVEMENTS.length}</span>
+        <span className="text-xs text-foreground/30">{unlockedCount}/{ACHIEVEMENTS.length}</span>
       </div>
       <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-8 gap-3">
         {ACHIEVEMENTS.map((achievement) => {
@@ -59,13 +58,13 @@ export function AchievementsGrid({ unlockedIds = ["into-the-box"] }: { unlockedI
               className={cn(
                 "aspect-square rounded-xl border flex flex-col items-center justify-center gap-2 p-2 transition-all group relative",
                 isUnlocked 
-                  ? "border-primary bg-primary/5 ring-1 ring-primary" 
-                  : "border-border bg-card grayscale opacity-40 hover:opacity-60"
+                  ? "border-primary/30 bg-primary/5 ring-1 ring-primary/20" 
+                  : "border-foreground/[0.06] bg-foreground/[0.02] grayscale opacity-40 hover:opacity-60"
               )}
             >
               <div className={cn(
                 "p-2 rounded-lg transition-colors",
-                isUnlocked ? "text-primary" : "text-muted-foreground"
+                isUnlocked ? "text-primary" : "text-foreground/30"
               )}>
                 {achievement.icon}
               </div>
@@ -73,8 +72,7 @@ export function AchievementsGrid({ unlockedIds = ["into-the-box"] }: { unlockedI
                 {achievement.title}
               </span>
               
-              {/* Tooltip */}
-              <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-popover text-popover-foreground text-[10px] py-1 px-2 rounded border border-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+              <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-background text-foreground text-[10px] py-1 px-2 rounded border border-foreground/[0.08] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
                 {achievement.title}
               </div>
             </div>
@@ -84,7 +82,3 @@ export function AchievementsGrid({ unlockedIds = ["into-the-box"] }: { unlockedI
     </div>
   );
 }
-
-
-
-

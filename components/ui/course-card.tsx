@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { ProgressRing } from "./progress-ring";
 import { useProgress } from "@/lib/hooks/use-progress";
 import type { Course } from "@/data/courses";
 import type { Episode } from "@/data/episodes";
 import { cn } from "@/lib/utils";
+import { ArrowRight } from "lucide-react";
 
 interface CourseCardProps {
   course: Course;
@@ -22,21 +21,26 @@ export function CourseCard({ course, episodes, className }: CourseCardProps) {
 
   return (
     <Link href={`/courses/${course.slug}`}>
-      <Card className={cn("group hover:border-primary/50 transition-all cursor-pointer h-full flex flex-col", className)}>
-        <div className="relative aspect-video w-full overflow-hidden rounded-t-lg">
+      <div
+        className={cn(
+          "group rounded-2xl border border-foreground/[0.06] bg-foreground/[0.02] overflow-hidden hover:border-primary/30 transition-all duration-300 cursor-pointer h-full flex flex-col",
+          className
+        )}
+      >
+        <div className="relative aspect-video w-full overflow-hidden">
           {course.posterImage ? (
             <Image
               src={course.posterImage}
               alt={course.title}
               fill
-              className="object-cover"
+              className="object-cover group-hover:scale-105 transition-transform duration-500"
               unoptimized
             />
           ) : (
             <>
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-background" />
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-background" />
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-4xl font-bold text-muted-foreground/20">
+                <span className="text-4xl font-bold text-foreground/[0.06]">
                   {course.title.charAt(0)}
                 </span>
               </div>
@@ -59,26 +63,26 @@ export function CourseCard({ course, episodes, className }: CourseCardProps) {
               <ProgressRing progress={progress} size={40} strokeWidth={3} />
             </div>
           )}
+          <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
         </div>
-        <CardHeader>
-          <CardTitle className="group-hover:text-primary transition-colors">
+        <div className="p-6 flex-1 flex flex-col">
+          <h3 className="font-bold text-lg mb-1 group-hover:text-primary transition-colors leading-tight">
             {course.title}
-          </CardTitle>
-          <CardDescription>{course.tagline}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex-1">
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          </h3>
+          <p className="text-sm text-foreground/50 mb-4 line-clamp-2">{course.tagline}</p>
+          <div className="flex items-center gap-4 text-xs text-foreground/40 mt-auto">
             <span>{course.durationWeeks} weeks</span>
             <span>&bull;</span>
             <span>{episodes.length} episodes</span>
           </div>
-        </CardContent>
-        <CardFooter>
-          <Badge variant="outline" className="w-full justify-center">
+        </div>
+        <div className="px-6 pb-5">
+          <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-foreground/[0.08] text-xs font-bold uppercase tracking-wider text-foreground/50 group-hover:border-primary/30 group-hover:text-primary transition-all">
             View Course
-          </Badge>
-        </CardFooter>
-      </Card>
+            <ArrowRight className="h-3 w-3" />
+          </div>
+        </div>
+      </div>
     </Link>
   );
 }

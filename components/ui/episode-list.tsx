@@ -73,7 +73,7 @@ export function EpisodeList({ episodes, courseSlug, className }: EpisodeListProp
                   : "border-green-500/30 bg-green-500/10 hover:border-green-500/50"
                 : isActive
                 ? "border-primary bg-primary/10"
-                : "border-border hover:border-primary/50 bg-card",
+                : "border-foreground/[0.06] hover:border-primary/30 bg-foreground/[0.02]",
               locked && "opacity-60 cursor-not-allowed",
               isAnimating && "animate-lightning"
             )}
@@ -94,7 +94,7 @@ export function EpisodeList({ episodes, courseSlug, className }: EpisodeListProp
 
             <div className="flex-shrink-0 relative z-10">
               {locked ? (
-                <Lock className="h-5 w-5 text-muted-foreground" />
+                <Lock className="h-5 w-5 text-foreground/30" />
               ) : isComplete ? (
                 <div className="relative">
                   {isAnimating && (
@@ -106,13 +106,13 @@ export function EpisodeList({ episodes, courseSlug, className }: EpisodeListProp
                   )} />
                 </div>
               ) : (
-                <PlayCircle className="h-5 w-5 text-muted-foreground" />
+                <PlayCircle className="h-5 w-5 text-foreground/30" />
               )}
             </div>
 
             <div className="flex-1 min-w-0 relative z-10">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm font-medium text-muted-foreground">
+                <span className="text-sm font-medium text-foreground/40">
                   Episode {episode.order}
                 </span>
                 {episode.premium && (
@@ -122,7 +122,7 @@ export function EpisodeList({ episodes, courseSlug, className }: EpisodeListProp
                 )}
               </div>
               <h4 className="font-semibold text-sm truncate">{episode.title}</h4>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-foreground/30">
                 {Math.floor(episode.durationSeconds / 60)} min
               </p>
             </div>

@@ -69,20 +69,20 @@ export default function InstructorLayout({
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed lg:static inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col transition-transform duration-200 lg:translate-x-0",
+          "fixed lg:static inset-y-0 left-0 z-50 w-64 bg-foreground/[0.02] border-r border-foreground/[0.06] flex flex-col transition-transform duration-200 lg:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {/* Sidebar header */}
-        <div className="h-14 flex items-center justify-between px-4 border-b border-border flex-shrink-0">
+        <div className="h-14 flex items-center justify-between px-4 border-b border-foreground/[0.06] flex-shrink-0">
           <Link href="/instructor" className="flex items-center gap-2">
             <span className="text-lg font-bold text-primary">FPA</span>
-            <span className="text-xs font-medium text-muted-foreground">
+            <span className="text-xs font-medium text-foreground/40">
               Instructor
             </span>
           </Link>
           <button
-            className="lg:hidden h-8 w-8 flex items-center justify-center rounded-md hover:bg-muted"
+            className="lg:hidden h-8 w-8 flex items-center justify-center rounded-md hover:bg-foreground/[0.04]"
             onClick={() => setSidebarOpen(false)}
           >
             <X className="h-4 w-4" />
@@ -102,7 +102,7 @@ export default function InstructorLayout({
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                   active
                     ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    : "text-foreground/40 hover:text-foreground hover:bg-foreground/[0.04]"
                 )}
               >
                 <item.icon className="h-4 w-4 flex-shrink-0" />
@@ -113,10 +113,10 @@ export default function InstructorLayout({
         </nav>
 
         {/* Sidebar footer */}
-        <div className="p-3 border-t border-border flex-shrink-0">
+        <div className="p-3 border-t border-foreground/[0.06] flex-shrink-0">
           <Link
             href="/dashboard"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground/40 hover:text-foreground hover:bg-foreground/[0.04] transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />
             Back to Dashboard
@@ -127,17 +127,17 @@ export default function InstructorLayout({
       {/* Main content area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
-        <header className="h-14 border-b border-border bg-background/95 backdrop-blur flex items-center justify-between px-4 flex-shrink-0">
+        <header className="h-14 border-b border-foreground/[0.06] bg-background/90 backdrop-blur-xl flex items-center justify-between px-4 flex-shrink-0">
           <div className="flex items-center gap-3">
             <button
-              className="lg:hidden h-8 w-8 flex items-center justify-center rounded-md hover:bg-muted"
+              className="lg:hidden h-8 w-8 flex items-center justify-center rounded-md hover:bg-foreground/[0.04]"
               onClick={() => setSidebarOpen(true)}
             >
               <Menu className="h-4 w-4" />
             </button>
             <Link
               href="/"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+              className="text-sm text-foreground/40 hover:text-foreground transition-colors flex items-center gap-1"
             >
               <Home className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Main Site</span>
@@ -161,7 +161,7 @@ export default function InstructorLayout({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 {userEmail && (
-                  <div className="px-2 py-1.5 text-xs text-muted-foreground truncate">
+                  <div className="px-2 py-1.5 text-xs text-foreground/40 truncate">
                     {userEmail}
                   </div>
                 )}

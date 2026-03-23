@@ -35,7 +35,7 @@ export default function FighterEliteDashboard() {
       <MainLayout>
         <Section className="pb-24 pt-12">
           <Container>
-            <div className="h-96 bg-muted/50 animate-pulse rounded-2xl" />
+            <div className="h-96 bg-foreground/[0.03] animate-pulse rounded-2xl border border-foreground/[0.06]" />
           </Container>
         </Section>
       </MainLayout>
@@ -52,7 +52,7 @@ export default function FighterEliteDashboard() {
                 <Crown className="h-10 w-10 text-primary" />
               </div>
               <h1 className="text-4xl md:text-5xl font-bold">Fighter Elite +</h1>
-              <p className="text-xl text-muted-foreground">
+              <p className="text-xl text-foreground/50">
                 {isActive
                   ? "Upgrade to Fighter Elite+ to unlock personalized video breakdowns from Jake Peacock."
                   : "Subscribe to Fighter Elite+ to get personalized coaching and video analysis."}
@@ -83,7 +83,7 @@ export default function FighterEliteDashboard() {
             </div>
             <div>
               <h1 className="text-4xl md:text-6xl font-bold mb-4 tracking-tight">Your Elite Dashboard</h1>
-              <p className="text-xl text-muted-foreground max-w-3xl leading-relaxed">
+              <p className="text-xl text-foreground/50 max-w-3xl leading-relaxed">
                 Welcome to your personalized training center. Upload your sparring or training footage for high-level analysis and feedback from the Fighting Prime coaching team.
               </p>
             </div>
@@ -96,7 +96,7 @@ export default function FighterEliteDashboard() {
               {/* Latest Breakdown Card */}
               <div className="relative group">
                 <div className="absolute -inset-1 bg-gradient-to-r from-primary/50 to-purple-500/50 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200" />
-                <div className="relative bg-card border border-border/50 rounded-3xl overflow-hidden shadow-2xl">
+                <div className="relative bg-foreground/[0.02] border border-foreground/[0.06] rounded-3xl overflow-hidden shadow-2xl backdrop-blur-sm">
                   <div className="p-8">
                     <div className="flex items-center gap-2 mb-6 text-primary">
                       <Play className="h-5 w-5 fill-current" />
@@ -104,7 +104,7 @@ export default function FighterEliteDashboard() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-                      <div className="md:col-span-5 relative aspect-video bg-black rounded-2xl overflow-hidden group/video border border-border/50 shadow-inner">
+                      <div className="md:col-span-5 relative aspect-video bg-black rounded-2xl overflow-hidden group/video border border-foreground/[0.08] shadow-inner">
                         {latestBreakdown.thumbnail ? (
                           <Image 
                             src={latestBreakdown.thumbnail} 
@@ -135,14 +135,14 @@ export default function FighterEliteDashboard() {
                           </Badge>
                         </div>
                         
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-4 text-sm text-foreground/40">
                           <div className="flex items-center gap-1.5">
                             <Calendar className="h-4 w-4 text-primary" />
                             {latestBreakdown.date}
                           </div>
                         </div>
 
-                        <p className="text-muted-foreground leading-relaxed">
+                        <p className="text-foreground/50 leading-relaxed">
                           {latestBreakdown.description}
                         </p>
 
@@ -159,16 +159,16 @@ export default function FighterEliteDashboard() {
               </div>
 
               {/* Upload Section */}
-              <div className="bg-card border border-border/50 rounded-3xl p-8 space-y-8 shadow-xl">
+              <div className="rounded-3xl border border-foreground/[0.06] bg-foreground/[0.02] p-8 space-y-8">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex items-center gap-2 text-primary">
                     <ArrowUpCircle className="h-5 w-5" />
                     <h2 className="text-xl font-bold uppercase tracking-widest">Upload Sparring Video</h2>
                   </div>
                   <div className="flex items-center gap-4 text-sm font-medium">
-                    <span className="text-muted-foreground">Monthly Uploads</span>
+                    <span className="text-foreground/40">Monthly Uploads</span>
                     <div className="flex items-center gap-2">
-                      <div className="h-2 w-32 bg-muted rounded-full overflow-hidden">
+                      <div className="h-2 w-32 bg-foreground/[0.06] rounded-full overflow-hidden">
                         <div className="h-full bg-primary w-0" />
                       </div>
                       <span className="text-primary">1 of 1 remaining</span>
@@ -181,7 +181,7 @@ export default function FighterEliteDashboard() {
                     "relative aspect-[21/9] rounded-2xl border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center gap-4 group cursor-pointer",
                     isDragging 
                       ? "border-primary bg-primary/5 scale-[0.99]" 
-                      : "border-border hover:border-primary/50 hover:bg-muted/30"
+                      : "border-foreground/[0.08] hover:border-primary/30 hover:bg-foreground/[0.03]"
                   )}
                   onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                   onDragLeave={() => setIsDragging(false)}
@@ -192,11 +192,11 @@ export default function FighterEliteDashboard() {
                   </div>
                   <div className="text-center">
                     <h3 className="text-lg font-bold mb-1">Upload Your Sparring Video</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-foreground/40">
                       Drag and drop your footage here or <span className="text-primary font-bold">click to browse</span>
                     </p>
                   </div>
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 text-[10px] text-muted-foreground bg-background/50 px-3 py-1 rounded-full border border-border">
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 text-[10px] text-foreground/30 bg-background/50 px-3 py-1 rounded-full border border-foreground/[0.08]">
                     <Info className="h-3 w-3" />
                     Recommended: 1080p, Max 500MB
                   </div>
@@ -206,7 +206,7 @@ export default function FighterEliteDashboard() {
 
             {/* Sidebar Column */}
             <div className="lg:col-span-4 space-y-6">
-              <div className="bg-card border border-border/50 rounded-3xl p-6 shadow-xl flex flex-col h-full">
+              <div className="rounded-3xl border border-foreground/[0.06] bg-foreground/[0.02] p-6 flex flex-col h-full">
                 <div className="flex items-center gap-2 mb-8 text-primary">
                   <History className="h-5 w-5" />
                   <h2 className="text-xl font-bold uppercase tracking-widest">Breakdown History</h2>
@@ -216,11 +216,11 @@ export default function FighterEliteDashboard() {
                   {eliteBreakdowns.map((item) => (
                     <div 
                       key={item.id}
-                      className="group p-4 rounded-2xl border border-border/40 hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer relative overflow-hidden"
+                      className="group p-4 rounded-2xl border border-foreground/[0.06] hover:border-primary/30 hover:bg-primary/5 transition-all cursor-pointer relative overflow-hidden"
                     >
                       <div className="flex items-start gap-4 relative z-10">
-                        <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center shrink-0 border border-border/50 group-hover:bg-primary/10 group-hover:border-primary/30 transition-colors">
-                          <Play className="h-5 w-5 text-muted-foreground group-hover:text-primary fill-current transition-colors" />
+                        <div className="h-10 w-10 rounded-lg bg-foreground/[0.04] flex items-center justify-center shrink-0 border border-foreground/[0.06] group-hover:bg-primary/10 group-hover:border-primary/30 transition-colors">
+                          <Play className="h-5 w-5 text-foreground/30 group-hover:text-primary fill-current transition-colors" />
                         </div>
                         <div className="space-y-1 flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2">
@@ -231,7 +231,7 @@ export default function FighterEliteDashboard() {
                               +100
                             </Badge>
                           </div>
-                          <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                          <div className="flex items-center gap-3 text-[10px] text-foreground/30">
                             <div className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
                               {item.date}
@@ -250,8 +250,8 @@ export default function FighterEliteDashboard() {
                   ))}
                 </div>
 
-                <div className="mt-8 p-4 rounded-2xl bg-muted/30 border border-border/30">
-                  <p className="text-[11px] text-muted-foreground text-center">
+                <div className="mt-8 p-4 rounded-2xl bg-foreground/[0.02] border border-foreground/[0.06]">
+                  <p className="text-[11px] text-foreground/30 text-center">
                     Analyze your training history to spot long-term patterns and technical growth.
                   </p>
                 </div>

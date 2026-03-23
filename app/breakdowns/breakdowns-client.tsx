@@ -23,7 +23,7 @@ export function BreakdownsClient({ breakdowns }: BreakdownsClientProps) {
       <MainLayout>
         <Section className="pb-24">
           <Container>
-            <p className="text-muted-foreground text-center py-12">No breakdowns available yet.</p>
+            <p className="text-foreground/40 text-center py-12">No breakdowns available yet.</p>
           </Container>
         </Section>
       </MainLayout>
@@ -35,8 +35,11 @@ export function BreakdownsClient({ breakdowns }: BreakdownsClientProps) {
       <Section className="pb-24">
         <Container>
           <div className="mb-12">
+            <span className="text-xs font-bold tracking-[0.3em] text-primary/80 uppercase mb-4 block">
+              Exclusive Content
+            </span>
             <h1 className="text-4xl md:text-5xl font-bold mb-4">Monthly Technique Breakdowns</h1>
-            <p className="text-xl text-muted-foreground max-w-2xl">
+            <p className="text-lg text-foreground/50 max-w-2xl">
               Deep dives into advanced fighting techniques with expert analysis from Fighting Prime coaches.
             </p>
           </div>
@@ -44,7 +47,7 @@ export function BreakdownsClient({ breakdowns }: BreakdownsClientProps) {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
             <div className="lg:col-span-8 space-y-8">
               <div className="space-y-6">
-                <div className="relative aspect-video bg-black rounded-2xl overflow-hidden border border-border group shadow-2xl shadow-primary/5">
+                <div className="relative aspect-video bg-black rounded-2xl overflow-hidden border border-foreground/[0.08] group shadow-2xl shadow-primary/5">
                   <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-background">
                     <Image
                       src={selectedBreakdown.thumbnail}
@@ -67,9 +70,9 @@ export function BreakdownsClient({ breakdowns }: BreakdownsClientProps) {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="space-y-2">
                     <h2 className="text-3xl font-bold tracking-tight">{selectedBreakdown.title}</h2>
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-foreground/40">
                       <div className="flex items-center gap-1.5">
-                        <Calendar className="h-4 w-4 text-primary" />
+                        <Calendar className="h-4 w-4 text-primary/60" />
                         Released {new Date(selectedBreakdown.releaseDate).toLocaleDateString(undefined, {
                           year: "numeric",
                           month: "long",
@@ -77,30 +80,30 @@ export function BreakdownsClient({ breakdowns }: BreakdownsClientProps) {
                         })}
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <User className="h-4 w-4 text-primary" />
+                        <User className="h-4 w-4 text-primary/60" />
                         By {selectedBreakdown.author}
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <Clock className="h-4 w-4 text-primary" />
+                        <Clock className="h-4 w-4 text-primary/60" />
                         15-20 min read
                       </div>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" className="w-fit gap-2">
+                  <Button variant="outline" size="sm" className="w-fit gap-2 border-foreground/[0.08]">
                     <Share2 className="h-4 w-4" />
                     Share Breakdown
                   </Button>
                 </div>
               </div>
 
-              <div className="bg-card border border-border rounded-2xl p-8 space-y-6">
-                <h3 className="text-xl font-bold border-b border-border pb-4">About This Breakdown</h3>
-                <p className="text-muted-foreground leading-relaxed text-lg">
+              <div className="rounded-2xl border border-foreground/[0.06] bg-foreground/[0.02] p-8 space-y-6">
+                <h3 className="text-xl font-bold border-b border-foreground/[0.06] pb-4">About This Breakdown</h3>
+                <p className="text-foreground/50 leading-relaxed text-lg">
                   {selectedBreakdown.description}
                 </p>
               </div>
 
-              <div className="bg-card border border-border rounded-2xl p-8">
+              <div className="rounded-2xl border border-foreground/[0.06] bg-foreground/[0.02] p-8">
                 <CommentSection
                   commentableType="breakdown"
                   commentableId={selectedBreakdown.id}
@@ -110,7 +113,7 @@ export function BreakdownsClient({ breakdowns }: BreakdownsClientProps) {
 
             <div className="lg:col-span-4">
               <div className="sticky top-24">
-                <div className="bg-card border border-border rounded-2xl p-6">
+                <div className="rounded-2xl border border-foreground/[0.06] bg-foreground/[0.02] p-6">
                   <BreakdownList
                     breakdowns={breakdowns}
                     selectedId={selectedBreakdown.id}

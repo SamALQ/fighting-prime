@@ -10,21 +10,21 @@ export function SubscriptionCard() {
   const { subscription, isLoading, isActive, plan, currentPeriodEnd, openBillingPortal } = useSubscription();
 
   if (isLoading) {
-    return <div className="h-40 bg-muted/50 animate-pulse rounded-2xl" />;
+    return <div className="h-40 bg-foreground/[0.03] animate-pulse rounded-2xl border border-foreground/[0.06]" />;
   }
 
   if (!isActive) {
     return (
-      <div className="bg-card border border-border/50 rounded-2xl p-6 shadow-xl">
+      <div className="rounded-2xl border border-foreground/[0.06] bg-foreground/[0.02] p-6">
         <div className="flex items-center gap-2 mb-4">
-          <CreditCard className="h-5 w-5 text-muted-foreground" />
+          <CreditCard className="h-5 w-5 text-foreground/30" />
           <h3 className="text-lg font-bold uppercase tracking-wider">Subscription</h3>
         </div>
-        <p className="text-muted-foreground mb-6">
+        <p className="text-foreground/50 mb-6">
           You don&apos;t have an active subscription. Subscribe to unlock all premium content.
         </p>
         <Link href="/pricing">
-          <Button className="w-full bg-primary hover:bg-primary/90 font-bold">
+          <Button className="w-full font-bold shadow-lg shadow-primary/25">
             View Plans
           </Button>
         </Link>
@@ -43,23 +43,23 @@ export function SubscriptionCard() {
     : null;
 
   return (
-    <div className="bg-card border border-border/50 rounded-2xl p-6 shadow-xl">
+    <div className="rounded-2xl border border-foreground/[0.06] bg-foreground/[0.02] p-6">
       <div className="flex items-center gap-2 mb-4">
         <CreditCard className="h-5 w-5 text-primary" />
         <h3 className="text-lg font-bold uppercase tracking-wider">Subscription</h3>
       </div>
       <div className="flex items-center gap-3 mb-4">
-        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+        <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
           <PlanIcon className="h-5 w-5 text-primary" />
         </div>
         <div>
           <p className="font-bold">{planName}</p>
           <div className="flex items-center gap-2">
-            <Badge className="bg-green-500/10 text-green-500 border-green-500/20 text-[10px]">
+            <Badge className="bg-green-500/10 text-green-400 border-green-500/20 text-[10px]">
               Active
             </Badge>
             {subscription?.billing_interval && (
-              <span className="text-xs text-muted-foreground capitalize">
+              <span className="text-xs text-foreground/30 capitalize">
                 {subscription.billing_interval}
               </span>
             )}
@@ -67,13 +67,13 @@ export function SubscriptionCard() {
         </div>
       </div>
       {renewDate && (
-        <p className="text-xs text-muted-foreground mb-4">
+        <p className="text-xs text-foreground/40 mb-4">
           Next billing date: {renewDate}
         </p>
       )}
       <Button
         variant="outline"
-        className="w-full"
+        className="w-full border-foreground/[0.08]"
         onClick={openBillingPortal}
       >
         Manage Subscription

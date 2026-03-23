@@ -30,7 +30,7 @@ export function MyCourses({ courses, episodes }: MyCoursesProps) {
     return map;
   }, [episodes]);
 
-  if (isLoading) return <div className="h-64 bg-muted/50 animate-pulse rounded-2xl" />;
+  if (isLoading) return <div className="h-64 bg-foreground/[0.03] animate-pulse rounded-2xl border border-foreground/[0.06]" />;
 
   const userCourses = courses.map((course) => ({
     ...course,
@@ -47,7 +47,7 @@ export function MyCourses({ courses, episodes }: MyCoursesProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex bg-muted/50 p-1 rounded-xl w-fit">
+      <div className="flex p-1 rounded-full border border-foreground/[0.08] bg-foreground/[0.02] w-fit">
         {[
           { id: "in-progress", label: "In Progress" },
           { id: "not-started", label: "Not Started" },
@@ -57,10 +57,10 @@ export function MyCourses({ courses, episodes }: MyCoursesProps) {
             key={tab.id}
             onClick={() => setActiveTab(tab.id as Tab)}
             className={cn(
-              "px-6 py-2 rounded-lg text-sm font-medium transition-all",
+              "px-5 py-2 rounded-full text-sm font-bold transition-all",
               activeTab === tab.id
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
+                ? "bg-primary text-white shadow-lg shadow-primary/25"
+                : "text-foreground/40 hover:text-foreground"
             )}
           >
             {tab.label}
@@ -75,7 +75,7 @@ export function MyCourses({ courses, episodes }: MyCoursesProps) {
             return (
               <div
                 key={course.id}
-                className="bg-card border border-border rounded-2xl overflow-hidden group hover:border-primary/50 transition-all"
+                className="rounded-2xl border border-foreground/[0.06] bg-foreground/[0.02] overflow-hidden group hover:border-primary/20 transition-all"
               >
                 <div className="flex flex-col md:flex-row">
                   <div className="relative w-full md:w-64 aspect-video md:aspect-square overflow-hidden">
@@ -95,10 +95,10 @@ export function MyCourses({ courses, episodes }: MyCoursesProps) {
                           <h3 className="text-2xl font-bold uppercase tracking-tight leading-none mb-2">
                             {course.title}
                           </h3>
-                          <p className="text-sm text-muted-foreground">by Jake Peacock</p>
+                          <p className="text-sm text-foreground/40">by Jake Peacock</p>
                         </div>
                         <div className="text-right">
-                          <span className="text-xs font-medium text-muted-foreground">
+                          <span className="text-xs font-medium text-foreground/30">
                             {courseEpisodes.length} episodes
                           </span>
                         </div>
@@ -109,7 +109,7 @@ export function MyCourses({ courses, episodes }: MyCoursesProps) {
                           <span className="font-medium">Progress</span>
                           <span className="font-bold">{course.progress}%</span>
                         </div>
-                        <div className="relative h-4 w-full bg-muted rounded-full overflow-hidden">
+                        <div className="relative h-3 w-full bg-foreground/[0.06] rounded-full overflow-hidden">
                           <div
                             className="absolute top-0 left-0 h-full bg-primary transition-all duration-1000"
                             style={{ width: `${course.progress}%` }}
@@ -120,7 +120,7 @@ export function MyCourses({ courses, episodes }: MyCoursesProps) {
 
                     <div className="mt-8">
                       <Link href={`/courses/${course.slug}`}>
-                        <Button className="w-full md:w-fit gap-2 h-12 px-8 text-base font-bold bg-primary hover:bg-primary/90">
+                        <Button className="w-full md:w-fit gap-2 h-12 px-8 text-base font-bold shadow-lg shadow-primary/25">
                           <Play className="h-5 w-5 fill-current" />
                           {course.progress === 0 ? "Start Course" : "Continue Course"}
                         </Button>
@@ -132,11 +132,11 @@ export function MyCourses({ courses, episodes }: MyCoursesProps) {
             );
           })
         ) : (
-          <div className="text-center py-20 border border-dashed border-border rounded-2xl">
-            <p className="text-muted-foreground">No courses found in this category.</p>
+          <div className="text-center py-20 border border-dashed border-foreground/[0.08] rounded-2xl">
+            <p className="text-foreground/40">No courses found in this category.</p>
             {activeTab === "not-started" ? null : (
               <Link href="/courses" className="mt-4 inline-block">
-                <Button variant="outline">Browse Courses</Button>
+                <Button variant="outline" className="border-foreground/[0.08]">Browse Courses</Button>
               </Link>
             )}
           </div>

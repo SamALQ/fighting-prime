@@ -13,7 +13,7 @@ export function RecentActivity() {
   const { userStats, isLoading } = useProgress();
 
   if (isLoading) {
-    return <div className="h-48 bg-muted/50 animate-pulse rounded-2xl" />;
+    return <div className="h-48 bg-foreground/[0.03] animate-pulse rounded-2xl border border-foreground/[0.06]" />;
   }
 
   const activities: { id: string; icon: React.ReactNode; title: string; subtitle: string }[] = [];
@@ -58,13 +58,13 @@ export function RecentActivity() {
   }
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-6">
+    <div className="rounded-2xl border border-foreground/[0.06] bg-foreground/[0.02] p-6">
       <h3 className="text-lg font-bold mb-6">Recent Activity</h3>
       <div className="space-y-6">
         {activities.map((activity, idx) => (
           <div key={activity.id} className="relative flex gap-4">
             {idx !== activities.length - 1 && (
-              <div className="absolute left-[7px] top-6 bottom-[-24px] w-[2px] bg-border" />
+              <div className="absolute left-[7px] top-6 bottom-[-24px] w-[2px] bg-foreground/[0.06]" />
             )}
             <div className="relative z-10 mt-1">
               <div className="h-4 w-4 rounded-full bg-background flex items-center justify-center">
@@ -73,7 +73,7 @@ export function RecentActivity() {
             </div>
             <div className="flex-1 space-y-1">
               <p className="text-sm font-semibold leading-none">{activity.title}</p>
-              <p className="text-xs text-muted-foreground">{activity.subtitle}</p>
+              <p className="text-xs text-foreground/40">{activity.subtitle}</p>
             </div>
           </div>
         ))}

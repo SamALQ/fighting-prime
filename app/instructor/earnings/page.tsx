@@ -32,85 +32,85 @@ export default function EarningsPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold">Earnings</h1>
-        <p className="text-muted-foreground text-sm mt-1">
+        <p className="text-foreground/40 text-sm mt-1">
           Track your revenue share and payout history
         </p>
       </div>
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-5 rounded-xl border border-border bg-card">
+        <div className="p-5 rounded-xl border border-foreground/[0.06] bg-foreground/[0.02]">
           <div className="flex items-center gap-3 mb-3">
             <div className="h-9 w-9 rounded-lg bg-green-500/10 flex items-center justify-center">
               <DollarSign className="h-4 w-4 text-green-500" />
             </div>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm text-foreground/40">
               Lifetime Earnings
             </span>
           </div>
           <p className="text-2xl font-bold">$0.00</p>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs text-foreground/40 mt-1">
             Payouts have not started yet
           </p>
         </div>
 
-        <div className="p-5 rounded-xl border border-border bg-card">
+        <div className="p-5 rounded-xl border border-foreground/[0.06] bg-foreground/[0.02]">
           <div className="flex items-center gap-3 mb-3">
             <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
               <Clock className="h-4 w-4 text-primary" />
             </div>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm text-foreground/40">
               Total Watch Time
             </span>
           </div>
           <p className="text-2xl font-bold">
             {loading ? "..." : formatDuration(watchTime)}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs text-foreground/40 mt-1">
             Your content&apos;s accumulated engagement
           </p>
         </div>
 
-        <div className="p-5 rounded-xl border border-border bg-card">
+        <div className="p-5 rounded-xl border border-foreground/[0.06] bg-foreground/[0.02]">
           <div className="flex items-center gap-3 mb-3">
             <div className="h-9 w-9 rounded-lg bg-blue-500/10 flex items-center justify-center">
               <PieChart className="h-4 w-4 text-blue-500" />
             </div>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm text-foreground/40">
               Watch Time Share
             </span>
           </div>
           <p className="text-2xl font-bold">—</p>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs text-foreground/40 mt-1">
             Calculated at end of each period
           </p>
         </div>
       </div>
 
       {/* Payout history */}
-      <div className="border border-border rounded-xl bg-card overflow-hidden">
-        <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
+      <div className="border border-foreground/[0.06] rounded-xl bg-foreground/[0.02] overflow-hidden">
+        <div className="flex items-center gap-2 px-5 py-4 border-b border-foreground/[0.06]">
           <DollarSign className="h-4 w-4 text-primary" />
           <h2 className="font-semibold text-sm">Payout History</h2>
         </div>
         <div className="p-12 text-center">
-          <DollarSign className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-          <p className="text-sm font-medium text-muted-foreground">
+          <DollarSign className="h-10 w-10 text-foreground/30 mx-auto mb-3" />
+          <p className="text-sm font-medium text-foreground/40">
             No payouts yet
           </p>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs text-foreground/40 mt-1">
             Earnings will appear here once the payout system is live.
           </p>
         </div>
       </div>
 
       {/* How it works */}
-      <div className="border border-border rounded-xl p-6 bg-card">
+      <div className="border border-foreground/[0.06] rounded-xl p-6 bg-foreground/[0.02]">
         <div className="flex items-center gap-2 mb-4">
           <Info className="h-4 w-4 text-primary" />
           <h2 className="font-semibold text-sm">How Earnings Work</h2>
         </div>
-        <div className="space-y-3 text-sm text-muted-foreground">
+        <div className="space-y-3 text-sm text-foreground/40">
           <div className="flex gap-3">
             <span className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0">
               1
