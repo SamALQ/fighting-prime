@@ -101,7 +101,10 @@ export function BreakdownsClient({ breakdowns }: BreakdownsClientProps) {
               </div>
 
               <div className="bg-card border border-border rounded-2xl p-8">
-                <CommentSection />
+                <CommentSection
+                  commentableType="breakdown"
+                  commentableId={selectedBreakdown.id}
+                />
               </div>
             </div>
 

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
 import { Container } from "@/components/layout/container";
+import { CommentSection } from "@/components/ui/comment-section";
 
 interface EpisodeDetailPageProps {
   params: Promise<{ slug: string; episodeSlug: string }>;
@@ -82,6 +83,13 @@ export default async function EpisodeDetailPage({ params }: EpisodeDetailPagePro
                 <Button variant="outline" disabled>
                   Submit Assignment (Coming Soon)
                 </Button>
+              </div>
+
+              <div className="bg-card border border-border rounded-xl p-6">
+                <CommentSection
+                  commentableType="episode"
+                  commentableId={episode.id}
+                />
               </div>
 
               <div className="flex items-center justify-between pt-6 border-t border-border">
