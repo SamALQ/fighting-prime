@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Container } from "./container";
-import { LogOut, User, ChevronRight, Play, LayoutDashboard, CreditCard, Settings } from "lucide-react";
+import { LogOut, User, ChevronRight, Play, LayoutDashboard, CreditCard, Settings, BarChart3, Shield } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useState, useRef, useEffect } from "react";
 import type { Course } from "@/data/courses";
@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 
 export function NavBar() {
-  const { isLoggedIn, isLoading, logout, userEmail } = useAuth();
+  const { isLoggedIn, isLoading, logout, userEmail, role } = useAuth();
   const [isCoursesHovered, setIsCoursesHovered] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [featuredCourses, setFeaturedCourses] = useState<Course[]>([]);
@@ -202,6 +202,23 @@ export function NavBar() {
                         <span>Dashboard</span>
                       </Link>
                     </DropdownMenuItem>
+                    {(role === "instructor" || role === "admin") && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/instructor">
+                          <BarChart3 className="mr-2 h-4 w-4" />
+                          <span>Instructor Portal</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    {role === "admin" && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin">
+                          <Shield className="mr-2 h-4 w-4" />
+                          <span>Admin</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                       <Link href="/account">
                         <Settings className="mr-2 h-4 w-4" />

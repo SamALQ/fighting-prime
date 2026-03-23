@@ -1,10 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MainLayout } from "@/components/layout/main-layout";
-import { Section } from "@/components/layout/section";
-import { Clock, Eye, Film, BookOpen, TrendingUp } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Clock, Eye, Film, BookOpen, TrendingUp, Trophy, Play } from "lucide-react";
 
 interface InstructorStats {
   instructor: { id: string; display_name: string; approved: boolean };
@@ -35,29 +32,32 @@ function StatCard({
   label,
   value,
   icon: Icon,
+  sub,
 }: {
   label: string;
   value: string;
   icon: React.ComponentType<{ className?: string }>;
+  sub?: string;
 }) {
   return (
-    <div className="p-5 rounded-lg border border-border bg-card">
-      <div className="flex items-center gap-3 mb-2">
+    <div className="p-5 rounded-xl border border-border bg-card">
+      <div className="flex items-center gap-3 mb-3">
         <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-          <Icon className="h-4.5 w-4.5 text-primary" />
+          <Icon className="h-4 w-4 text-primary" />
         </div>
         <span className="text-sm text-muted-foreground">{label}</span>
       </div>
       <p className="text-2xl font-bold">{value}</p>
+      {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
     </div>
   );
 }
 
-function TimelineChart({ data }: { data: { date: string; seconds: number }[] }) {
+function MiniChart({ data }: { data: { date: string; seconds: number }[] }) {
   if (data.length === 0) {
     return (
-      <div className="h-40 flex items-center justify-center text-muted-foreground text-sm">
-        No data yet. Watch time will appear here as viewers watch your content.
+      <div className="h-32 flex items-center justify-center text-muted-foreground text-sm">
+        Watch time data will appear here as viewers engage with your content.
       </div>
     );
   }
@@ -65,19 +65,18 @@ function TimelineChart({ data }: { data: { date: string; seconds: number }[] }) 
   const maxVal = Math.max(...data.map((d) => d.seconds), 1);
 
   return (
-    <div className="h-40 flex items-end gap-1">
+    <div className="h-32 flex items-end gap-[3px]">
       {data.map((d) => (
         <div
           key={d.date}
           className="flex-1 group relative"
-          title={`${d.date}: ${formatDuration(d.seconds)}`}
         >
           <div
-            className="w-full bg-primary/80 hover:bg-primary rounded-t transition-colors min-h-[2px]"
-            style={{ height: `${(d.seconds / maxVal) * 100}%` }}
+            className="w-full bg-primary/70 hover:bg-primary rounded-t-sm transition-colors min-h-[2px]"
+            style={{ height: `${Math.max((d.seconds / maxVal) * 100, 2)}%` }}
           />
-          <div className="absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover:block bg-popover border border-border rounded px-2 py-1 text-xs whitespace-nowrap shadow-lg z-10">
-            {d.date}: {formatDuration(d.seconds)}
+          <div className="absolute -top-9 left-1/2 -translate-x-1/2 hidden group-hover:block bg-popover border border-border rounded px-2 py-1 text-[10px] whitespace-nowrap shadow-lg z-10">
+            {d.date.slice(5)}: {formatDuration(d.seconds)}
           </div>
         </div>
       ))}
@@ -85,221 +84,161 @@ function TimelineChart({ data }: { data: { date: string; seconds: number }[] }) 
   );
 }
 
-export default function InstructorDashboard() {
+export default function InstructorOverview() {
   const [stats, setStats] = useState<InstructorStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       const res = await fetch("/api/instructor/stats");
-      if (res.ok) {
-        const data = await res.json();
-        setStats(data);
-        if (data.courses.length > 0) {
-          setSelectedCourse(data.courses[0].id);
-        }
-      }
+      if (res.ok) setStats(await res.json());
       setLoading(false);
     })();
   }, []);
 
   if (loading) {
     return (
-      <MainLayout>
-        <Section>
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-muted rounded w-64" />
-            <div className="grid grid-cols-4 gap-4">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-24 bg-muted rounded" />
-              ))}
-            </div>
-          </div>
-        </Section>
-      </MainLayout>
+      <div className="space-y-6">
+        <div className="h-8 bg-muted rounded w-64 animate-pulse" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-28 bg-muted rounded-xl animate-pulse" />
+          ))}
+        </div>
+      </div>
     );
   }
 
   if (!stats) {
     return (
-      <MainLayout>
-        <Section>
-          <h1 className="text-3xl font-bold mb-4">Instructor Dashboard</h1>
-          <p className="text-muted-foreground">Unable to load dashboard data.</p>
-        </Section>
-      </MainLayout>
+      <div>
+        <h1 className="text-2xl font-bold mb-2">Overview</h1>
+        <p className="text-muted-foreground">Unable to load dashboard data.</p>
+      </div>
     );
   }
 
-  const selectedEpisodes = stats.episodes.filter(
-    (ep) => ep.course_id === selectedCourse
-  );
+  const topEpisodes = stats.episodes
+    .map((ep) => ({
+      ...ep,
+      watchSeconds: stats.episodeStats[ep.id]?.watchSeconds ?? 0,
+      viewers: stats.episodeStats[ep.id]?.viewers ?? 0,
+      courseName: stats.courses.find((c) => c.id === ep.course_id)?.title ?? "",
+    }))
+    .sort((a, b) => b.watchSeconds - a.watchSeconds)
+    .slice(0, 5);
 
   return (
-    <MainLayout>
-      <Section className="pb-24">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">
-            Welcome, {stats.instructor.display_name}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Track your content performance and viewer engagement
-          </p>
-          {!stats.instructor.approved && (
-            <div className="mt-3 px-4 py-2.5 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-sm text-yellow-500">
-              Your instructor account is pending approval. Stats will populate
-              once approved and content is assigned.
+    <div className="space-y-8">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold">
+          Welcome back, {stats.instructor.display_name}
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Here&apos;s how your content is performing
+        </p>
+        {!stats.instructor.approved && (
+          <div className="mt-3 px-4 py-2.5 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-sm text-yellow-500">
+            Your instructor account is pending approval.
+          </div>
+        )}
+      </div>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Total Watch Time"
+          value={formatDuration(stats.totals.watchSeconds)}
+          icon={Clock}
+          sub="Accumulated across all content"
+        />
+        <StatCard
+          label="Unique Viewers"
+          value={stats.totals.views.toLocaleString()}
+          icon={Eye}
+        />
+        <StatCard
+          label="Courses"
+          value={stats.totals.courses.toString()}
+          icon={BookOpen}
+        />
+        <StatCard
+          label="Episodes"
+          value={stats.totals.episodes.toString()}
+          icon={Film}
+        />
+      </div>
+
+      {/* Watch time chart */}
+      <div className="border border-border rounded-xl p-5 bg-card">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-primary" />
+            <h2 className="font-semibold text-sm">Daily Watch Time</h2>
+          </div>
+          <span className="text-xs text-muted-foreground">Last 30 days</span>
+        </div>
+        <MiniChart data={stats.timeline} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top episodes */}
+        <div className="border border-border rounded-xl bg-card">
+          <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
+            <Trophy className="h-4 w-4 text-primary" />
+            <h2 className="font-semibold text-sm">Top Episodes</h2>
+          </div>
+          {topEpisodes.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground text-sm">
+              No episode data yet.
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {topEpisodes.map((ep, i) => (
+                <div
+                  key={ep.id}
+                  className="flex items-center gap-4 px-5 py-3.5"
+                >
+                  <span className="text-lg font-bold text-muted-foreground/50 w-6 text-center">
+                    {i + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{ep.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {ep.courseName}
+                    </p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-sm font-semibold">
+                      {formatDuration(ep.watchSeconds)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {ep.viewers} viewer{ep.viewers !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
 
-        {/* Overview stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-          <StatCard
-            label="Total Watch Time"
-            value={formatDuration(stats.totals.watchSeconds)}
-            icon={Clock}
-          />
-          <StatCard
-            label="Total Views"
-            value={stats.totals.views.toLocaleString()}
-            icon={Eye}
-          />
-          <StatCard
-            label="Courses"
-            value={stats.totals.courses.toString()}
-            icon={BookOpen}
-          />
-          <StatCard
-            label="Episodes"
-            value={stats.totals.episodes.toString()}
-            icon={Film}
-          />
-        </div>
-
-        {/* Timeline */}
-        <div className="border border-border rounded-lg p-5 bg-card mb-10">
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="h-4 w-4 text-primary" />
-            <h2 className="font-semibold">Daily Watch Time (Last 30 Days)</h2>
+        {/* Recent activity */}
+        <div className="border border-border rounded-xl bg-card">
+          <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
+            <Play className="h-4 w-4 text-primary" />
+            <h2 className="font-semibold text-sm">Recent Activity</h2>
           </div>
-          <TimelineChart data={stats.timeline} />
-        </div>
-
-        {/* Course breakdown */}
-        {stats.courses.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Course Breakdown</h2>
-
-            {/* Course tabs */}
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {stats.courses.map((course) => (
-                <button
-                  key={course.id}
-                  onClick={() => setSelectedCourse(course.id)}
-                  className={cn(
-                    "px-4 py-2 rounded-lg border text-sm font-medium whitespace-nowrap transition-colors",
-                    selectedCourse === course.id
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border bg-card hover:border-primary/50"
-                  )}
-                >
-                  {course.title}
-                </button>
-              ))}
-            </div>
-
-            {/* Course stats summary */}
-            {selectedCourse && stats.courseStats[selectedCourse] && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-lg border border-border bg-card">
-                  <p className="text-sm text-muted-foreground">Course Watch Time</p>
-                  <p className="text-xl font-bold">
-                    {formatDuration(
-                      stats.courseStats[selectedCourse].watchSeconds
-                    )}
-                  </p>
-                </div>
-                <div className="p-4 rounded-lg border border-border bg-card">
-                  <p className="text-sm text-muted-foreground">Unique Viewers</p>
-                  <p className="text-xl font-bold">
-                    {stats.courseStats[selectedCourse].viewers.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Episode table */}
-            <div className="border border-border rounded-lg overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted/50 border-b border-border">
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                      #
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                      Episode
-                    </th>
-                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">
-                      Duration
-                    </th>
-                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">
-                      Watch Time
-                    </th>
-                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">
-                      Viewers
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {selectedEpisodes.map((ep) => {
-                    const epStat = stats.episodeStats[ep.id];
-                    return (
-                      <tr key={ep.id} className="bg-card hover:bg-muted/30">
-                        <td className="px-4 py-3 text-muted-foreground">
-                          {ep.episode_order}
-                        </td>
-                        <td className="px-4 py-3 font-medium">{ep.title}</td>
-                        <td className="px-4 py-3 text-right text-muted-foreground">
-                          {formatDuration(ep.duration_seconds)}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          {epStat ? formatDuration(epStat.watchSeconds) : "—"}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          {epStat ? epStat.viewers.toLocaleString() : "—"}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {selectedEpisodes.length === 0 && (
-                    <tr>
-                      <td
-                        colSpan={5}
-                        className="px-4 py-8 text-center text-muted-foreground"
-                      >
-                        No episodes for this course yet.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {stats.courses.length === 0 && (
-          <div className="text-center py-12 border border-border rounded-lg bg-card">
-            <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-lg font-semibold mb-2">No Courses Assigned</h2>
-            <p className="text-muted-foreground">
-              Once an admin assigns courses to your account, your stats will
-              appear here.
+          <div className="p-8 text-center">
+            <p className="text-sm text-muted-foreground">
+              Viewer activity feed coming soon.
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              See completions, milestones, and engagement as they happen.
             </p>
           </div>
-        )}
-      </Section>
-    </MainLayout>
+        </div>
+      </div>
+    </div>
   );
 }
