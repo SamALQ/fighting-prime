@@ -13,7 +13,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Container } from "./container";
-import { LogOut, User, ChevronRight, Play, LayoutDashboard, CreditCard, Settings, BarChart3, Shield } from "lucide-react";
+import {
+  LogOut,
+  User,
+  ChevronRight,
+  Play,
+  LayoutDashboard,
+  CreditCard,
+  Settings,
+  BarChart3,
+  Shield,
+  Menu,
+  X,
+} from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useState, useRef, useEffect } from "react";
 import type { Course } from "@/data/courses";
@@ -23,6 +35,7 @@ import Image from "next/image";
 export function NavBar() {
   const { isLoggedIn, isLoading, logout, userEmail, role } = useAuth();
   const [isCoursesHovered, setIsCoursesHovered] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [featuredCourses, setFeaturedCourses] = useState<Course[]>([]);
 
@@ -34,6 +47,17 @@ export function NavBar() {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
 
   const handleMouseEnter = () => {
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
@@ -47,9 +71,21 @@ export function NavBar() {
   };
 
   const handleLogout = async () => {
+    setMobileOpen(false);
     await logout();
     window.location.href = "/";
   };
+
+  const closeMobile = () => setMobileOpen(false);
+
+  const navLinks = [
+    { href: "/", label: "Home", always: true },
+    { href: "/dashboard", label: "Dashboard", auth: true },
+    { href: "/courses", label: "Courses", always: true },
+    { href: "/breakdowns", label: "Breakdowns", always: true },
+    { href: "/pricing", label: "Pricing", always: true },
+    { href: "/about", label: "About", always: true },
+  ];
 
   return (
     <nav className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
@@ -62,7 +98,8 @@ export function NavBar() {
             </span>
           </Link>
 
-          <div className="flex items-center gap-6">
+          {/* Desktop nav */}
+          <div className="hidden lg:flex items-center gap-6">
             <Link
               href="/"
               className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
@@ -250,8 +287,137 @@ export function NavBar() {
               )}
             </div>
           </div>
+
+          {/* Mobile: theme toggle + hamburger */}
+          <div className="flex lg:hidden items-center gap-2">
+            <ThemeToggle />
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="h-9 w-9 flex items-center justify-center rounded-md hover:bg-muted transition-colors"
+              aria-label="Toggle menu"
+            >
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
       </Container>
+
+      {/* Mobile drawer */}
+      <div
+        className={cn(
+          "fixed inset-0 top-16 z-40 lg:hidden transition-all duration-300",
+          mobileOpen
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
+        )}
+      >
+        {/* Backdrop */}
+        <div
+          className="absolute inset-0 bg-black/60"
+          onClick={closeMobile}
+        />
+
+        {/* Drawer panel */}
+        <div
+          className={cn(
+            "absolute top-0 right-0 w-72 h-full bg-background border-l border-border shadow-2xl transition-transform duration-300 flex flex-col",
+            mobileOpen ? "translate-x-0" : "translate-x-full"
+          )}
+        >
+          <div className="flex-1 overflow-y-auto py-4 px-4">
+            {/* Nav links */}
+            <div className="space-y-1">
+              {navLinks.map((link) => {
+                if (link.auth && !isLoggedIn) return null;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={closeMobile}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* Auth section */}
+            {!isLoading && (
+              <>
+                <div className="my-4 border-t border-border" />
+
+                {isLoggedIn ? (
+                  <div className="space-y-1">
+                    {userEmail && (
+                      <div className="px-3 py-2 text-xs text-muted-foreground truncate">
+                        {userEmail}
+                      </div>
+                    )}
+                    {(role === "instructor" || role === "admin") && (
+                      <Link
+                        href="/instructor"
+                        onClick={closeMobile}
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-colors"
+                      >
+                        <BarChart3 className="h-4 w-4" />
+                        Instructor Portal
+                      </Link>
+                    )}
+                    {role === "admin" && (
+                      <Link
+                        href="/admin"
+                        onClick={closeMobile}
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-colors"
+                      >
+                        <Shield className="h-4 w-4" />
+                        Admin
+                      </Link>
+                    )}
+                    <Link
+                      href="/account"
+                      onClick={closeMobile}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-colors"
+                    >
+                      <Settings className="h-4 w-4" />
+                      Account Settings
+                    </Link>
+                    <Link
+                      href="/pricing"
+                      onClick={closeMobile}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-colors"
+                    >
+                      <CreditCard className="h-4 w-4" />
+                      Subscription
+                    </Link>
+
+                    <div className="my-3 border-t border-border" />
+
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors w-full text-left"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Logout
+                    </button>
+                  </div>
+                ) : (
+                  <div className="px-3 space-y-2">
+                    <Link href="/login" onClick={closeMobile}>
+                      <Button className="w-full">Login</Button>
+                    </Link>
+                    <Link href="/signup" onClick={closeMobile}>
+                      <Button variant="outline" className="w-full">
+                        Sign Up
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
     </nav>
   );
 }
