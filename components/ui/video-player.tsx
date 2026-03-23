@@ -188,28 +188,40 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
     setIsPlaying(true);
   };
 
+  const seekTo = useCallback((time: number, fast?: boolean) => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (fast && typeof video.fastSeek === "function") {
+      video.fastSeek(time);
+    } else {
+      video.currentTime = time;
+    }
+  }, []);
+
   const handleScrub = useCallback(
-    (e: React.MouseEvent<HTMLDivElement> | MouseEvent) => {
+    (e: React.MouseEvent<HTMLDivElement> | MouseEvent, fast?: boolean) => {
       const bar = scrubBarRef.current;
       const video = videoRef.current;
       if (!bar || !video || !video.duration) return;
       const rect = bar.getBoundingClientRect();
       const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
       const pct = x / rect.width;
-      video.currentTime = pct * video.duration;
-      setCurrentSeconds(pct * video.duration);
+      const time = pct * video.duration;
+      seekTo(time, fast);
+      setCurrentSeconds(time);
       setCurrentPercent(pct * 100);
     },
-    []
+    [seekTo]
   );
 
   const handleScrubStart = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       setIsScrubbing(true);
-      handleScrub(e);
+      handleScrub(e, true);
 
-      const handleMove = (me: MouseEvent) => handleScrub(me);
-      const handleUp = () => {
+      const handleMove = (me: MouseEvent) => handleScrub(me, true);
+      const handleUp = (me: MouseEvent) => {
+        handleScrub(me, false);
         setIsScrubbing(false);
         window.removeEventListener("mousemove", handleMove);
         window.removeEventListener("mouseup", handleUp);
@@ -286,6 +298,7 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
         ref={videoRef}
         className="w-full h-full object-contain"
         src={episode.videoUrl}
+        preload="auto"
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         onClick={togglePlay}
