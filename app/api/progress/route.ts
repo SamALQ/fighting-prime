@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
   if (courseId) {
     const { data: existingCourse } = await supabase
       .from("user_course_progress")
-      .select("id")
+      .select("user_id")
       .eq("user_id", user.id)
       .eq("course_id", courseId)
       .maybeSingle();

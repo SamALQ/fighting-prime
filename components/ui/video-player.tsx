@@ -21,7 +21,7 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
   const [hasTriggeredConfetti, setHasTriggeredConfetti] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { isActive } = useSubscription();
-  const { updateProgress, updateWatchTime, getProgress } = useProgress();
+  const { updateProgress, updateWatchTime, getProgress, flush } = useProgress();
 
   const progress = getProgress(episode.id);
   const locked = !episode.isFree && !isActive;
@@ -57,13 +57,20 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
       }
     };
 
+    const handlePause = () => {
+      flush();
+    };
+
     video.addEventListener("loadedmetadata", handleLoadedMetadata);
     video.addEventListener("timeupdate", handleTimeUpdate);
+    video.addEventListener("pause", handlePause);
     return () => {
       video.removeEventListener("loadedmetadata", handleLoadedMetadata);
       video.removeEventListener("timeupdate", handleTimeUpdate);
+      video.removeEventListener("pause", handlePause);
+      flush();
     };
-  }, [episode.id, episode.courseId, episode.durationSeconds, progress, updateProgress, updateWatchTime, hasTriggeredConfetti, locked]);
+  }, [episode.id, episode.courseId, episode.durationSeconds, progress, updateProgress, updateWatchTime, hasTriggeredConfetti, locked, flush]);
 
   const togglePlay = () => {
     if (locked) return;

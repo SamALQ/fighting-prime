@@ -16,7 +16,7 @@ export interface UserStats {
 const POINTS_PER_LEVEL = 1000;
 const POINTS_PER_SECOND = 0.5;
 const POINTS_PER_COMPLETION = 100;
-const FLUSH_INTERVAL_MS = 10_000;
+const FLUSH_INTERVAL_MS = 5_000;
 
 interface EpisodeCache {
   percent: number;
@@ -39,6 +39,7 @@ export function useProgress() {
 
   const pendingRef = useRef<Record<string, PendingUpdate>>({});
   const flushTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const savedEpisodesRef = useRef<Set<string>>(new Set());
 
   const flush = useCallback(async () => {
     const pending = { ...pendingRef.current };
@@ -52,6 +53,7 @@ export function useProgress() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(u),
+          keepalive: true,
         })
       )
     );
@@ -74,6 +76,11 @@ export function useProgress() {
 
         setEpisodeMap(data.episodes ?? {});
         setCoursesStarted(data.stats?.coursesStarted ?? []);
+
+        const knownIds = Object.keys(data.episodes ?? {});
+        for (const id of knownIds) {
+          savedEpisodesRef.current.add(id);
+        }
       } catch {
         // leave empty on error
       } finally {
@@ -160,6 +167,11 @@ export function useProgress() {
             0,
           courseId: courseId ?? pendingRef.current[episodeId]?.courseId,
         };
+
+        if (!savedEpisodesRef.current.has(episodeId)) {
+          savedEpisodesRef.current.add(episodeId);
+          flush();
+        }
       }
 
       if (courseId && !coursesStarted.includes(courseId)) {
@@ -170,7 +182,7 @@ export function useProgress() {
 
       return best >= 95;
     },
-    [episodeMap, coursesStarted]
+    [episodeMap, coursesStarted, flush]
   );
 
   const updateWatchTime = useCallback(
@@ -243,5 +255,6 @@ export function useProgress() {
     getCourseProgress,
     getWatchTime,
     formatWatchTime,
+    flush,
   };
 }
