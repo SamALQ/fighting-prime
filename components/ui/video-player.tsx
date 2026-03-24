@@ -15,6 +15,10 @@ import {
   Settings,
   Check,
   Loader2,
+  PictureInPicture2,
+  Gauge,
+  Keyboard,
+  Bookmark,
 } from "lucide-react";
 import { Button } from "./button";
 import { useSubscription } from "@/lib/hooks/use-subscription";
@@ -72,6 +76,12 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
   const [activeResolution, setActiveResolution] = useState<string | null>(null);
   const [isLoadingSource, setIsLoadingSource] = useState(false);
   const [showResolutionMenu, setShowResolutionMenu] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [showSpeedMenu, setShowSpeedMenu] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+
+  const [bookmarks, setBookmarks] = useState<{ id: string; timestamp_seconds: number; note: string }[]>([]);
+  const [chapters, setChapters] = useState<{ id: string; title: string; timestamp_seconds: number }[]>([]);
 
   const hasTriggeredConfetti = useRef(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -136,6 +146,34 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
       setIsLoadingSource(false);
     });
   }, [episode.id, episode.videoUrl, episode.videoResolutions, locked, fetchVideoSource]);
+
+  useEffect(() => {
+    if (locked) return;
+    fetch(`/api/bookmarks?episodeId=${episode.id}`)
+      .then((r) => r.json())
+      .then((d) => setBookmarks(d.bookmarks ?? []))
+      .catch(() => {});
+    fetch(`/api/chapters?episodeId=${episode.id}`)
+      .then((r) => r.json())
+      .then((d) => setChapters(d.chapters ?? []))
+      .catch(() => {});
+  }, [episode.id, locked]);
+
+  const addBookmark = useCallback(async () => {
+    const video = videoRef.current;
+    if (!video) return;
+    const ts = Math.round(video.currentTime);
+    const note = "";
+    const res = await fetch("/api/bookmarks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ episodeId: episode.id, timestampSeconds: ts, note }),
+    });
+    if (res.ok) {
+      const { bookmark } = await res.json();
+      setBookmarks((prev) => [...prev.filter((b) => b.timestamp_seconds !== ts), bookmark].sort((a, b) => a.timestamp_seconds - b.timestamp_seconds));
+    }
+  }, [episode.id]);
 
   const switchResolution = useCallback(
     async (resolution: string) => {
@@ -293,16 +331,37 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (showResolutionMenu) {
-        const target = e.target as HTMLElement;
-        if (!target.closest("[data-resolution-menu]")) {
-          setShowResolutionMenu(false);
-        }
+      const target = e.target as HTMLElement;
+      if (showResolutionMenu && !target.closest("[data-resolution-menu]")) {
+        setShowResolutionMenu(false);
+      }
+      if (showSpeedMenu && !target.closest("[data-speed-menu]")) {
+        setShowSpeedMenu(false);
       }
     };
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
-  }, [showResolutionMenu]);
+  }, [showResolutionMenu, showSpeedMenu]);
+
+  const PLAYBACK_SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+
+  const changeSpeed = useCallback((speed: number) => {
+    setPlaybackSpeed(speed);
+    setShowSpeedMenu(false);
+    if (videoRef.current) videoRef.current.playbackRate = speed;
+  }, []);
+
+  const togglePiP = useCallback(async () => {
+    try {
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+      } else if (videoRef.current) {
+        await videoRef.current.requestPictureInPicture();
+      }
+    } catch {
+      /* PiP not supported */
+    }
+  }, []);
 
   const togglePlay = useCallback(() => {
     if (locked) return;
@@ -417,6 +476,76 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
       await container.requestFullscreen();
     }
   };
+
+  useEffect(() => {
+    if (locked) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      switch (e.key) {
+        case " ":
+        case "k":
+          e.preventDefault();
+          togglePlay();
+          break;
+        case "ArrowLeft":
+          e.preventDefault();
+          if (videoRef.current) seekTo(Math.max(0, videoRef.current.currentTime - 5));
+          break;
+        case "ArrowRight":
+          e.preventDefault();
+          if (videoRef.current) seekTo(videoRef.current.currentTime + 5);
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          if (videoRef.current) {
+            const newVol = Math.min(1, videoRef.current.volume + 0.1);
+            videoRef.current.volume = newVol;
+            setVolume(newVol);
+            setIsMuted(false);
+          }
+          break;
+        case "ArrowDown":
+          e.preventDefault();
+          if (videoRef.current) {
+            const newVol = Math.max(0, videoRef.current.volume - 0.1);
+            videoRef.current.volume = newVol;
+            setVolume(newVol);
+            if (newVol === 0) setIsMuted(true);
+          }
+          break;
+        case "f":
+          e.preventDefault();
+          toggleFullscreen();
+          break;
+        case "m":
+          e.preventDefault();
+          toggleMute();
+          break;
+        case "p":
+          e.preventDefault();
+          togglePiP();
+          break;
+        case "?":
+          e.preventDefault();
+          setShowShortcuts((s) => !s);
+          break;
+        case "<":
+          e.preventDefault();
+          { const idx = PLAYBACK_SPEEDS.indexOf(playbackSpeed);
+            if (idx > 0) changeSpeed(PLAYBACK_SPEEDS[idx - 1]); }
+          break;
+        case ">":
+          e.preventDefault();
+          { const idx = PLAYBACK_SPEEDS.indexOf(playbackSpeed);
+            if (idx < PLAYBACK_SPEEDS.length - 1) changeSpeed(PLAYBACK_SPEEDS[idx + 1]); }
+          break;
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [locked, togglePlay, seekTo, toggleFullscreen, toggleMute, togglePiP, changeSpeed, playbackSpeed, PLAYBACK_SPEEDS]);
 
   if (locked) {
     return (
@@ -549,6 +678,39 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
         </div>
       )}
 
+      {/* Keyboard shortcuts overlay */}
+      {showShortcuts && (
+        <div
+          className="absolute inset-0 z-40 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setShowShortcuts(false)}
+        >
+          <div className="bg-black/90 border border-white/10 rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+              <Keyboard className="h-4 w-4 text-primary" />
+              Keyboard Shortcuts
+            </h3>
+            <div className="grid grid-cols-2 gap-y-2 gap-x-6 text-xs">
+              {[
+                ["Space / K", "Play / Pause"],
+                ["\u2190", "Rewind 5s"],
+                ["\u2192", "Forward 5s"],
+                ["\u2191 / \u2193", "Volume"],
+                ["F", "Fullscreen"],
+                ["M", "Mute"],
+                ["P", "Picture-in-Picture"],
+                ["< / >", "Speed down / up"],
+                ["?", "Toggle this panel"],
+              ].map(([key, desc]) => (
+                <div key={key} className="contents">
+                  <kbd className="px-1.5 py-0.5 bg-white/10 rounded text-white/90 font-mono text-center">{key}</kbd>
+                  <span className="text-white/60">{desc}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Center play/pause on click feedback (while playing) */}
       {hasStarted && !showResumePrompt && !isPlaying && !isLoadingSource && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/20">
@@ -584,6 +746,25 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
                 className="absolute inset-y-0 left-0 bg-primary rounded-full"
                 style={{ width: `${currentPercent}%` }}
               />
+              {/* Chapter markers */}
+              {duration > 0 && chapters.map((ch) => (
+                <div
+                  key={ch.id}
+                  className="absolute top-1/2 -translate-y-1/2 w-0.5 h-3 bg-white/60 rounded-full z-10"
+                  style={{ left: `${(ch.timestamp_seconds / duration) * 100}%` }}
+                  title={ch.title}
+                />
+              ))}
+              {/* Bookmark markers */}
+              {duration > 0 && bookmarks.map((bm) => (
+                <div
+                  key={bm.id}
+                  className="absolute top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-yellow-400 rounded-full z-10 cursor-pointer"
+                  style={{ left: `${(bm.timestamp_seconds / duration) * 100}%` }}
+                  title={bm.note || `Bookmark at ${formatTime(bm.timestamp_seconds)}`}
+                  onClick={(e) => { e.stopPropagation(); seekTo(bm.timestamp_seconds); }}
+                />
+              ))}
               <div
                 className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-3.5 w-3.5 rounded-full bg-primary opacity-0 group-hover/scrub:opacity-100 transition-opacity shadow"
                 style={{ left: `${currentPercent}%` }}
@@ -608,7 +789,53 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
               {formatTime(currentSeconds)} / {formatTime(duration)}
             </span>
 
+            {/* Bookmark button */}
+            <button
+              className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-white/10 transition-colors"
+              onClick={addBookmark}
+              title="Add bookmark (current time)"
+            >
+              <Bookmark className="h-3.5 w-3.5" />
+            </button>
+
             <div className="flex-1" />
+
+            {/* Speed */}
+            <div className="relative" data-speed-menu>
+              <button
+                className="h-8 px-2 flex items-center gap-1 rounded-md hover:bg-white/10 transition-colors text-xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowSpeedMenu(!showSpeedMenu);
+                }}
+              >
+                <Gauge className="h-3.5 w-3.5" />
+                <span className="text-white/70">{playbackSpeed === 1 ? "" : `${playbackSpeed}x`}</span>
+              </button>
+
+              {showSpeedMenu && (
+                <div className="absolute bottom-full right-0 mb-2 bg-black/90 backdrop-blur-lg border border-white/10 rounded-lg overflow-hidden min-w-[100px] shadow-xl z-50">
+                  <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white/40 border-b border-white/10">
+                    Speed
+                  </div>
+                  {PLAYBACK_SPEEDS.map((spd) => (
+                    <button
+                      key={spd}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-white/10 transition-colors text-left",
+                        playbackSpeed === spd ? "text-primary" : "text-white/80"
+                      )}
+                      onClick={() => changeSpeed(spd)}
+                    >
+                      {playbackSpeed === spd && <Check className="h-3 w-3" />}
+                      <span className={playbackSpeed !== spd ? "pl-5" : ""}>
+                        {spd === 1 ? "Normal" : `${spd}x`}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Resolution picker */}
             {availableResolutions.length > 1 && (
@@ -650,6 +877,24 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
                 )}
               </div>
             )}
+
+            {/* PiP */}
+            <button
+              className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-white/10 transition-colors"
+              onClick={togglePiP}
+              title="Picture-in-Picture (P)"
+            >
+              <PictureInPicture2 className="h-4 w-4" />
+            </button>
+
+            {/* Shortcuts help */}
+            <button
+              className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-white/10 transition-colors"
+              onClick={() => setShowShortcuts((s) => !s)}
+              title="Keyboard shortcuts (?)"
+            >
+              <Keyboard className="h-3.5 w-3.5" />
+            </button>
 
             {/* Volume */}
             <div

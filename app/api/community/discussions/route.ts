@@ -4,6 +4,28 @@ import { createNotification } from "@/lib/notifications";
 
 const VALID_CATEGORIES = ["general", "technique", "training", "nutrition", "mindset", "gear"];
 
+async function notifyMentions(content: string, authorId: string, link: string, supabase: Awaited<ReturnType<typeof createClient>>) {
+  const mentionPattern = /@([\w.-]+)/g;
+  const mentions = [...content.matchAll(mentionPattern)].map((m) => m[1]);
+  if (mentions.length === 0) return;
+
+  const { data: users } = await supabase
+    .from("profiles")
+    .select("id, display_name")
+    .in("display_name", mentions);
+
+  for (const u of users ?? []) {
+    if (u.id === authorId) continue;
+    createNotification({
+      userId: u.id,
+      type: "mention",
+      title: "You were mentioned in a discussion",
+      body: content.slice(0, 100),
+      link,
+    }).catch(() => {});
+  }
+}
+
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
   const { searchParams } = request.nextUrl;
@@ -155,6 +177,8 @@ export async function POST(request: NextRequest) {
       }).catch(() => {});
     }
 
+    notifyMentions(content.trim(), user.id, "/community", supabase);
+
     return NextResponse.json(reply);
   }
 
@@ -187,6 +211,8 @@ export async function POST(request: NextRequest) {
   if (error) {
     return NextResponse.json({ error: "Failed to create post" }, { status: 500 });
   }
+
+  notifyMentions(content.trim(), user.id, "/community", supabase);
 
   return NextResponse.json(post, { status: 201 });
 }

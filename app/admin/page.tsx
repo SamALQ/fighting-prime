@@ -204,6 +204,54 @@ export default function AdminPage() {
               <TestItem>Verify the Analytics card appears on the /admin dashboard page</TestItem>
             </TestSection>
 
+            <TestSection title="Video Player Enhancements (Phase 1)">
+              <TestItem>Open any episode and verify the speed control (gauge icon) — try 0.5x, 1.5x, 2x</TestItem>
+              <TestItem>Test keyboard shortcuts: Space/K (play/pause), arrows (seek/volume), F (fullscreen), M (mute), P (PiP), &lt;/&gt; (speed), ? (help)</TestItem>
+              <TestItem>Click the PiP button — verify picture-in-picture works</TestItem>
+              <TestItem>Click the keyboard icon to see the shortcuts overlay</TestItem>
+              <TestItem>Go to /breakdowns — verify the video player now shows instead of &ldquo;Video will be added soon&rdquo;</TestItem>
+              <TestItem>Verify dark mode is the default theme</TestItem>
+            </TestSection>
+
+            <TestSection title="Achievements & Gamification (Phase 2)">
+              <TestItem>Visit /dashboard — verify the achievements grid shows real achievement definitions (First Blood, Scholar, Iron Will, etc.)</TestItem>
+              <TestItem>Watch an episode to trigger &ldquo;First Blood&rdquo; achievement — verify toast notification appears</TestItem>
+              <TestItem>Check the points card shows streak multiplier info when you have an active streak</TestItem>
+              <TestItem>Verify level-up overlay animation fires when crossing a level boundary</TestItem>
+            </TestSection>
+
+            <TestSection title="Study Tools (Phase 3)">
+              <TestItem>On any episode, click the bookmark icon (🔖) to save a bookmark at the current timestamp</TestItem>
+              <TestItem>Verify bookmark markers appear as yellow dots on the timeline scrub bar</TestItem>
+              <TestItem>Click a bookmark marker to seek to that timestamp</TestItem>
+              <TestItem>Chapter markers appear as white lines on the timeline (if chapters exist for the episode)</TestItem>
+              <TestItem>Press ⌘K or click the search bar — verify global search finds courses, episodes, and discussions</TestItem>
+            </TestSection>
+
+            <TestSection title="Training Tools (Phase 4)">
+              <TestItem>Go to /training — verify Drill Timer, Training Log, and Challenges tabs work</TestItem>
+              <TestItem>Test drill timer: select a preset, start, verify audio beeps, round transitions, and completion</TestItem>
+              <TestItem>In Training Log: log a session with date, duration, type, intensity, and notes</TestItem>
+              <TestItem>Verify logged sessions appear in the list and can be deleted</TestItem>
+              <TestItem>Check Challenges tab shows active challenges (when available)</TestItem>
+            </TestSection>
+
+            <TestSection title="Social Features (Phase 5)">
+              <TestItem>Visit a user profile — verify Follow button appears (not on own profile)</TestItem>
+              <TestItem>Follow/unfollow a user — verify follower count updates</TestItem>
+              <TestItem>On an episode page, verify the 5-star rating component appears below the title</TestItem>
+              <TestItem>Rate an episode — verify the rating saves and average updates</TestItem>
+              <TestItem>Post a reply with @mention — verify the mentioned user gets a notification</TestItem>
+              <TestItem>Go to /onboarding — verify the 3-step wizard (name, experience, goals) works</TestItem>
+            </TestSection>
+
+            <TestSection title="Platform Features (Phase 6)">
+              <TestItem>Go to /techniques — verify the technique library page loads with search and category filters</TestItem>
+              <TestItem>Go to /referrals — verify referral code generation and redemption flow</TestItem>
+              <TestItem>Test PWA: check manifest loads and service worker registers (DevTools &rarr; Application)</TestItem>
+              <TestItem>Verify /training link appears in navbar for logged-in users</TestItem>
+            </TestSection>
+
             <TestSection title="General / Existing Features">
               <TestItem>Watch a course episode and return to /dashboard — verify it shows in &ldquo;courses in progress&rdquo;</TestItem>
               <TestItem>Test the comments section on any episode page</TestItem>

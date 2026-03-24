@@ -73,6 +73,8 @@ export default function ProfilePage() {
   const [editName, setEditName] = useState("");
   const [editBio, setEditBio] = useState("");
   const [saving, setSaving] = useState(false);
+  const [followStats, setFollowStats] = useState({ followers: 0, following: 0, isFollowing: false });
+  const [followLoading, setFollowLoading] = useState(false);
 
   const isOwnProfile = user?.id === id;
 
@@ -92,7 +94,29 @@ export default function ProfilePage() {
         setLoading(false);
       }
     })();
+    fetch(`/api/follows?userId=${id}`)
+      .then((r) => r.json())
+      .then((d) => setFollowStats(d))
+      .catch(() => {});
   }, [id]);
+
+  const toggleFollow = async () => {
+    setFollowLoading(true);
+    const action = followStats.isFollowing ? "unfollow" : "follow";
+    try {
+      await fetch("/api/follows", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetUserId: id, action }),
+      });
+      setFollowStats((prev) => ({
+        ...prev,
+        isFollowing: !prev.isFollowing,
+        followers: prev.followers + (action === "follow" ? 1 : -1),
+      }));
+    } catch { /* silent */ }
+    setFollowLoading(false);
+  };
 
   const saveProfile = async () => {
     setSaving(true);
@@ -213,6 +237,21 @@ export default function ProfilePage() {
                   </div>
                   {profile.bio && (
                     <p className="text-foreground/50 text-sm mt-3 max-w-md mx-auto">{profile.bio}</p>
+                  )}
+                  <div className="flex items-center justify-center gap-4 mt-3 text-sm">
+                    <span className="text-foreground/50"><strong className="text-foreground">{followStats.followers}</strong> followers</span>
+                    <span className="text-foreground/50"><strong className="text-foreground">{followStats.following}</strong> following</span>
+                  </div>
+                  {!isOwnProfile && user && (
+                    <Button
+                      size="sm"
+                      variant={followStats.isFollowing ? "outline" : "default"}
+                      onClick={toggleFollow}
+                      disabled={followLoading}
+                      className="mt-3"
+                    >
+                      {followStats.isFollowing ? "Following" : "Follow"}
+                    </Button>
                   )}
                   <p className="text-foreground/25 text-xs mt-3 flex items-center justify-center gap-1">
                     <Calendar className="h-3 w-3" />

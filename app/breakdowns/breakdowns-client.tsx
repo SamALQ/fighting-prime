@@ -4,12 +4,13 @@ import { MainLayout } from "@/components/layout/main-layout";
 import { Section } from "@/components/layout/section";
 import { Container } from "@/components/layout/container";
 import type { Breakdown } from "@/data/breakdowns";
-import { useState } from "react";
+import type { Episode } from "@/data/episodes";
+import { useState, useMemo } from "react";
 import { CommentSection } from "@/components/ui/comment-section";
 import { BreakdownList } from "@/components/ui/breakdown-list";
 import { Calendar, User, Clock, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
+import { VideoPlayer } from "@/components/ui/video-player";
 
 interface BreakdownsClientProps {
   breakdowns: Breakdown[];
@@ -30,6 +31,23 @@ export function BreakdownsClient({ breakdowns }: BreakdownsClientProps) {
     );
   }
 
+  const episodeProxy = useMemo<Episode>(() => ({
+    id: selectedBreakdown.id,
+    slug: selectedBreakdown.slug,
+    courseId: "__breakdown__",
+    title: selectedBreakdown.title,
+    order: 0,
+    isFree: true,
+    premium: false,
+    videoUrl: selectedBreakdown.videoUrl,
+    description: selectedBreakdown.description,
+    videoResolutions: [],
+    durationSeconds: 0,
+    keyTakeaways: [],
+    releaseDate: selectedBreakdown.releaseDate,
+    thumbnail: selectedBreakdown.thumbnail,
+  }), [selectedBreakdown]);
+
   return (
     <MainLayout>
       <Section className="pb-24">
@@ -47,25 +65,10 @@ export function BreakdownsClient({ breakdowns }: BreakdownsClientProps) {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
             <div className="lg:col-span-8 space-y-8">
               <div className="space-y-6">
-                <div className="relative aspect-video bg-black rounded-2xl overflow-hidden border border-foreground/[0.08] group shadow-2xl shadow-primary/5">
-                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-background">
-                    <Image
-                      src={selectedBreakdown.thumbnail}
-                      alt={selectedBreakdown.title}
-                      fill
-                      className="object-cover opacity-40 blur-sm"
-                      unoptimized
-                    />
-                    <div className="relative z-10 text-center space-y-4 px-6">
-                      <div className="h-20 w-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto border border-primary/30 group-hover:scale-110 transition-transform duration-500">
-                        <div className="h-16 w-16 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-                          <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[18px] border-l-white border-b-[10px] border-b-transparent ml-1" />
-                        </div>
-                      </div>
-                      <p className="text-lg font-medium text-white/80">Video will be added soon</p>
-                    </div>
-                  </div>
-                </div>
+                <VideoPlayer
+                  episode={episodeProxy}
+                  className="border border-foreground/[0.08] shadow-2xl shadow-primary/5"
+                />
 
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="space-y-2">

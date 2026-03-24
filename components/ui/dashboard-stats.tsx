@@ -1,7 +1,7 @@
 "use client";
 
 import { useProgress } from "@/lib/hooks/use-progress";
-import { Trophy, Target, Clock, CheckCircle2 } from "lucide-react";
+import { Trophy, Target, Clock, CheckCircle2, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function DashboardStats() {
@@ -11,6 +11,12 @@ export function DashboardStats() {
   const currentLevelPoints = userStats.points % pointsPerLevel;
   const progressToNextLevel = (currentLevelPoints / pointsPerLevel) * 100;
   const pointsToNext = pointsPerLevel - currentLevelPoints;
+
+  const multiplierLabel = userStats.streakMultiplier > 1
+    ? `${userStats.streakMultiplier}x streak bonus active`
+    : userStats.isFirstWatchToday
+      ? "2x first-watch bonus!"
+      : "Lifetime Earned";
 
   const stats = [
     {
@@ -36,8 +42,10 @@ export function DashboardStats() {
     {
       label: "Total Points",
       value: userStats.points.toLocaleString(),
-      subtitle: "Lifetime Earned",
-      icon: <Target className="h-5 w-5 text-primary" />,
+      subtitle: multiplierLabel,
+      icon: userStats.streakMultiplier > 1 || userStats.isFirstWatchToday
+        ? <Flame className="h-5 w-5 text-orange-500" />
+        : <Target className="h-5 w-5 text-primary" />,
     },
     {
       label: "Watch Time",

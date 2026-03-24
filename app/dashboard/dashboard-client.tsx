@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Container } from "@/components/layout/container";
 import { DashboardStats } from "@/components/ui/dashboard-stats";
@@ -9,6 +10,7 @@ import { AchievementsGrid } from "@/components/ui/dashboard/achievements-grid";
 import { SubscriptionCard } from "@/components/ui/dashboard/subscription-card";
 import { ContinueWatching } from "@/components/ui/dashboard/continue-watching";
 import { StreakCard } from "@/components/ui/dashboard/streak-card";
+import { LevelUpOverlay, AchievementToast } from "@/components/ui/level-up-overlay";
 import { useProgress } from "@/lib/hooks/use-progress";
 import type { Course } from "@/data/courses";
 import type { Episode } from "@/data/episodes";
@@ -19,7 +21,21 @@ interface DashboardClientProps {
 }
 
 export function DashboardClient({ courses, episodes }: DashboardClientProps) {
-  const { userStats, isLoading: isProgressLoading } = useProgress();
+  const {
+    userStats,
+    isLoading: isProgressLoading,
+    levelUpFrom,
+    newAchievements,
+    dismissLevelUp,
+    dismissNewAchievements,
+    checkAchievementsNow,
+  } = useProgress();
+
+  useEffect(() => {
+    if (!isProgressLoading) {
+      checkAchievementsNow();
+    }
+  }, [isProgressLoading, checkAchievementsNow]);
 
   if (isProgressLoading) {
     return null;
@@ -27,6 +43,19 @@ export function DashboardClient({ courses, episodes }: DashboardClientProps) {
 
   return (
     <MainLayout>
+      {levelUpFrom !== null && (
+        <LevelUpOverlay
+          fromLevel={levelUpFrom}
+          toLevel={userStats.level}
+          onDismiss={dismissLevelUp}
+        />
+      )}
+      {newAchievements.length > 0 && (
+        <AchievementToast
+          achievementIds={newAchievements}
+          onDismiss={dismissNewAchievements}
+        />
+      )}
       <section className="relative py-16 md:py-24 lg:py-32 pb-24 overflow-hidden">
         <div className="absolute -top-32 -right-32 w-[600px] h-[600px] rounded-full bg-primary/[0.04] blur-[120px]" />
 

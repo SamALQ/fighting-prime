@@ -107,12 +107,18 @@ export async function PATCH(request: NextRequest) {
   }
 
   const body = await request.json();
-  const updates: Record<string, string> = {};
+  const updates: Record<string, unknown> = {};
 
   if (typeof body.displayName === "string")
     updates.display_name = body.displayName.trim().slice(0, 50);
   if (typeof body.bio === "string")
     updates.bio = body.bio.trim().slice(0, 300);
+  if (typeof body.experienceLevel === "string")
+    updates.experience_level = body.experienceLevel;
+  if (Array.isArray(body.trainingGoals))
+    updates.training_goals = body.trainingGoals;
+  if (body.onboardingCompleted === true)
+    updates.onboarding_completed = true;
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });

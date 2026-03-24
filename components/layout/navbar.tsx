@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { NotificationBell } from "@/components/ui/notification-bell";
+import { GlobalSearch } from "@/components/ui/global-search";
 import { useState, useRef, useEffect } from "react";
 import type { Course } from "@/data/courses";
 import { cn } from "@/lib/utils";
@@ -85,6 +86,7 @@ export function NavBar() {
     { href: "/courses", label: "Courses", always: true },
     { href: "/breakdowns", label: "Breakdowns", always: true },
     { href: "/community", label: "Community", always: true },
+    { href: "/training", label: "Training", auth: true },
     { href: "/pricing", label: "Pricing", always: true },
     { href: "/about", label: "About", always: true },
   ];
@@ -203,6 +205,14 @@ export function NavBar() {
             >
               Community
             </Link>
+            {isLoggedIn && (
+              <Link
+                href="/training"
+                className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
+              >
+                Training
+              </Link>
+            )}
             <Link
               href="/pricing"
               className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
@@ -216,6 +226,7 @@ export function NavBar() {
               About
             </Link>
 
+            <GlobalSearch />
             <NotificationBell />
             <ThemeToggle />
 

@@ -10,6 +10,7 @@ import { ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { CommentSection } from "@/components/ui/comment-section";
 import { AssignmentUpload } from "@/components/ui/assignment-upload";
+import { EpisodeRating } from "@/components/ui/episode-rating";
 
 interface EpisodeDetailPageProps {
   params: Promise<{ slug: string; episodeSlug: string }>;
@@ -59,9 +60,10 @@ export default async function EpisodeDetailPage({ params }: EpisodeDetailPagePro
                   )}
                 </div>
                 <h1 className="text-3xl font-bold mb-4">{episode.title}</h1>
-                <p className="text-foreground/40">
+                <p className="text-foreground/40 mb-3">
                   Duration: {Math.floor(episode.durationSeconds / 60)}:{String(episode.durationSeconds % 60).padStart(2, "0")}
                 </p>
+                <EpisodeRating episodeId={episode.id} />
               </div>
 
               <div className="h-px bg-gradient-to-r from-transparent via-primary/15 to-transparent" />

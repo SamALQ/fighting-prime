@@ -14,6 +14,8 @@ export interface UserStats {
   assignmentPoints: number;
   currentStreak: number;
   longestStreak: number;
+  streakMultiplier: number;
+  isFirstWatchToday: boolean;
   coursesStarted: string[];
   achievements: string[];
 }
@@ -54,9 +56,13 @@ export function useProgress() {
   const [episodeMap, setEpisodeMap] = useState<Record<string, EpisodeCache>>({});
   const [coursesStarted, setCoursesStarted] = useState<string[]>([]);
   const [serverAssignmentStats, setServerAssignmentStats] = useState({ submitted: 0, approved: 0, points: 0 });
-  const [serverStreakStats, setServerStreakStats] = useState({ current: 0, longest: 0 });
+  const [serverStreakStats, setServerStreakStats] = useState({ current: 0, longest: 0, multiplier: 1, isFirstWatchToday: false });
+  const [serverAchievements, setServerAchievements] = useState<string[]>([]);
   const [continueWatching, setContinueWatching] = useState<ContinueWatchingItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [levelUpFrom, setLevelUpFrom] = useState<number | null>(null);
+  const [newAchievements, setNewAchievements] = useState<string[]>([]);
+  const prevLevelRef = useRef<number>(0);
 
   const pendingRef = useRef<Record<string, PendingUpdate>>({});
   const watchEventRef = useRef<Record<string, WatchEventDelta>>({});
@@ -135,7 +141,10 @@ export function useProgress() {
         setServerStreakStats({
           current: data.stats?.currentStreak ?? 0,
           longest: data.stats?.longestStreak ?? 0,
+          multiplier: data.stats?.streakMultiplier ?? 1,
+          isFirstWatchToday: data.stats?.isFirstWatchToday ?? false,
         });
+        setServerAchievements(data.achievements ?? []);
         setContinueWatching(data.continueWatching ?? []);
 
         const knownIds = Object.keys(data.episodes ?? {});
@@ -180,9 +189,15 @@ export function useProgress() {
     const watchPoints = Math.floor(totalWatchTime * POINTS_PER_SECOND);
     const completionPoints = completedCount * POINTS_PER_COMPLETION;
     const totalPoints = watchPoints + completionPoints + serverAssignmentStats.points;
+    const newLevel = calculateLevel(totalPoints);
+
+    if (prevLevelRef.current > 0 && newLevel > prevLevelRef.current) {
+      setLevelUpFrom(prevLevelRef.current);
+    }
+    prevLevelRef.current = newLevel;
 
     return {
-      level: calculateLevel(totalPoints),
+      level: newLevel,
       points: totalPoints,
       watchTime: totalWatchTime,
       episodesCompleted: completedCount,
@@ -191,10 +206,12 @@ export function useProgress() {
       assignmentPoints: serverAssignmentStats.points,
       currentStreak: serverStreakStats.current,
       longestStreak: serverStreakStats.longest,
+      streakMultiplier: serverStreakStats.multiplier,
+      isFirstWatchToday: serverStreakStats.isFirstWatchToday,
       coursesStarted,
-      achievements: ["into-the-box"],
+      achievements: serverAchievements,
     };
-  }, [episodeMap, coursesStarted, serverAssignmentStats, serverStreakStats]);
+  }, [episodeMap, coursesStarted, serverAssignmentStats, serverStreakStats, serverAchievements]);
 
   const getProgress = useCallback(
     (episodeId: string): number => episodeMapRef.current[episodeId]?.percent ?? 0,
@@ -322,6 +339,21 @@ export function useProgress() {
     return `${minutes}m`;
   };
 
+  const dismissLevelUp = useCallback(() => setLevelUpFrom(null), []);
+  const dismissNewAchievements = useCallback(() => setNewAchievements([]), []);
+
+  const checkAchievementsNow = useCallback(async () => {
+    try {
+      const res = await fetch("/api/achievements", { method: "POST" });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.newlyUnlocked?.length > 0) {
+        setServerAchievements(data.allUnlocked);
+        setNewAchievements(data.newlyUnlocked);
+      }
+    } catch { /* silent */ }
+  }, []);
+
   return {
     progress: Object.fromEntries(
       Object.entries(episodeMap).map(([id, ep]) => [id, ep.percent])
@@ -332,6 +364,11 @@ export function useProgress() {
     userStats: computeStats(),
     continueWatching,
     isLoading,
+    levelUpFrom,
+    newAchievements,
+    dismissLevelUp,
+    dismissNewAchievements,
+    checkAchievementsNow,
     updateProgress,
     updateWatchTime,
     trackWatchEvent,

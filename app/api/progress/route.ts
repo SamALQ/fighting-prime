@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getStreakMultiplier } from "@/lib/achievements";
 
 export async function GET() {
   const supabase = await createClient();
@@ -8,7 +9,7 @@ export async function GET() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ episodes: {}, stats: defaultStats() });
+    return NextResponse.json({ episodes: {}, stats: defaultStats(), achievements: [] });
   }
 
   const { data: progressRows } = await supabase
@@ -36,7 +37,7 @@ export async function GET() {
   const watchPoints = Math.floor(totalWatchTime * 0.5);
   const completionPoints = completedCount * 100;
 
-  const [courseProgressResult, assignmentResult] = await Promise.all([
+  const [courseProgressResult, assignmentResult, streakResult, recentProgressResult, achievementsResult] = await Promise.all([
     supabase
       .from("user_course_progress")
       .select("course_id")
@@ -44,6 +45,23 @@ export async function GET() {
     supabase
       .from("assignment_submissions")
       .select("id, episode_id, status, points_awarded")
+      .eq("user_id", user.id),
+    supabase
+      .from("user_streaks")
+      .select("current_streak, longest_streak, last_active_date")
+      .eq("user_id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("user_progress")
+      .select("episode_id, percent_watched, watch_time_seconds, updated_at")
+      .eq("user_id", user.id)
+      .lt("percent_watched", 95)
+      .gt("percent_watched", 1)
+      .order("updated_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("user_achievements")
+      .select("achievement_id, unlocked_at")
       .eq("user_id", user.id),
   ]);
 
@@ -54,22 +72,17 @@ export async function GET() {
   const assignmentsSubmitted = assignments.filter((a) => a.status !== "uploading").length;
   const assignmentsApproved = assignments.filter((a) => a.status === "approved").length;
 
+  const currentStreak = streakResult.data?.current_streak ?? 0;
+  const longestStreak = streakResult.data?.longest_streak ?? 0;
+  const streakMultiplier = getStreakMultiplier(currentStreak);
+
+  const today = new Date().toISOString().split("T")[0];
+  const lastActive = streakResult.data?.last_active_date;
+  const isFirstWatchToday = lastActive !== today;
+
   const totalPoints = watchPoints + completionPoints + assignmentPoints;
 
-  const { data: streak } = await supabase
-    .from("user_streaks")
-    .select("current_streak, longest_streak, last_active_date")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  const { data: recentProgress } = await supabase
-    .from("user_progress")
-    .select("episode_id, percent_watched, watch_time_seconds, updated_at")
-    .eq("user_id", user.id)
-    .lt("percent_watched", 95)
-    .gt("percent_watched", 1)
-    .order("updated_at", { ascending: false })
-    .limit(5);
+  const achievements = (achievementsResult.data ?? []).map((a) => a.achievement_id);
 
   return NextResponse.json({
     episodes,
@@ -82,10 +95,13 @@ export async function GET() {
       assignmentsSubmitted,
       assignmentsApproved,
       assignmentPoints,
-      currentStreak: streak?.current_streak ?? 0,
-      longestStreak: streak?.longest_streak ?? 0,
+      currentStreak,
+      longestStreak,
+      streakMultiplier,
+      isFirstWatchToday,
     },
-    continueWatching: recentProgress ?? [],
+    achievements,
+    continueWatching: recentProgressResult.data ?? [],
   });
 }
 
