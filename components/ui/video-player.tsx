@@ -12,6 +12,9 @@ import {
   VolumeX,
   Maximize,
   Minimize,
+  Settings,
+  Check,
+  Loader2,
 } from "lucide-react";
 import { Button } from "./button";
 import { useSubscription } from "@/lib/hooks/use-subscription";
@@ -21,6 +24,26 @@ import { cn } from "@/lib/utils";
 interface VideoPlayerProps {
   episode: Episode;
   className?: string;
+}
+
+interface VideoSource {
+  url: string;
+  source: "presigned" | "direct" | "fallback";
+  resolution?: string;
+  resolutions: string[];
+  expiresIn?: number;
+}
+
+const PREFERRED_RESOLUTION_KEY = "fpa-preferred-resolution";
+
+function getPreferredResolution(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(PREFERRED_RESOLUTION_KEY);
+}
+
+function setPreferredResolution(res: string) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(PREFERRED_RESOLUTION_KEY, res);
 }
 
 function formatTime(seconds: number): string {
@@ -44,6 +67,12 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [volumeOpen, setVolumeOpen] = useState(false);
 
+  const [videoSrc, setVideoSrc] = useState<string | null>(null);
+  const [availableResolutions, setAvailableResolutions] = useState<string[]>([]);
+  const [activeResolution, setActiveResolution] = useState<string | null>(null);
+  const [isLoadingSource, setIsLoadingSource] = useState(false);
+  const [showResolutionMenu, setShowResolutionMenu] = useState(false);
+
   const hasTriggeredConfetti = useRef(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -51,12 +80,104 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
   const controlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSeeking = useRef(false);
   const lastNaturalTime = useRef(0);
+  const presignedExpiresAt = useRef(0);
 
   const { isActive } = useSubscription();
   const { updateProgress, updateWatchTime, trackWatchEvent, getProgress, flush } = useProgress();
   const lastTickMs = useRef(0);
 
   const locked = !episode.isFree && !isActive;
+
+  const fetchVideoSource = useCallback(
+    async (resolution?: string): Promise<VideoSource | null> => {
+      try {
+        const params = new URLSearchParams({ episodeId: episode.id });
+        if (resolution) params.set("resolution", resolution);
+        const res = await fetch(`/api/video?${params}`);
+        if (!res.ok) return null;
+        return await res.json();
+      } catch {
+        return null;
+      }
+    },
+    [episode.id]
+  );
+
+  useEffect(() => {
+    if (locked) return;
+
+    const hasS3Resolutions = episode.videoResolutions && episode.videoResolutions.length > 0;
+
+    if (!hasS3Resolutions) {
+      setVideoSrc(episode.videoUrl);
+      setAvailableResolutions([]);
+      setActiveResolution(null);
+      return;
+    }
+
+    setIsLoadingSource(true);
+    const preferred = getPreferredResolution();
+    fetchVideoSource(preferred ?? undefined).then((source) => {
+      if (source?.url) {
+        setVideoSrc(source.url);
+        setAvailableResolutions(source.resolutions);
+        setActiveResolution(source.resolution ?? null);
+        if (source.expiresIn) {
+          presignedExpiresAt.current = Date.now() + source.expiresIn * 1000;
+        }
+      } else {
+        setVideoSrc(episode.videoUrl);
+        setAvailableResolutions([]);
+      }
+      setIsLoadingSource(false);
+    });
+  }, [episode.id, episode.videoUrl, episode.videoResolutions, locked, fetchVideoSource]);
+
+  const switchResolution = useCallback(
+    async (resolution: string) => {
+      const video = videoRef.current;
+      const savedTime = video?.currentTime ?? 0;
+      const wasPlaying = isPlaying;
+
+      if (video) video.pause();
+      setIsLoadingSource(true);
+      setShowResolutionMenu(false);
+
+      const source = await fetchVideoSource(resolution);
+      if (source?.url) {
+        setVideoSrc(source.url);
+        setActiveResolution(source.resolution ?? resolution);
+        setPreferredResolution(resolution);
+        if (source.expiresIn) {
+          presignedExpiresAt.current = Date.now() + source.expiresIn * 1000;
+        }
+
+        await new Promise<void>((resolve) => {
+          const checkVideo = () => {
+            const v = videoRef.current;
+            if (v) {
+              const onCanPlay = () => {
+                v.removeEventListener("canplay", onCanPlay);
+                resolve();
+              };
+              v.addEventListener("canplay", onCanPlay);
+              v.load();
+            } else {
+              resolve();
+            }
+          };
+          requestAnimationFrame(checkVideo);
+        });
+
+        if (videoRef.current) {
+          videoRef.current.currentTime = savedTime;
+          if (wasPlaying) videoRef.current.play();
+        }
+      }
+      setIsLoadingSource(false);
+    },
+    [fetchVideoSource, isPlaying]
+  );
 
   const resetControlsTimer = useCallback(() => {
     if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
@@ -165,6 +286,19 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
     document.addEventListener("fullscreenchange", handleFsChange);
     return () => document.removeEventListener("fullscreenchange", handleFsChange);
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (showResolutionMenu) {
+        const target = e.target as HTMLElement;
+        if (!target.closest("[data-resolution-menu]")) {
+          setShowResolutionMenu(false);
+        }
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [showResolutionMenu]);
 
   const togglePlay = useCallback(() => {
     if (locked) return;
@@ -312,18 +446,33 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
       onMouseMove={resetControlsTimer}
       onMouseLeave={() => isPlaying && setShowControls(false)}
     >
-      <video
-        ref={videoRef}
-        className="w-full h-full object-contain"
-        src={episode.videoUrl}
-        preload="auto"
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
-        onClick={togglePlay}
-      />
+      {videoSrc ? (
+        <video
+          ref={videoRef}
+          className="w-full h-full object-contain"
+          src={videoSrc}
+          preload="auto"
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+          onClick={togglePlay}
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center">
+          {isLoadingSource && (
+            <Loader2 className="h-8 w-8 text-white/50 animate-spin" />
+          )}
+        </div>
+      )}
+
+      {/* Loading overlay during resolution switch */}
+      {isLoadingSource && hasStarted && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-30">
+          <Loader2 className="h-10 w-10 text-white animate-spin" />
+        </div>
+      )}
 
       {/* Thumbnail overlay (before first play) */}
-      {!hasStarted && !showResumePrompt && (
+      {!hasStarted && !showResumePrompt && !isLoadingSource && (
         <div className="absolute inset-0">
           {episode.thumbnail ? (
             <Image
@@ -392,7 +541,7 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
       )}
 
       {/* Center play/pause on click feedback (while playing) */}
-      {hasStarted && !showResumePrompt && !isPlaying && (
+      {hasStarted && !showResumePrompt && !isPlaying && !isLoadingSource && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/20">
           <button
             className="h-16 w-16 rounded-full bg-white/90 hover:bg-white flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
@@ -412,7 +561,6 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
             : "opacity-0 pointer-events-none"
         )}
       >
-        {/* Gradient fade */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
 
         <div className="relative px-3 pb-2.5 pt-8">
@@ -434,7 +582,7 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
             </div>
           </div>
 
-          {/* Bottom row: play, time, volume, fullscreen */}
+          {/* Bottom row: play, time, resolution, volume, fullscreen */}
           <div className="flex items-center gap-2 text-white">
             <button
               className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-white/10 transition-colors"
@@ -451,8 +599,48 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
               {formatTime(currentSeconds)} / {formatTime(duration)}
             </span>
 
-            {/* Spacer */}
             <div className="flex-1" />
+
+            {/* Resolution picker */}
+            {availableResolutions.length > 1 && (
+              <div className="relative" data-resolution-menu>
+                <button
+                  className="h-8 px-2 flex items-center gap-1.5 rounded-md hover:bg-white/10 transition-colors text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowResolutionMenu(!showResolutionMenu);
+                  }}
+                >
+                  <Settings className="h-3.5 w-3.5" />
+                  {activeResolution && (
+                    <span className="text-white/70">{activeResolution}</span>
+                  )}
+                </button>
+
+                {showResolutionMenu && (
+                  <div className="absolute bottom-full right-0 mb-2 bg-black/90 backdrop-blur-lg border border-white/10 rounded-lg overflow-hidden min-w-[120px] shadow-xl z-50">
+                    <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white/40 border-b border-white/10">
+                      Quality
+                    </div>
+                    {availableResolutions.map((res) => (
+                      <button
+                        key={res}
+                        className={cn(
+                          "w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-white/10 transition-colors text-left",
+                          activeResolution === res ? "text-primary" : "text-white/80"
+                        )}
+                        onClick={() => switchResolution(res)}
+                      >
+                        {activeResolution === res && <Check className="h-3 w-3" />}
+                        <span className={activeResolution !== res ? "pl-5" : ""}>
+                          {res}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Volume */}
             <div

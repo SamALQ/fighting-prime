@@ -46,6 +46,7 @@ function mapEpisode(row: any): Episode {
     isFree: row.is_free ?? false,
     premium: row.premium ?? false,
     videoUrl: row.video_url ?? "",
+    videoResolutions: row.video_resolutions ?? [],
     durationSeconds: row.duration_seconds ?? 0,
     keyTakeaways: row.key_takeaways ?? [],
     releaseDate: row.release_date ?? "",

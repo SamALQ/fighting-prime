@@ -1,3 +1,8 @@
+export interface VideoResolution {
+  label: string;
+  key: string;
+}
+
 export interface Episode {
   id: string;
   slug: string;
@@ -7,6 +12,7 @@ export interface Episode {
   isFree: boolean;
   premium: boolean;
   videoUrl: string;
+  videoResolutions: VideoResolution[];
   durationSeconds: number;
   keyTakeaways: string[];
   releaseDate: string;

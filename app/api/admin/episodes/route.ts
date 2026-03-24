@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
       has_assignment: body.hasAssignment ?? false,
       assignment_points: body.assignmentPoints ?? 0,
       thumbnail: body.thumbnail ?? "",
+      video_resolutions: body.videoResolutions ?? [],
     })
     .select()
     .single();
@@ -90,6 +91,7 @@ export async function PATCH(request: NextRequest) {
   if (fields.hasAssignment !== undefined) updates.has_assignment = fields.hasAssignment;
   if (fields.assignmentPoints !== undefined) updates.assignment_points = fields.assignmentPoints;
   if (fields.thumbnail !== undefined) updates.thumbnail = fields.thumbnail;
+  if (fields.videoResolutions !== undefined) updates.video_resolutions = fields.videoResolutions;
 
   const { data, error: dbError } = await supabase
     .from("episodes")

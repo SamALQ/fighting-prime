@@ -18,6 +18,11 @@ const nextConfig: NextConfig = {
         hostname: 'fp-course-content.s3.us-east-1.amazonaws.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'fighting-prime-media.s3.us-east-1.amazonaws.com',
+        pathname: '/**',
+      },
     ],
   },
 };
