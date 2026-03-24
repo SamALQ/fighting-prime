@@ -38,7 +38,7 @@ export function AchievementsGrid({ unlockedIds = [] }: { unlockedIds?: string[] 
               >
                 {/* Inner card */}
                 <div
-                  className="w-[50px] h-[50px] rounded-[10px] flex items-center justify-center relative overflow-hidden"
+                  className="w-[75px] h-[75px] rounded-[10px] flex items-center justify-center relative overflow-hidden"
                   style={{ background: "#0C0C0C" }}
                 >
                   {/* Diagonal color wash */}
@@ -56,7 +56,7 @@ export function AchievementsGrid({ unlockedIds = [] }: { unlockedIds?: string[] 
                     className="relative z-10"
                     style={{ color: isUnlocked ? "#FFFFFFDD" : "rgba(255,255,255,0.2)" }}
                   >
-                    {getAchievementIcon(achievement.icon, "h-6 w-6")}
+                    {getAchievementIcon(achievement.icon, "h-8 w-8")}
                   </div>
                 </div>
               </div>
