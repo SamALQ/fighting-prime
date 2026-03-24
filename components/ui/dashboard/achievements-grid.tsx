@@ -27,10 +27,11 @@ export function AchievementsGrid({ unlockedIds = [] }: { unlockedIds?: string[] 
               {/* Outer shell — gradient border via padding + bg gradient */}
               <div
                 className={cn(
-                  "rounded-xl p-[2px] transition-all duration-300",
+                  "p-[2px] transition-all duration-300",
                   !isUnlocked && "opacity-25 grayscale hover:opacity-45"
                 )}
                 style={{
+                  borderRadius: 12,
                   background: isUnlocked
                     ? `linear-gradient(160deg, ${c} 0%, ${c}40 50%, ${c}18 100%)`
                     : "linear-gradient(160deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.04) 100%)",
@@ -38,8 +39,8 @@ export function AchievementsGrid({ unlockedIds = [] }: { unlockedIds?: string[] 
               >
                 {/* Inner card */}
                 <div
-                  className="w-[75px] h-[75px] rounded-[10px] flex items-center justify-center relative overflow-hidden"
-                  style={{ background: "#0C0C0C" }}
+                  className="flex items-center justify-center relative overflow-hidden"
+                  style={{ width: 75, height: 75, borderRadius: 10, background: "#0C0C0C" }}
                 >
                   {/* Diagonal color wash */}
                   {isUnlocked && (
