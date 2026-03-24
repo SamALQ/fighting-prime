@@ -14,51 +14,56 @@ export function AchievementsGrid({ unlockedIds = [] }: { unlockedIds?: string[] 
           {unlockedCount}/{ACHIEVEMENTS.length}
         </span>
       </div>
-      <div className="grid grid-cols-5 sm:grid-cols-5 lg:grid-cols-5 gap-3">
+      <div className="flex flex-wrap gap-3">
         {ACHIEVEMENTS.map((achievement) => {
           const isUnlocked = unlockedIds.includes(achievement.id);
+          const c = achievement.accent;
+
           return (
             <div
               key={achievement.id}
               className="relative group"
             >
+              {/* Outer shell — gradient border via padding + bg gradient */}
               <div
                 className={cn(
-                  "aspect-square rounded-xl flex items-center justify-center transition-all duration-300 relative overflow-hidden",
-                  isUnlocked
-                    ? "opacity-100"
-                    : "opacity-30 grayscale hover:opacity-50"
+                  "rounded-xl p-[2px] transition-all duration-300",
+                  !isUnlocked && "opacity-25 grayscale hover:opacity-45"
                 )}
                 style={{
-                  background: "#0A0A0A",
-                  border: `2px solid ${isUnlocked ? achievement.accent : "rgba(255,255,255,0.08)"}`,
-                  boxShadow: isUnlocked
-                    ? `0 0 20px ${achievement.accent}30, inset 0 0 30px ${achievement.accent}10`
-                    : "none",
+                  background: isUnlocked
+                    ? `linear-gradient(160deg, ${c} 0%, ${c}40 50%, ${c}18 100%)`
+                    : "linear-gradient(160deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.04) 100%)",
                 }}
               >
-                {/* Inner glow gradient */}
-                {isUnlocked && (
-                  <div
-                    className="absolute inset-0 opacity-20"
-                    style={{
-                      background: `radial-gradient(circle at center, ${achievement.accent}40 0%, transparent 70%)`,
-                    }}
-                  />
-                )}
-
-                {/* Icon */}
+                {/* Inner card */}
                 <div
-                  className="relative z-10"
-                  style={{ color: isUnlocked ? achievement.accent : "rgba(255,255,255,0.25)" }}
+                  className="w-[50px] h-[50px] rounded-[10px] flex items-center justify-center relative overflow-hidden"
+                  style={{ background: "#0C0C0C" }}
                 >
-                  {getAchievementIcon(achievement.icon, "h-8 w-8 sm:h-10 sm:w-10")}
+                  {/* Diagonal color wash */}
+                  {isUnlocked && (
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        background: `linear-gradient(135deg, ${c}25 0%, ${c}08 40%, transparent 70%)`,
+                      }}
+                    />
+                  )}
+
+                  {/* Icon — white when unlocked */}
+                  <div
+                    className="relative z-10"
+                    style={{ color: isUnlocked ? "#FFFFFFDD" : "rgba(255,255,255,0.2)" }}
+                  >
+                    {getAchievementIcon(achievement.icon, "h-6 w-6")}
+                  </div>
                 </div>
               </div>
 
               {/* Hover tooltip */}
               <div className="absolute -top-14 left-1/2 -translate-x-1/2 bg-black/95 text-white text-[10px] py-2 px-3 rounded-lg border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 text-center shadow-xl backdrop-blur-sm">
-                <div className="font-bold text-[11px]" style={{ color: isUnlocked ? achievement.accent : undefined }}>
+                <div className="font-bold text-[11px]" style={{ color: isUnlocked ? c : undefined }}>
                   {achievement.title}
                 </div>
                 <div className="text-white/50 mt-0.5">{achievement.description}</div>
