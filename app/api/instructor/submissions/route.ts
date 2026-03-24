@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createNotification } from "@/lib/notifications";
 import {
   getPresignedViewUrl,
   getPresignedUploadUrl,
@@ -132,6 +133,15 @@ export async function POST(request: NextRequest) {
     if (error) {
       return NextResponse.json({ error: "Failed to claim submission" }, { status: 500 });
     }
+
+    createNotification({
+      userId: submission.user_id,
+      type: "elite_claimed",
+      title: "Your Elite submission is being reviewed",
+      body: "An instructor has claimed your submission and will respond soon.",
+      link: "/fighter-elite",
+    }).catch(() => {});
+
     return NextResponse.json({ success: true });
   }
 
@@ -170,6 +180,14 @@ export async function POST(request: NextRequest) {
       console.error("Failed to respond:", error);
       return NextResponse.json({ error: "Failed to submit response" }, { status: 500 });
     }
+
+    createNotification({
+      userId: submission.user_id,
+      type: "elite_responded",
+      title: "Your Elite submission has a response!",
+      body: responseText?.trim() || "An instructor has reviewed your video.",
+      link: "/fighter-elite",
+    }).catch(() => {});
 
     return NextResponse.json({ success: true });
   }

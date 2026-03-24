@@ -15,6 +15,7 @@ import Link from "next/link";
 
 interface ShowcaseItem {
   id: string;
+  userId: string;
   displayName: string;
   role: string;
   episodeTitle: string;
@@ -135,7 +136,7 @@ export function ShowcaseTab() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="font-medium text-sm">{item.displayName}</p>
+                      <Link href={`/profile/${item.userId}`} className="font-medium text-sm hover:text-primary transition-colors">{item.displayName}</Link>
                       {item.role === "instructor" && (
                         <Badge className="text-[10px] h-4 px-1.5 bg-primary/10 text-primary border-primary/20">Coach</Badge>
                       )}

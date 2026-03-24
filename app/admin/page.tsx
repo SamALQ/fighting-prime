@@ -1,7 +1,7 @@
 import { MainLayout } from "@/components/layout/main-layout";
 import { Section } from "@/components/layout/section";
 import Link from "next/link";
-import { Users, BookOpen, Film, Newspaper, HardDrive, AlertTriangle, ClipboardCheck } from "lucide-react";
+import { Users, BookOpen, Film, Newspaper, HardDrive, AlertTriangle, ClipboardCheck, BarChart3 } from "lucide-react";
 
 export default function AdminPage() {
   return (
@@ -90,6 +90,19 @@ export default function AdminPage() {
               Browse, upload, and manage S3 media files
             </p>
           </Link>
+
+          <Link
+            href="/admin/analytics"
+            className="p-6 rounded-lg border border-border bg-card hover:border-primary/50 transition-colors group"
+          >
+            <BarChart3 className="h-8 w-8 text-primary mb-3" />
+            <h2 className="text-lg font-semibold group-hover:text-primary transition-colors">
+              Analytics
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Platform metrics, engagement, and growth data
+            </p>
+          </Link>
         </div>
 
         {/* Testing Checklist */}
@@ -160,6 +173,35 @@ export default function AdminPage() {
               <TestItem>Discussions tab: open a post and write a reply — verify the reply appears and reply count increments</TestItem>
               <TestItem>Discussions tab: filter posts by category (technique, training, etc.)</TestItem>
               <TestItem>Discussions tab: delete your own post and reply</TestItem>
+            </TestSection>
+
+            <TestSection title="Notifications">
+              <TestItem>Verify the notification bell appears in the navbar when logged in</TestItem>
+              <TestItem>As an instructor, approve an assignment — verify the student gets a notification with points info</TestItem>
+              <TestItem>As an instructor, respond to an Elite submission — verify the student gets a notification</TestItem>
+              <TestItem>Reply to a discussion post — verify the post author gets a notification</TestItem>
+              <TestItem>Click a notification to navigate to its link, verify it marks as read</TestItem>
+              <TestItem>Click &ldquo;Mark all read&rdquo; — verify all notifications become read and badge count clears</TestItem>
+            </TestSection>
+
+            <TestSection title="User Profiles">
+              <TestItem>Click any fighter name on the leaderboard — verify it opens their /profile/[id] page</TestItem>
+              <TestItem>Verify profile shows: display name, level/tier, points, watch time, episodes, assignments, streak</TestItem>
+              <TestItem>On your own profile, click the edit icon — change display name and bio, save, verify it persists</TestItem>
+              <TestItem>Click fighter names in the Showcase tab — verify they link to profiles</TestItem>
+            </TestSection>
+
+            <TestSection title="Progress & Streaks">
+              <TestItem>Watch part of an episode, go to /dashboard — verify &ldquo;Continue Watching&rdquo; section shows with progress bar</TestItem>
+              <TestItem>Verify the streak card appears on the dashboard sidebar with the current streak count</TestItem>
+              <TestItem>Watch an episode on consecutive days — verify the streak increments</TestItem>
+              <TestItem>Course progress bars should show X% on the &ldquo;My Courses&rdquo; section</TestItem>
+            </TestSection>
+
+            <TestSection title="Admin Analytics">
+              <TestItem>Go to /admin/analytics — verify all sections load: Users, Subscriptions, Engagement, Assignments, Elite, Community</TestItem>
+              <TestItem>Verify status breakdowns show colored bars for assignment and elite submission statuses</TestItem>
+              <TestItem>Verify the Analytics card appears on the /admin dashboard page</TestItem>
             </TestSection>
 
             <TestSection title="General / Existing Features">

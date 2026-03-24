@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
       const ep = sub.episodes as unknown as { title: string; slug: string; courses: { title: string; slug: string } } | null;
       return {
         id: sub.id,
+        userId: sub.user_id,
         displayName: profile?.name || "Fighter",
         role: profile?.role || "user",
         episodeTitle: ep?.title ?? "Unknown",

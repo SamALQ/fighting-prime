@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Trophy,
   Medal,
@@ -122,7 +123,7 @@ export function LeaderboardTab() {
                 )}>
                   {getInitials(entry.displayName)}
                 </div>
-                <p className={cn("font-bold text-sm truncate", isMe && "text-primary")}>{entry.displayName}</p>
+                <Link href={`/profile/${entry.userId}`} className={cn("font-bold text-sm truncate hover:text-primary transition-colors block", isMe && "text-primary")}>{entry.displayName}</Link>
                 <p className={cn("text-xs font-medium mt-0.5", tier.color)}>Lvl {entry.level} · {tier.name}</p>
                 <p className="text-2xl font-bold mt-2 text-primary">{entry.totalPoints.toLocaleString()}</p>
                 <p className="text-[10px] uppercase tracking-wider text-foreground/30 font-bold">points</p>
@@ -176,10 +177,10 @@ export function LeaderboardTab() {
                   {getInitials(entry.displayName)}
                 </div>
                 <div className="min-w-0">
-                  <p className={cn("text-sm font-medium truncate", isMe && "text-primary")}>
+                  <Link href={`/profile/${entry.userId}`} className={cn("text-sm font-medium truncate hover:text-primary transition-colors block", isMe && "text-primary")}>
                     {entry.displayName}
                     {isMe && <span className="text-primary/60 ml-1.5 text-xs">(you)</span>}
-                  </p>
+                  </Link>
                   <p className={cn("text-[11px]", tier.color)}>Lvl {entry.level} · {tier.name}</p>
                 </div>
                 {entry.role === "instructor" && (

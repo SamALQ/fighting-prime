@@ -56,6 +56,21 @@ export async function GET() {
 
   const totalPoints = watchPoints + completionPoints + assignmentPoints;
 
+  const { data: streak } = await supabase
+    .from("user_streaks")
+    .select("current_streak, longest_streak, last_active_date")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const { data: recentProgress } = await supabase
+    .from("user_progress")
+    .select("episode_id, percent_watched, watch_time_seconds, updated_at")
+    .eq("user_id", user.id)
+    .lt("percent_watched", 95)
+    .gt("percent_watched", 1)
+    .order("updated_at", { ascending: false })
+    .limit(5);
+
   return NextResponse.json({
     episodes,
     stats: {
@@ -67,7 +82,10 @@ export async function GET() {
       assignmentsSubmitted,
       assignmentsApproved,
       assignmentPoints,
+      currentStreak: streak?.current_streak ?? 0,
+      longestStreak: streak?.longest_streak ?? 0,
     },
+    continueWatching: recentProgress ?? [],
   });
 }
 
@@ -147,6 +165,41 @@ export async function POST(request: NextRequest) {
         status: "in_progress",
       });
     }
+  }
+
+  const today = new Date().toISOString().split("T")[0];
+  const { data: existingStreak } = await supabase
+    .from("user_streaks")
+    .select("current_streak, longest_streak, last_active_date")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!existingStreak) {
+    await supabase.from("user_streaks").insert({
+      user_id: user.id,
+      current_streak: 1,
+      longest_streak: 1,
+      last_active_date: today,
+    });
+  } else if (existingStreak.last_active_date !== today) {
+    const lastDate = new Date(existingStreak.last_active_date);
+    const todayDate = new Date(today);
+    const diffDays = Math.floor(
+      (todayDate.getTime() - lastDate.getTime()) / 86400000
+    );
+
+    const newStreak = diffDays === 1 ? existingStreak.current_streak + 1 : 1;
+    const newLongest = Math.max(newStreak, existingStreak.longest_streak);
+
+    await supabase
+      .from("user_streaks")
+      .update({
+        current_streak: newStreak,
+        longest_streak: newLongest,
+        last_active_date: today,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", user.id);
   }
 
   return NextResponse.json({ success: true });

@@ -27,6 +27,7 @@ import {
   X,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { NotificationBell } from "@/components/ui/notification-bell";
 import { useState, useRef, useEffect } from "react";
 import type { Course } from "@/data/courses";
 import { cn } from "@/lib/utils";
@@ -215,6 +216,7 @@ export function NavBar() {
               About
             </Link>
 
+            <NotificationBell />
             <ThemeToggle />
 
             <div className="w-8 h-8 flex items-center justify-center">

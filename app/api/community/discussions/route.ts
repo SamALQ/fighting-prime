@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createNotification } from "@/lib/notifications";
 
 const VALID_CATEGORIES = ["general", "technique", "training", "nutrition", "mindset", "gear"];
 
@@ -137,6 +138,23 @@ export async function POST(request: NextRequest) {
     if (error) {
       return NextResponse.json({ error: "Failed to reply" }, { status: 500 });
     }
+
+    const { data: post } = await supabase
+      .from("discussion_posts")
+      .select("user_id, title")
+      .eq("id", postId)
+      .single();
+
+    if (post && post.user_id !== user.id) {
+      createNotification({
+        userId: post.user_id,
+        type: "discussion_reply",
+        title: `New reply on "${post.title.slice(0, 50)}"`,
+        body: content.trim().slice(0, 100),
+        link: `/community`,
+      }).catch(() => {});
+    }
+
     return NextResponse.json(reply);
   }
 

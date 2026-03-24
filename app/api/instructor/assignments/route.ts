@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getPresignedViewUrl } from "@/lib/s3";
+import { createNotification } from "@/lib/notifications";
 
 async function requireInstructor(supabase: ReturnType<typeof createClient> extends Promise<infer T> ? T : never) {
   const {
@@ -106,6 +107,15 @@ export async function POST(request: NextRequest) {
     if (error) {
       return NextResponse.json({ error: "Failed to approve" }, { status: 500 });
     }
+
+    createNotification({
+      userId: submission.user_id,
+      type: "assignment_approved",
+      title: `Assignment approved! +${points} pts`,
+      body: feedback?.trim() || "Great work on your submission!",
+      link: "/dashboard",
+    }).catch(() => {});
+
     return NextResponse.json({ success: true, points_awarded: points });
   }
 
@@ -128,6 +138,15 @@ export async function POST(request: NextRequest) {
     if (error) {
       return NextResponse.json({ error: "Failed to update" }, { status: 500 });
     }
+
+    createNotification({
+      userId: submission.user_id,
+      type: "assignment_revision",
+      title: "Revision requested on your assignment",
+      body: feedback.trim(),
+      link: "/dashboard",
+    }).catch(() => {});
+
     return NextResponse.json({ success: true });
   }
 

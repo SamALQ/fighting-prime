@@ -12,8 +12,17 @@ export interface UserStats {
   assignmentsSubmitted: number;
   assignmentsApproved: number;
   assignmentPoints: number;
+  currentStreak: number;
+  longestStreak: number;
   coursesStarted: string[];
   achievements: string[];
+}
+
+export interface ContinueWatchingItem {
+  episode_id: string;
+  percent_watched: number;
+  watch_time_seconds: number;
+  updated_at: string;
 }
 
 const POINTS_PER_LEVEL = 1000;
@@ -45,6 +54,8 @@ export function useProgress() {
   const [episodeMap, setEpisodeMap] = useState<Record<string, EpisodeCache>>({});
   const [coursesStarted, setCoursesStarted] = useState<string[]>([]);
   const [serverAssignmentStats, setServerAssignmentStats] = useState({ submitted: 0, approved: 0, points: 0 });
+  const [serverStreakStats, setServerStreakStats] = useState({ current: 0, longest: 0 });
+  const [continueWatching, setContinueWatching] = useState<ContinueWatchingItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const pendingRef = useRef<Record<string, PendingUpdate>>({});
@@ -121,6 +132,11 @@ export function useProgress() {
           approved: data.stats?.assignmentsApproved ?? 0,
           points: data.stats?.assignmentPoints ?? 0,
         });
+        setServerStreakStats({
+          current: data.stats?.currentStreak ?? 0,
+          longest: data.stats?.longestStreak ?? 0,
+        });
+        setContinueWatching(data.continueWatching ?? []);
 
         const knownIds = Object.keys(data.episodes ?? {});
         for (const id of knownIds) {
@@ -173,10 +189,12 @@ export function useProgress() {
       assignmentsSubmitted: serverAssignmentStats.submitted,
       assignmentsApproved: serverAssignmentStats.approved,
       assignmentPoints: serverAssignmentStats.points,
+      currentStreak: serverStreakStats.current,
+      longestStreak: serverStreakStats.longest,
       coursesStarted,
       achievements: ["into-the-box"],
     };
-  }, [episodeMap, coursesStarted, serverAssignmentStats]);
+  }, [episodeMap, coursesStarted, serverAssignmentStats, serverStreakStats]);
 
   const getProgress = useCallback(
     (episodeId: string): number => episodeMapRef.current[episodeId]?.percent ?? 0,
@@ -312,6 +330,7 @@ export function useProgress() {
       Object.entries(episodeMap).map(([id, ep]) => [id, ep.watchTime])
     ),
     userStats: computeStats(),
+    continueWatching,
     isLoading,
     updateProgress,
     updateWatchTime,

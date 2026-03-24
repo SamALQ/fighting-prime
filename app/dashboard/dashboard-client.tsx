@@ -7,6 +7,8 @@ import { MyCourses } from "@/components/ui/my-courses";
 import { RecentActivity } from "@/components/ui/dashboard/recent-activity";
 import { AchievementsGrid } from "@/components/ui/dashboard/achievements-grid";
 import { SubscriptionCard } from "@/components/ui/dashboard/subscription-card";
+import { ContinueWatching } from "@/components/ui/dashboard/continue-watching";
+import { StreakCard } from "@/components/ui/dashboard/streak-card";
 import { useProgress } from "@/lib/hooks/use-progress";
 import type { Course } from "@/data/courses";
 import type { Episode } from "@/data/episodes";
@@ -47,6 +49,8 @@ export function DashboardClient({ courses, episodes }: DashboardClientProps) {
 
               <div className="h-px bg-gradient-to-r from-transparent via-primary/15 to-transparent" />
 
+              <ContinueWatching episodes={episodes} courses={courses} />
+
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
                 <div className="lg:col-span-8 space-y-12">
                   <MyCourses courses={courses} episodes={episodes} />
@@ -54,6 +58,7 @@ export function DashboardClient({ courses, episodes }: DashboardClientProps) {
                 </div>
 
                 <div className="lg:col-span-4 space-y-8">
+                  <StreakCard />
                   <SubscriptionCard />
                   <RecentActivity />
                 </div>
