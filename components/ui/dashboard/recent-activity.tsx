@@ -18,12 +18,21 @@ export function RecentActivity() {
 
   const activities: { id: string; icon: React.ReactNode; title: string; subtitle: string }[] = [];
 
-  if (userStats.assignmentsCompleted > 0) {
+  if (userStats.episodesCompleted > 0) {
     activities.push({
       id: "completions",
       icon: icons.completion,
-      title: `${userStats.assignmentsCompleted} episode${userStats.assignmentsCompleted !== 1 ? "s" : ""} completed`,
+      title: `${userStats.episodesCompleted} episode${userStats.episodesCompleted !== 1 ? "s" : ""} completed`,
       subtitle: "Keep up the great work!",
+    });
+  }
+
+  if (userStats.assignmentsApproved > 0) {
+    activities.push({
+      id: "assignments",
+      icon: icons.completion,
+      title: `${userStats.assignmentsApproved} assignment${userStats.assignmentsApproved !== 1 ? "s" : ""} approved`,
+      subtitle: `+${userStats.assignmentPoints} points earned`,
     });
   }
 

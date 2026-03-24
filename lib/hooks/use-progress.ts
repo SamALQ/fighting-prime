@@ -8,7 +8,10 @@ export interface UserStats {
   level: number;
   points: number;
   watchTime: number;
-  assignmentsCompleted: number;
+  episodesCompleted: number;
+  assignmentsSubmitted: number;
+  assignmentsApproved: number;
+  assignmentPoints: number;
   coursesStarted: string[];
   achievements: string[];
 }
@@ -41,6 +44,7 @@ export function useProgress() {
   const { user } = useAuth();
   const [episodeMap, setEpisodeMap] = useState<Record<string, EpisodeCache>>({});
   const [coursesStarted, setCoursesStarted] = useState<string[]>([]);
+  const [serverAssignmentStats, setServerAssignmentStats] = useState({ submitted: 0, approved: 0, points: 0 });
   const [isLoading, setIsLoading] = useState(true);
 
   const pendingRef = useRef<Record<string, PendingUpdate>>({});
@@ -112,6 +116,11 @@ export function useProgress() {
 
         setEpisodeMap(data.episodes ?? {});
         setCoursesStarted(data.stats?.coursesStarted ?? []);
+        setServerAssignmentStats({
+          submitted: data.stats?.assignmentsSubmitted ?? 0,
+          approved: data.stats?.assignmentsApproved ?? 0,
+          points: data.stats?.assignmentPoints ?? 0,
+        });
 
         const knownIds = Object.keys(data.episodes ?? {});
         for (const id of knownIds) {
@@ -154,17 +163,20 @@ export function useProgress() {
 
     const watchPoints = Math.floor(totalWatchTime * POINTS_PER_SECOND);
     const completionPoints = completedCount * POINTS_PER_COMPLETION;
-    const totalPoints = watchPoints + completionPoints;
+    const totalPoints = watchPoints + completionPoints + serverAssignmentStats.points;
 
     return {
       level: calculateLevel(totalPoints),
       points: totalPoints,
       watchTime: totalWatchTime,
-      assignmentsCompleted: completedCount,
+      episodesCompleted: completedCount,
+      assignmentsSubmitted: serverAssignmentStats.submitted,
+      assignmentsApproved: serverAssignmentStats.approved,
+      assignmentPoints: serverAssignmentStats.points,
       coursesStarted,
       achievements: ["into-the-box"],
     };
-  }, [episodeMap, coursesStarted]);
+  }, [episodeMap, coursesStarted, serverAssignmentStats]);
 
   const getProgress = useCallback(
     (episodeId: string): number => episodeMapRef.current[episodeId]?.percent ?? 0,

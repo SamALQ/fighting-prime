@@ -29,6 +29,7 @@ import {
   X,
   ChevronLeft,
   Crown,
+  ClipboardCheck,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -36,6 +37,7 @@ const NAV_ITEMS = [
   { href: "/instructor/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/instructor/content", label: "My Content", icon: Film },
   { href: "/instructor/submissions", label: "Elite Submissions", icon: Crown },
+  { href: "/instructor/assignments", label: "Assignments", icon: ClipboardCheck },
   { href: "/instructor/community", label: "Community", icon: MessageSquare },
   { href: "/instructor/earnings", label: "Earnings", icon: DollarSign },
   { href: "/instructor/settings", label: "Settings", icon: Settings },

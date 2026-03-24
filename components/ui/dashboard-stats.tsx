@@ -47,8 +47,8 @@ export function DashboardStats() {
     },
     {
       label: "Assignments",
-      value: userStats.assignmentsCompleted,
-      subtitle: "Submitted",
+      value: `${userStats.assignmentsApproved}/${userStats.assignmentsSubmitted}`,
+      subtitle: userStats.assignmentsSubmitted === 0 ? "None submitted" : `${userStats.assignmentPoints} pts earned`,
       icon: <CheckCircle2 className="h-5 w-5 text-primary" />,
     },
   ];

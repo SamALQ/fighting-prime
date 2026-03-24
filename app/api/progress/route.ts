@@ -35,14 +35,26 @@ export async function GET() {
 
   const watchPoints = Math.floor(totalWatchTime * 0.5);
   const completionPoints = completedCount * 100;
-  const totalPoints = watchPoints + completionPoints;
 
-  const { data: courseProgressRows } = await supabase
-    .from("user_course_progress")
-    .select("course_id")
-    .eq("user_id", user.id);
+  const [courseProgressResult, assignmentResult] = await Promise.all([
+    supabase
+      .from("user_course_progress")
+      .select("course_id")
+      .eq("user_id", user.id),
+    supabase
+      .from("assignment_submissions")
+      .select("id, episode_id, status, points_awarded")
+      .eq("user_id", user.id),
+  ]);
 
-  const coursesStarted = (courseProgressRows ?? []).map((r) => r.course_id);
+  const coursesStarted = (courseProgressResult.data ?? []).map((r) => r.course_id);
+
+  const assignments = assignmentResult.data ?? [];
+  const assignmentPoints = assignments.reduce((sum, a) => sum + (a.points_awarded ?? 0), 0);
+  const assignmentsSubmitted = assignments.filter((a) => a.status !== "uploading").length;
+  const assignmentsApproved = assignments.filter((a) => a.status === "approved").length;
+
+  const totalPoints = watchPoints + completionPoints + assignmentPoints;
 
   return NextResponse.json({
     episodes,
@@ -52,6 +64,9 @@ export async function GET() {
       totalWatchTime,
       completedCount,
       coursesStarted,
+      assignmentsSubmitted,
+      assignmentsApproved,
+      assignmentPoints,
     },
   });
 }

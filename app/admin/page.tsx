@@ -138,6 +138,17 @@ export default function AdminPage() {
               <TestItem>Upload a test file and then delete it</TestItem>
             </TestSection>
 
+            <TestSection title="Assignment Submissions & Points">
+              <TestItem>Open an MTF episode with an assignment (e.g. Stance Fundamentals) — verify the Assignment section shows with point value and upload form</TestItem>
+              <TestItem>Upload a video assignment — verify progress bar works and status shows &ldquo;Submitted — Awaiting Review&rdquo;</TestItem>
+              <TestItem>As a non-subscriber, verify the assignment section shows &ldquo;Subscribe to submit&rdquo; prompt</TestItem>
+              <TestItem>As an instructor, go to /instructor/assignments — verify the Assignments tab appears in sidebar</TestItem>
+              <TestItem>Review a pending assignment: watch the video, write feedback, and click Approve — verify points are awarded</TestItem>
+              <TestItem>Request revision on a submission — verify the student sees &ldquo;Revision Requested&rdquo; with feedback and can resubmit</TestItem>
+              <TestItem>Check /dashboard stats — verify assignment points appear in total points and the Assignments card shows approved/submitted count</TestItem>
+              <TestItem>Episodes without assignments should not show the assignment section at all</TestItem>
+            </TestSection>
+
             <TestSection title="General / Existing Features">
               <TestItem>Watch a course episode and return to /dashboard — verify it shows in &ldquo;courses in progress&rdquo;</TestItem>
               <TestItem>Test the comments section on any episode page</TestItem>

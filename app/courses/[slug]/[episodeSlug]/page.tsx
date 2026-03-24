@@ -9,6 +9,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { CommentSection } from "@/components/ui/comment-section";
+import { AssignmentUpload } from "@/components/ui/assignment-upload";
 
 interface EpisodeDetailPageProps {
   params: Promise<{ slug: string; episodeSlug: string }>;
@@ -77,15 +78,13 @@ export default async function EpisodeDetailPage({ params }: EpisodeDetailPagePro
                 </ul>
               </div>
 
-              <div className="rounded-2xl border border-foreground/[0.06] bg-foreground/[0.02] p-6">
-                <h2 className="text-xl font-bold mb-2">Assignment</h2>
-                <p className="text-foreground/50 mb-4">
-                  Practice the techniques shown in this episode and submit a video for feedback.
-                </p>
-                <Button variant="outline" disabled className="border-foreground/[0.08]">
-                  Submit Assignment (Coming Soon)
-                </Button>
-              </div>
+              {episode.hasAssignment && (
+                <AssignmentUpload
+                  episodeId={episode.id}
+                  episodeTitle={episode.title}
+                  assignmentPoints={episode.assignmentPoints ?? 0}
+                />
+              )}
 
               <div className="rounded-2xl border border-foreground/[0.06] bg-foreground/[0.02] p-6">
                 <CommentSection
