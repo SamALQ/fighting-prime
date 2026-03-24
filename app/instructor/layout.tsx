@@ -28,12 +28,14 @@ import {
   Menu,
   X,
   ChevronLeft,
+  Crown,
 } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/instructor", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/instructor/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/instructor/content", label: "My Content", icon: Film },
+  { href: "/instructor/submissions", label: "Elite Submissions", icon: Crown },
   { href: "/instructor/community", label: "Community", icon: MessageSquare },
   { href: "/instructor/earnings", label: "Earnings", icon: DollarSign },
   { href: "/instructor/settings", label: "Settings", icon: Settings },
