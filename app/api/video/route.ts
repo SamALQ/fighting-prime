@@ -95,7 +95,7 @@ async function handleEpisode(supabase: any, user: any, episodeId: string, resolu
       }
     );
   } catch (err) {
-    console.error("Failed to generate presigned URL:", err);
+    console.error("Failed to generate presigned URL:", err instanceof Error ? err.message : err);
     return NextResponse.json({
       url: episode.video_url || null,
       source: "fallback",

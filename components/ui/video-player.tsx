@@ -94,9 +94,13 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
         const params = new URLSearchParams({ episodeId: episode.id });
         if (resolution) params.set("resolution", resolution);
         const res = await fetch(`/api/video?${params}`);
-        if (!res.ok) return null;
+        if (!res.ok) {
+          console.warn(`[VideoPlayer] /api/video responded ${res.status} for episode ${episode.id}`);
+          return null;
+        }
         return await res.json();
-      } catch {
+      } catch (err) {
+        console.warn("[VideoPlayer] Failed to fetch video source:", err);
         return null;
       }
     },
@@ -458,8 +462,13 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center">
-          {isLoadingSource && (
+          {isLoadingSource ? (
             <Loader2 className="h-8 w-8 text-white/50 animate-spin" />
+          ) : (
+            <div className="text-center space-y-2 px-6">
+              <p className="text-white/50 text-sm">Video unavailable</p>
+              <p className="text-white/30 text-xs">This episode&apos;s video could not be loaded.</p>
+            </div>
           )}
         </div>
       )}
