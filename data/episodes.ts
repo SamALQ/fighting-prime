@@ -12,6 +12,7 @@ export interface Episode {
   isFree: boolean;
   premium: boolean;
   videoUrl: string;
+  description: string;
   videoResolutions: VideoResolution[];
   durationSeconds: number;
   keyTakeaways: string[];
