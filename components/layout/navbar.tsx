@@ -83,6 +83,7 @@ export function NavBar() {
     { href: "/dashboard", label: "Dashboard", auth: true },
     { href: "/courses", label: "Courses", always: true },
     { href: "/breakdowns", label: "Breakdowns", always: true },
+    { href: "/community", label: "Community", always: true },
     { href: "/pricing", label: "Pricing", always: true },
     { href: "/about", label: "About", always: true },
   ];
@@ -194,6 +195,12 @@ export function NavBar() {
               className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
             >
               Breakdowns
+            </Link>
+            <Link
+              href="/community"
+              className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
+            >
+              Community
             </Link>
             <Link
               href="/pricing"

@@ -149,6 +149,19 @@ export default function AdminPage() {
               <TestItem>Episodes without assignments should not show the assignment section at all</TestItem>
             </TestSection>
 
+            <TestSection title="Community Page">
+              <TestItem>Go to /community — verify page loads and &ldquo;Community&rdquo; link appears in the main navbar (desktop + mobile)</TestItem>
+              <TestItem>Leaderboard tab: verify it shows ranked fighters with points, levels, tiers, watch time, episodes completed, assignments approved</TestItem>
+              <TestItem>Leaderboard tab: your own row should be highlighted with &ldquo;(you)&rdquo; label</TestItem>
+              <TestItem>Leaderboard tab: top 3 podium cards render with crown/medal icons</TestItem>
+              <TestItem>Showcase tab: verify approved assignment submissions display with video player, student name, episode link, and instructor feedback</TestItem>
+              <TestItem>Showcase tab: click a card to expand the video player, click again to collapse</TestItem>
+              <TestItem>Discussions tab: create a new post with a title, content, and category — verify it appears in the list</TestItem>
+              <TestItem>Discussions tab: open a post and write a reply — verify the reply appears and reply count increments</TestItem>
+              <TestItem>Discussions tab: filter posts by category (technique, training, etc.)</TestItem>
+              <TestItem>Discussions tab: delete your own post and reply</TestItem>
+            </TestSection>
+
             <TestSection title="General / Existing Features">
               <TestItem>Watch a course episode and return to /dashboard — verify it shows in &ldquo;courses in progress&rdquo;</TestItem>
               <TestItem>Test the comments section on any episode page</TestItem>

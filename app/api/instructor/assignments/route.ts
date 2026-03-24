@@ -88,7 +88,8 @@ export async function POST(request: NextRequest) {
   }
 
   if (action === "approve") {
-    const points = submission.episodes?.assignment_points ?? 0;
+    const ep = submission.episodes as unknown as { assignment_points: number } | null;
+    const points = ep?.assignment_points ?? 0;
 
     const { error } = await supabase
       .from("assignment_submissions")
