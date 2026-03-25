@@ -57,7 +57,7 @@ export function CourseCard({ course, episodes, className }: CourseCardProps) {
     <Link href={`/courses/${course.slug}`} className={cn("group", className)}>
       <div className="rounded-2xl border border-foreground/[0.06] bg-[#111111] overflow-hidden hover:border-primary/30 transition-all duration-300 cursor-pointer h-full flex flex-col">
         {/* Poster image */}
-        <div className="relative aspect-[4/5] w-full overflow-hidden">
+        <div className="relative aspect-[3/4] w-full overflow-hidden">
           {course.posterImage ? (
             <Image
               src={course.posterImage}
