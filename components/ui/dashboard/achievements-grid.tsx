@@ -32,9 +32,7 @@ export function AchievementsGrid({ unlockedIds = [] }: { unlockedIds?: string[] 
                 )}
                 style={{
                   borderRadius: 12,
-                  background: isUnlocked
-                    ? `linear-gradient(160deg, ${c} 0%, ${c}40 50%, ${c}18 100%)`
-                    : "linear-gradient(160deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.04) 100%)",
+                  background: isUnlocked ? c : "rgba(255,255,255,0.08)",
                 }}
               >
                 {/* Inner card */}
