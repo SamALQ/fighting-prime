@@ -58,6 +58,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
 
   return (
     <MainLayout>
+      <div className="bg-black min-h-screen">
       <CourseJSONLD course={course} />
 
       {/* Cinematic splash hero */}
@@ -235,6 +236,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
           </div>
         </div>
       </Section>
+      </div>
     </MainLayout>
   );
 }
