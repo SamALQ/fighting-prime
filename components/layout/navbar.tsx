@@ -35,7 +35,7 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 
 export function NavBar() {
-  const { isLoggedIn, isLoading, logout, userEmail, role } = useAuth();
+  const { user, isLoggedIn, isLoading, logout, userEmail, role } = useAuth();
   const [isCoursesHovered, setIsCoursesHovered] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -259,6 +259,14 @@ export function NavBar() {
                         <span>Dashboard</span>
                       </Link>
                     </DropdownMenuItem>
+                    {user && (
+                      <DropdownMenuItem asChild>
+                        <Link href={`/profile/${user.id}`}>
+                          <User className="mr-2 h-4 w-4" />
+                          <span>My Profile</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     {(role === "instructor" || role === "admin") && (
                       <DropdownMenuItem asChild>
                         <Link href="/instructor">
@@ -373,6 +381,16 @@ export function NavBar() {
                       <div className="px-3 py-2 text-xs text-muted-foreground truncate">
                         {userEmail}
                       </div>
+                    )}
+                    {user && (
+                      <Link
+                        href={`/profile/${user.id}`}
+                        onClick={closeMobile}
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-colors"
+                      >
+                        <User className="h-4 w-4" />
+                        My Profile
+                      </Link>
                     )}
                     {(role === "instructor" || role === "admin") && (
                       <Link
