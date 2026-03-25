@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
       instructor_image: body.instructorImage ?? "",
       cover_image: body.coverImage ?? "",
       poster_image: body.posterImage ?? "",
+      teaser_portrait_image: body.teaserPortraitImage ?? "",
       difficulty_meter_image: body.difficultyMeterImage ?? "",
       learning_outcomes: body.learningOutcomes ?? [],
       released: body.released ?? false,
@@ -91,6 +92,7 @@ export async function PATCH(request: NextRequest) {
   if (fields.instructorImage !== undefined) updates.instructor_image = fields.instructorImage;
   if (fields.coverImage !== undefined) updates.cover_image = fields.coverImage;
   if (fields.posterImage !== undefined) updates.poster_image = fields.posterImage;
+  if (fields.teaserPortraitImage !== undefined) updates.teaser_portrait_image = fields.teaserPortraitImage;
   if (fields.difficultyMeterImage !== undefined) updates.difficulty_meter_image = fields.difficultyMeterImage;
   if (fields.learningOutcomes !== undefined) updates.learning_outcomes = fields.learningOutcomes;
   if (fields.released !== undefined) updates.released = fields.released;

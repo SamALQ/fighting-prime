@@ -163,7 +163,7 @@ export function NavBar() {
                     >
                       <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-muted">
                         <Image
-                          src={course.posterImage || course.difficultyMeterImage || course.coverImage}
+                          src={course.teaserPortraitImage || course.posterImage || course.coverImage}
                           alt={course.title}
                           fill
                           className="object-cover transition-transform duration-500 group-hover:scale-110"

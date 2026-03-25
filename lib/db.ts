@@ -27,6 +27,7 @@ function mapCourse(row: any): Course {
     },
     coverImage: row.cover_image ?? "",
     posterImage: row.poster_image ?? "",
+    teaserPortraitImage: row.teaser_portrait_image ?? "",
     difficultyMeterImage: row.difficulty_meter_image ?? "",
     learningOutcomes: row.learning_outcomes ?? [],
     released: row.released ?? false,

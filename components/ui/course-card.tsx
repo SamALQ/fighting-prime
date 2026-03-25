@@ -48,9 +48,9 @@ export function CourseCard({ course, episodes, className }: CourseCardProps) {
       <div className="relative rounded-2xl overflow-hidden h-full bg-[#0a0a0a] border border-white/[0.06] hover:border-white/[0.12] transition-all duration-500">
         {/* Full-bleed poster — cinematic ratio */}
         <div className="relative aspect-[3/4] w-full overflow-hidden">
-          {(course.posterImage || course.coverImage) ? (
+          {(course.teaserPortraitImage || course.posterImage || course.coverImage) ? (
             <Image
-              src={course.posterImage || course.coverImage}
+              src={course.teaserPortraitImage || course.posterImage || course.coverImage}
               alt={course.title}
               fill
               className="object-cover transition-all duration-700 group-hover:scale-[1.04] group-hover:brightness-110"

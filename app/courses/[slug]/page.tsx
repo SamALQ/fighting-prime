@@ -64,9 +64,9 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
       <section className="relative min-h-[85vh] flex items-end overflow-hidden">
         {/* Background poster */}
         <div className="absolute inset-0">
-          {(course.posterImage || course.coverImage) ? (
+          {(course.coverImage || course.posterImage) ? (
             <Image
-              src={course.posterImage || course.coverImage}
+              src={course.coverImage || course.posterImage}
               alt={course.title}
               fill
               className="object-cover object-top"

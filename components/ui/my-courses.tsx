@@ -80,7 +80,7 @@ export function MyCourses({ courses, episodes }: MyCoursesProps) {
                 <div className="flex flex-col md:flex-row">
                   <div className="relative w-full md:w-64 aspect-video md:aspect-square overflow-hidden">
                     <Image
-                      src={course.posterImage || course.difficultyMeterImage || course.coverImage}
+                      src={course.teaserPortraitImage || course.posterImage || course.coverImage}
                       alt={course.title}
                       fill
                       className="object-cover transition-transform group-hover:scale-105"

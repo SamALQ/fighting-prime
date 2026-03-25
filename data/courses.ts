@@ -22,5 +22,6 @@ export interface Course {
   totalPoints?: number;
   difficultyMeterImage?: string;
   posterImage?: string;
+  teaserPortraitImage?: string;
   sortOrder?: number;
 }
