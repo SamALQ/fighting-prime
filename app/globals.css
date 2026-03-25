@@ -117,10 +117,15 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    overflow-x: hidden;
+    width: 100%;
+  }
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-inter), system-ui, sans-serif;
     overflow-x: hidden;
+    width: 100%;
   }
   
   /* Apply Bruce Forever to all headings */
