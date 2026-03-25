@@ -77,6 +77,7 @@ export function HudPill() {
   const [collapsed, setCollapsed] = useState(false);
   const [leaderboardRank, setLeaderboardRank] = useState<number | null>(null);
   const [rankLoading, setRankLoading] = useState(false);
+  const rankFetchedRef = useRef(false);
   const hudRef = useRef<HTMLDivElement>(null);
 
   const prevLevelRef = useRef(0);
@@ -150,24 +151,25 @@ export function HudPill() {
     return () => document.removeEventListener("mousedown", handle);
   }, [panelOpen]);
 
-  // Fetch leaderboard rank when panel opens
+  // Fetch leaderboard rank when panel opens (once per session)
   const fetchRank = useCallback(async () => {
-    if (!user || rankLoading) return;
+    if (!user || rankFetchedRef.current) return;
+    rankFetchedRef.current = true;
     setRankLoading(true);
     try {
       const res = await fetch("/api/community/leaderboard?limit=100");
       if (res.ok) {
         const data = await res.json();
         const idx = data.leaderboard?.findIndex((e: { userId: string }) => e.userId === user.id);
-        setLeaderboardRank(idx >= 0 ? idx + 1 : null);
+        setLeaderboardRank(idx >= 0 ? idx + 1 : -1);
       }
     } catch { /* silent */ }
     setRankLoading(false);
-  }, [user, rankLoading]);
+  }, [user]);
 
   useEffect(() => {
-    if (panelOpen && leaderboardRank === null) fetchRank();
-  }, [panelOpen, leaderboardRank, fetchRank]);
+    if (panelOpen && !rankFetchedRef.current) fetchRank();
+  }, [panelOpen, fetchRank]);
 
   if (authLoading || !isLoggedIn || progressLoading) return null;
   if (HIDDEN_ROUTES.some((r) => pathname.startsWith(r))) return null;
@@ -175,7 +177,7 @@ export function HudPill() {
   const initials = (user?.email ?? "?").charAt(0).toUpperCase();
 
   return (
-    <div ref={hudRef} className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60]">
+    <div ref={hudRef} className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-[60] pb-[env(safe-area-inset-bottom)]">
       {/* Expanded stats panel */}
       <AnimatePresence>
         {panelOpen && (
@@ -184,7 +186,7 @@ export function HudPill() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ type: "spring", damping: 25, stiffness: 350 }}
-            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-80 rounded-2xl bg-black/80 backdrop-blur-2xl border border-white/[0.1] shadow-2xl shadow-black/50 overflow-hidden"
+            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-[calc(100vw-2rem)] sm:w-80 max-w-80 rounded-2xl bg-black/80 backdrop-blur-2xl border border-white/[0.1] shadow-2xl shadow-black/50 overflow-hidden"
           >
             {/* Panel header */}
             <div className="p-5 pb-4">
@@ -253,7 +255,7 @@ export function HudPill() {
                   </div>
                   <div>
                     <p className="text-xs font-bold text-white">
-                      {rankLoading ? "..." : leaderboardRank ? `#${leaderboardRank} on Leaderboard` : "Unranked"}
+                      {rankLoading ? "Loading..." : leaderboardRank && leaderboardRank > 0 ? `#${leaderboardRank} on Leaderboard` : "Unranked"}
                     </p>
                     <p className="text-[10px] text-white/30">Keep training to climb</p>
                   </div>
@@ -299,7 +301,7 @@ export function HudPill() {
         }}
         transition={{ type: "spring", damping: 22, stiffness: 300 }}
         className={cn(
-          "relative flex items-center gap-1 rounded-full border backdrop-blur-2xl shadow-2xl shadow-black/40 overflow-hidden cursor-default",
+          "relative flex items-center gap-1 rounded-full border backdrop-blur-2xl shadow-2xl shadow-black/40 overflow-hidden cursor-default max-w-[calc(100vw-2rem)]",
           "bg-black/70 border-white/[0.08]",
           hotStreak && "border-orange-500/30 shadow-orange-500/10",
         )}
@@ -314,15 +316,15 @@ export function HudPill() {
           />
         )}
 
-        <div className={cn("relative z-10 flex items-center gap-1 px-1.5 py-1.5", collapsed && "gap-0")}>
+        <div className={cn("relative z-10 flex items-center gap-1 sm:gap-1 px-1.5 py-1.5", collapsed && "gap-0")}>
           {/* Avatar with XP ring */}
           <motion.button
             onClick={() => setPanelOpen(!panelOpen)}
             whileTap={{ scale: 0.92 }}
-            className="relative h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary shrink-0 hover:bg-primary/30 transition-colors"
+            className="relative h-9 w-9 sm:h-8 sm:w-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary shrink-0 hover:bg-primary/30 transition-colors"
           >
             {initials}
-            <MiniXpRing progress={xpProgress} size={32} strokeWidth={2} />
+            <MiniXpRing progress={xpProgress} size={32} strokeWidth={2} className="sm:inset-0 inset-0.5" />
           </motion.button>
 
           <AnimatePresence>
@@ -338,7 +340,7 @@ export function HudPill() {
                 <motion.div
                   animate={levelPulse ? { scale: [1, 1.3, 1] } : {}}
                   transition={{ duration: 0.4 }}
-                  className="flex items-center gap-1 px-2 py-1 rounded-full bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
+                  className="flex items-center gap-1 px-2.5 sm:px-2 py-1.5 sm:py-1 rounded-full bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
                 >
                   <span className="text-[10px] font-black text-white/50 uppercase tracking-wider">Lvl</span>
                   <span className="text-xs font-black text-white tabular-nums">{level}</span>
@@ -349,13 +351,13 @@ export function HudPill() {
                   animate={streakPulse ? { scale: [1, 1.3, 1] } : {}}
                   transition={{ duration: 0.4 }}
                   className={cn(
-                    "flex items-center gap-1 px-2 py-1 rounded-full transition-colors",
+                    "flex items-center gap-1 px-2.5 sm:px-2 py-1.5 sm:py-1 rounded-full transition-colors",
                     userStats.currentStreak > 0
                       ? "bg-orange-500/[0.08] hover:bg-orange-500/[0.15]"
                       : "bg-white/[0.04] hover:bg-white/[0.08]"
                   )}
                 >
-                  <Flame className={cn("h-3 w-3", userStats.currentStreak > 0 ? "text-orange-500" : "text-white/30")} />
+                  <Flame className={cn("h-3.5 w-3.5 sm:h-3 sm:w-3", userStats.currentStreak > 0 ? "text-orange-500" : "text-white/30")} />
                   <span className={cn("text-xs font-bold tabular-nums", userStats.currentStreak > 0 ? "text-orange-400" : "text-white/30")}>
                     {userStats.currentStreak}
                   </span>
@@ -368,15 +370,15 @@ export function HudPill() {
                 >
                   <Link
                     href="/dashboard"
-                    className="relative flex items-center justify-center h-7 w-7 rounded-full bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
+                    className="relative flex items-center justify-center h-8 w-8 sm:h-7 sm:w-7 rounded-full bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
                   >
-                    <Bell className="h-3 w-3 text-white/40" />
+                    <Bell className="h-3.5 w-3.5 sm:h-3 sm:w-3 text-white/40" />
                     {unreadCount > 0 && (
                       <motion.span
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={{ type: "spring", damping: 12, stiffness: 400 }}
-                        className="absolute -top-0.5 -right-0.5 h-3.5 min-w-[14px] rounded-full bg-primary text-[8px] font-bold text-white flex items-center justify-center px-0.5"
+                        className="absolute -top-0.5 -right-0.5 h-4 min-w-[16px] sm:h-3.5 sm:min-w-[14px] rounded-full bg-primary text-[9px] sm:text-[8px] font-bold text-white flex items-center justify-center px-0.5"
                       >
                         {unreadCount > 9 ? "9+" : unreadCount}
                       </motion.span>
@@ -386,8 +388,8 @@ export function HudPill() {
 
                 {/* DMs placeholder */}
                 <div className="group relative">
-                  <div className="flex items-center justify-center h-7 w-7 rounded-full bg-white/[0.04] cursor-not-allowed">
-                    <MessageCircle className="h-3 w-3 text-white/20" />
+                  <div className="flex items-center justify-center h-8 w-8 sm:h-7 sm:w-7 rounded-full bg-white/[0.04] cursor-not-allowed">
+                    <MessageCircle className="h-3.5 w-3.5 sm:h-3 sm:w-3 text-white/20" />
                   </div>
                   <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-lg bg-black/90 border border-white/10 text-[10px] font-bold text-white/50 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                     Coming Soon
