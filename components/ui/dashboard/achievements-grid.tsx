@@ -45,7 +45,7 @@ export function AchievementsGrid({ unlockedIds = [] }: { unlockedIds?: string[] 
                     <div
                       className="absolute inset-0"
                       style={{
-                        background: `linear-gradient(135deg, ${c}25 0%, ${c}08 40%, transparent 70%)`,
+                        background: `linear-gradient(135deg, color-mix(in srgb, ${c} 85%, #0C0C0C) 0%, color-mix(in srgb, ${c} 28%, #0C0C0C) 32%, color-mix(in srgb, ${c} 8%, #070707) 55%, #050505 100%)`,
                       }}
                     />
                   )}
