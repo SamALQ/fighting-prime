@@ -6,7 +6,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
       <NavBar />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 pb-20 sm:pb-16">{children}</main>
       <Footer />
       <HudPill />
     </div>

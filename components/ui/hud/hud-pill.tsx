@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
-import { Flame, Bell, MessageCircle, Trophy, Clock, CheckCircle2, ChevronUp, ExternalLink } from "lucide-react";
+import { Flame, Bell, MessageCircle, Trophy, Clock, CheckCircle2, ChevronUp, ExternalLink, X } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useProgress } from "@/lib/hooks/use-progress";
 import { useHudNotifications } from "./use-hud-notifications";
@@ -141,14 +142,12 @@ export function HudPill() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close panel on outside click
+  // Close panel on Escape key
   useEffect(() => {
     if (!panelOpen) return;
-    const handle = (e: MouseEvent) => {
-      if (hudRef.current && !hudRef.current.contains(e.target as Node)) setPanelOpen(false);
-    };
-    document.addEventListener("mousedown", handle);
-    return () => document.removeEventListener("mousedown", handle);
+    const handle = (e: KeyboardEvent) => { if (e.key === "Escape") setPanelOpen(false); };
+    document.addEventListener("keydown", handle);
+    return () => document.removeEventListener("keydown", handle);
   }, [panelOpen]);
 
   // Fetch leaderboard rank when panel opens (once per session)
@@ -176,122 +175,164 @@ export function HudPill() {
 
   const initials = (user?.email ?? "?").charAt(0).toUpperCase();
 
-  return (
-    <div ref={hudRef} className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-[60] pb-[env(safe-area-inset-bottom)]">
-      {/* Expanded stats panel */}
-      <AnimatePresence>
-        {panelOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            transition={{ type: "spring", damping: 25, stiffness: 350 }}
-            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-[calc(100vw-2rem)] sm:w-80 max-w-80 rounded-2xl bg-black/80 backdrop-blur-2xl border border-white/[0.1] shadow-2xl shadow-black/50 overflow-hidden"
-          >
-            {/* Panel header */}
-            <div className="p-5 pb-4">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="relative h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center text-lg font-bold text-primary shrink-0">
-                  {initials}
-                  <MiniXpRing progress={xpProgress} size={48} strokeWidth={2.5} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-white text-sm truncate">{user?.email?.split("@")[0] ?? "Fighter"}</p>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className={cn("text-[10px] font-black uppercase tracking-wider", tier.color)}>
-                      Lvl {level} · {tier.name}
-                    </span>
-                  </div>
-                </div>
-                <Link
-                  href={`/profile/${user?.id}`}
-                  onClick={() => setPanelOpen(false)}
-                  className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors"
-                >
-                  <ExternalLink className="h-3.5 w-3.5 text-white/40" />
-                </Link>
-              </div>
-
-              {/* XP bar */}
-              <div className="mb-4">
-                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-white/30 mb-1.5">
-                  <span><AnimatedNumber value={pointsInLevel} /> / {POINTS_PER_LEVEL} XP</span>
-                  <span>Level {level + 1}</span>
-                </div>
-                <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-                  <motion.div
-                    className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${xpProgress}%` }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                  />
-                </div>
-              </div>
-
-              {/* Quick stats */}
-              <div className="grid grid-cols-3 gap-2 mb-4">
-                <div className="rounded-xl bg-white/[0.04] p-2.5 text-center">
-                  <Trophy className="h-3.5 w-3.5 text-primary mx-auto mb-1" />
-                  <p className="text-sm font-bold text-white"><AnimatedNumber value={points} /></p>
-                  <p className="text-[9px] text-white/30 uppercase tracking-wider font-bold">Points</p>
-                </div>
-                <div className="rounded-xl bg-white/[0.04] p-2.5 text-center">
-                  <Clock className="h-3.5 w-3.5 text-blue-400 mx-auto mb-1" />
-                  <p className="text-sm font-bold text-white">{formatTime(userStats.watchTime)}</p>
-                  <p className="text-[9px] text-white/30 uppercase tracking-wider font-bold">Watch</p>
-                </div>
-                <div className="rounded-xl bg-white/[0.04] p-2.5 text-center">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500 mx-auto mb-1" />
-                  <p className="text-sm font-bold text-white">{userStats.episodesCompleted}</p>
-                  <p className="text-[9px] text-white/30 uppercase tracking-wider font-bold">Done</p>
-                </div>
-              </div>
-
-              {/* Leaderboard rank */}
-              <div className="flex items-center justify-between rounded-xl bg-white/[0.04] px-3 py-2.5">
-                <div className="flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <ChevronUp className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-white">
-                      {rankLoading ? "Loading..." : leaderboardRank && leaderboardRank > 0 ? `#${leaderboardRank} on Leaderboard` : "Unranked"}
-                    </p>
-                    <p className="text-[10px] text-white/30">Keep training to climb</p>
-                  </div>
-                </div>
-                <Link
-                  href="/community"
-                  onClick={() => setPanelOpen(false)}
-                  className="text-[10px] font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-wider"
-                >
-                  View
-                </Link>
-              </div>
+  const panelContent = (
+    <>
+      {/* Panel header */}
+      <div className="p-5 pb-4">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="relative h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center text-lg font-bold text-primary shrink-0">
+            {initials}
+            <MiniXpRing progress={xpProgress} size={48} strokeWidth={2.5} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-white text-sm truncate">{user?.email?.split("@")[0] ?? "Fighter"}</p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className={cn("text-[10px] font-black uppercase tracking-wider", tier.color)}>
+                Lvl {level} · {tier.name}
+              </span>
             </div>
+          </div>
+          <Link
+            href={`/profile/${user?.id}`}
+            onClick={() => setPanelOpen(false)}
+            className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors"
+          >
+            <ExternalLink className="h-3.5 w-3.5 text-white/40" />
+          </Link>
+        </div>
 
-            {/* Streak section */}
-            {userStats.currentStreak > 0 && (
-              <div className="px-5 pb-4">
-                <div className="flex items-center gap-2.5 rounded-xl bg-orange-500/[0.06] border border-orange-500/10 px-3 py-2.5">
-                  <Flame className="h-5 w-5 text-orange-500" />
-                  <div className="flex-1">
-                    <p className="text-xs font-bold text-white">{userStats.currentStreak}-day streak</p>
-                    <p className="text-[10px] text-white/30">Longest: {userStats.longestStreak}d</p>
-                  </div>
-                  {userStats.streakMultiplier > 1 && (
-                    <span className="text-[10px] font-black text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full">
-                      {userStats.streakMultiplier}x
-                    </span>
-                  )}
-                </div>
-              </div>
+        {/* XP bar */}
+        <div className="mb-4">
+          <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-white/30 mb-1.5">
+            <span><AnimatedNumber value={pointsInLevel} /> / {POINTS_PER_LEVEL} XP</span>
+            <span>Level {level + 1}</span>
+          </div>
+          <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+            <motion.div
+              className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70"
+              initial={{ width: 0 }}
+              animate={{ width: `${xpProgress}%` }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+            />
+          </div>
+        </div>
+
+        {/* Quick stats */}
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <div className="rounded-xl bg-white/[0.04] p-2.5 text-center">
+            <Trophy className="h-3.5 w-3.5 text-primary mx-auto mb-1" />
+            <p className="text-sm font-bold text-white"><AnimatedNumber value={points} /></p>
+            <p className="text-[9px] text-white/30 uppercase tracking-wider font-bold">Points</p>
+          </div>
+          <div className="rounded-xl bg-white/[0.04] p-2.5 text-center">
+            <Clock className="h-3.5 w-3.5 text-blue-400 mx-auto mb-1" />
+            <p className="text-sm font-bold text-white">{formatTime(userStats.watchTime)}</p>
+            <p className="text-[9px] text-white/30 uppercase tracking-wider font-bold">Watch</p>
+          </div>
+          <div className="rounded-xl bg-white/[0.04] p-2.5 text-center">
+            <CheckCircle2 className="h-3.5 w-3.5 text-green-500 mx-auto mb-1" />
+            <p className="text-sm font-bold text-white">{userStats.episodesCompleted}</p>
+            <p className="text-[9px] text-white/30 uppercase tracking-wider font-bold">Done</p>
+          </div>
+        </div>
+
+        {/* Leaderboard rank */}
+        <div className="flex items-center justify-between rounded-xl bg-white/[0.04] px-3 py-2.5">
+          <div className="flex items-center gap-2">
+            <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
+              <ChevronUp className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-white">
+                {rankLoading ? "Loading..." : leaderboardRank && leaderboardRank > 0 ? `#${leaderboardRank} on Leaderboard` : "Unranked"}
+              </p>
+              <p className="text-[10px] text-white/30">Keep training to climb</p>
+            </div>
+          </div>
+          <Link
+            href="/community"
+            onClick={() => setPanelOpen(false)}
+            className="text-[10px] font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-wider"
+          >
+            View
+          </Link>
+        </div>
+      </div>
+
+      {/* Streak section */}
+      {userStats.currentStreak > 0 && (
+        <div className="px-5 pb-4">
+          <div className="flex items-center gap-2.5 rounded-xl bg-orange-500/[0.06] border border-orange-500/10 px-3 py-2.5">
+            <Flame className="h-5 w-5 text-orange-500" />
+            <div className="flex-1">
+              <p className="text-xs font-bold text-white">{userStats.currentStreak}-day streak</p>
+              <p className="text-[10px] text-white/30">Longest: {userStats.longestStreak}d</p>
+            </div>
+            {userStats.streakMultiplier > 1 && (
+              <span className="text-[10px] font-black text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full">
+                {userStats.streakMultiplier}x
+              </span>
             )}
-          </motion.div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  return (
+    <>
+      {/* Stats panel — bottom sheet on mobile, floating card on desktop */}
+      <AnimatePresence>
+        {panelOpen && createPortal(
+          <>
+            {/* Backdrop (mobile only: visible overlay; desktop: transparent click-catcher) */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[59] bg-black/60 sm:bg-transparent"
+              onClick={() => setPanelOpen(false)}
+            />
+
+            {/* Mobile bottom sheet */}
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 350 }}
+              className="fixed inset-x-0 bottom-0 z-[61] sm:hidden max-h-[85vh] flex flex-col rounded-t-2xl bg-[#111] border-t border-white/[0.1] shadow-2xl overflow-hidden"
+              style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+            >
+              {/* Drag handle + close */}
+              <div className="flex items-center justify-between px-5 pt-3 pb-1 shrink-0">
+                <div className="w-10 h-1 rounded-full bg-white/20 mx-auto" />
+                <button onClick={() => setPanelOpen(false)} className="absolute right-4 top-3 h-8 w-8 rounded-full bg-white/[0.06] flex items-center justify-center">
+                  <X className="h-4 w-4 text-white/40" />
+                </button>
+              </div>
+              <div className="overflow-y-auto flex-1 overscroll-contain">
+                {panelContent}
+              </div>
+            </motion.div>
+
+            {/* Desktop floating card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              transition={{ type: "spring", damping: 25, stiffness: 350 }}
+              className="hidden sm:block fixed bottom-20 left-1/2 -translate-x-1/2 z-[61] w-80 rounded-2xl bg-black/80 backdrop-blur-2xl border border-white/[0.1] shadow-2xl shadow-black/50 overflow-hidden"
+            >
+              {panelContent}
+            </motion.div>
+          </>,
+          document.body
         )}
       </AnimatePresence>
 
       {/* Main pill */}
+      <div ref={hudRef} className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-[60] pb-[env(safe-area-inset-bottom)]">
       <motion.div
         initial={{ y: 80, opacity: 0 }}
         animate={{
@@ -401,5 +442,6 @@ export function HudPill() {
         </div>
       </motion.div>
     </div>
+    </>
   );
 }
