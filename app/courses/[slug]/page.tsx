@@ -66,7 +66,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
         <div className="absolute inset-0">
           {(course.coverImage || course.posterImage) ? (
             <Image
-              src={course.coverImage || course.posterImage}
+              src={(course.coverImage || course.posterImage)!}
               alt={course.title}
               fill
               className="object-cover object-top"
