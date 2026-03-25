@@ -6,7 +6,7 @@ import { useProgress } from "@/lib/hooks/use-progress";
 import type { Course, Difficulty } from "@/data/courses";
 import type { Episode } from "@/data/episodes";
 import { cn } from "@/lib/utils";
-import { Sparkles, User } from "lucide-react";
+import { Sparkles, User, Play } from "lucide-react";
 import { useMemo } from "react";
 
 interface CourseCardProps {
@@ -15,19 +15,19 @@ interface CourseCardProps {
   className?: string;
 }
 
-const difficultyConfig: Record<Difficulty, { label: string; color: string; dots: number }> = {
-  Beginner: { label: "Beginner", color: "bg-green-500", dots: 1 },
-  Intermediate: { label: "Intermediate", color: "bg-yellow-500", dots: 2 },
-  Advanced: { label: "Advanced", color: "bg-red-500", dots: 3 },
-  Professional: { label: "Pro", color: "bg-purple-500", dots: 4 },
+const difficultyConfig: Record<Difficulty, { color: string; glow: string; dots: number }> = {
+  Beginner: { color: "bg-green-500", glow: "shadow-green-500/30", dots: 1 },
+  Intermediate: { color: "bg-yellow-500", glow: "shadow-yellow-500/30", dots: 2 },
+  Advanced: { color: "bg-red-500", glow: "shadow-red-500/30", dots: 3 },
+  Professional: { color: "bg-purple-500", glow: "shadow-purple-500/30", dots: 4 },
 };
 
 function formatTotalDuration(episodes: Episode[]): string {
   const totalSec = episodes.reduce((s, e) => s + e.durationSeconds, 0);
   const hours = Math.floor(totalSec / 3600);
   const minutes = Math.floor((totalSec % 3600) / 60);
-  if (hours > 0) return minutes > 0 ? `${hours} HR, ${minutes} MIN` : `${hours} HR`;
-  return `${minutes} MIN`;
+  if (hours > 0) return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+  return `${minutes}m`;
 }
 
 function isNewRelease(releaseDate?: string): boolean {
@@ -43,165 +43,148 @@ export function CourseCard({ course, episodes, className }: CourseCardProps) {
   const duration = useMemo(() => formatTotalDuration(episodes), [episodes]);
   const newRelease = isNewRelease(course.releaseDate);
 
-  const badgeLabel = newRelease
-    ? "NEW RELEASE"
-    : course.releaseDate
-      ? new Date(course.releaseDate).toLocaleDateString("en-US", {
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        }).toUpperCase()
-      : null;
-
   return (
-    <Link href={`/courses/${course.slug}`} className={cn("group", className)}>
-      <div className="rounded-2xl border border-foreground/[0.06] bg-[#111111] overflow-hidden hover:border-primary/30 transition-all duration-300 cursor-pointer h-full flex flex-col">
-        {/* Poster image */}
+    <Link href={`/courses/${course.slug}`} className={cn("group block", className)}>
+      <div className="relative rounded-2xl overflow-hidden h-full bg-[#0a0a0a] border border-white/[0.06] hover:border-white/[0.12] transition-all duration-500">
+        {/* Full-bleed poster — cinematic ratio */}
         <div className="relative aspect-[3/4] w-full overflow-hidden">
-          {course.posterImage ? (
+          {(course.posterImage || course.coverImage) ? (
             <Image
-              src={course.posterImage}
+              src={course.posterImage || course.coverImage}
               alt={course.title}
               fill
-              className="object-cover group-hover:scale-105 transition-transform duration-500"
-              unoptimized
-            />
-          ) : course.coverImage ? (
-            <Image
-              src={course.coverImage}
-              alt={course.title}
-              fill
-              className="object-cover group-hover:scale-105 transition-transform duration-500"
+              className="object-cover transition-all duration-700 group-hover:scale-[1.04] group-hover:brightness-110"
               unoptimized
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-foreground/[0.08] to-background flex items-center justify-center">
-              <span className="text-5xl font-black text-foreground/[0.06] uppercase">
-                {course.title.charAt(0)}
-              </span>
-            </div>
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-[#0a0a0a] to-[#0a0a0a]" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#111111] via-[#111111]/40 to-transparent" />
 
-          {/* Badge overlay */}
-          {badgeLabel && (
-            <div className="absolute bottom-4 left-4 z-10">
-              <span
-                className={cn(
-                  "inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-md border",
-                  newRelease
-                    ? "bg-green-500/20 text-green-400 border-green-500/40"
-                    : "bg-foreground/10 text-foreground/70 border-foreground/20"
-                )}
-              >
-                {badgeLabel}
-              </span>
-            </div>
-          )}
-        </div>
+          {/* Cinematic gradient overlay — heavier at bottom for text legibility */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/60 to-transparent opacity-90" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
 
-        {/* Content */}
-        <div className="px-5 pt-4 pb-2 flex-1 flex flex-col">
-          {/* Difficulty indicator */}
-          <div className="flex items-end gap-2 mb-2">
-            {course.difficultyMeterImage ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={course.difficultyMeterImage}
-                alt={`${course.difficulty} difficulty`}
-                width={80}
-                height={20}
-                className="block h-[22px] w-auto shrink-0 object-contain object-bottom"
-                loading="lazy"
-                decoding="async"
-              />
-            ) : (
-              <span className="flex gap-0.5 items-end pb-px">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <span
-                    key={i}
-                    className={cn(
-                      "h-1.5 w-1.5 rounded-full shrink-0",
-                      i < diff.dots ? diff.color : "bg-foreground/[0.1]"
-                    )}
-                  />
-                ))}
+          {/* Subtle vignette */}
+          <div className="absolute inset-0 shadow-[inset_0_0_80px_rgba(0,0,0,0.5)]" />
+
+          {/* Accent glow on hover — emanates from bottom */}
+          <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-primary/0 group-hover:bg-primary/20 rounded-full blur-3xl transition-all duration-700" />
+
+          {/* Top badge row */}
+          <div className="absolute top-0 left-0 right-0 z-20 p-4 flex items-start justify-between">
+            {newRelease && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-500/20 backdrop-blur-md border border-green-500/30 text-[10px] font-black uppercase tracking-wider text-green-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
+                New
               </span>
             )}
-            <span className="text-[11px] font-bold uppercase tracking-wide text-foreground/40 leading-none">
-              {course.difficulty}
-            </span>
-          </div>
-
-          <h3 className="font-black text-xl uppercase tracking-tight leading-tight mb-2 group-hover:text-primary transition-colors">
-            {course.title}
-          </h3>
-
-          <p className="text-sm text-foreground/45 leading-relaxed mb-4 line-clamp-2">
-            {course.tagline}
-          </p>
-
-          {/* Primary divider */}
-          <div className="w-16 h-[2px] bg-primary/60 mb-4" />
-
-          {/* Instructor */}
-          <div className="flex items-center gap-2 mb-4">
-            {course.instructor.image ? (
-              <Image
-                src={course.instructor.image}
-                alt={course.instructor.name}
-                width={22}
-                height={22}
-                className="rounded-full object-cover"
-                unoptimized
-              />
-            ) : (
-              <div className="h-[22px] w-[22px] rounded-full bg-foreground/[0.08] flex items-center justify-center">
-                <User className="h-3 w-3 text-foreground/40" />
-              </div>
-            )}
-            <span className="text-xs text-foreground/40">{course.instructor.name}</span>
-          </div>
-
-          {/* Meta pills */}
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            <span className="inline-flex items-center rounded-md border border-foreground/[0.1] bg-foreground/[0.04] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-foreground/50">
-              {episodes.length} {episodes.length === 1 ? "EPISODE" : "EPISODES"}
-            </span>
-            <span className="inline-flex items-center rounded-md border border-foreground/[0.1] bg-foreground/[0.04] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-foreground/50">
-              {duration}
-            </span>
             {(course.totalPoints ?? 0) > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-md border border-foreground/[0.1] bg-foreground/[0.04] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-foreground/50">
-                <Sparkles className="h-3 w-3 text-primary/60" />
-                {course.totalPoints} POINTS
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-[10px] font-bold text-white/70 ml-auto">
+                <Sparkles className="h-3 w-3 text-primary" />
+                {course.totalPoints}
               </span>
             )}
           </div>
 
-          {/* Progress bar (only when started) */}
-          {progress > 0 && (
-            <div className="mb-4 mt-auto">
-              <div className="flex items-center justify-between text-[11px] mb-1.5">
-                <span className="font-bold text-foreground/40 uppercase tracking-wide">Progress</span>
-                <span className="font-black text-primary/70">{progress}%</span>
-              </div>
-              <div className="h-1.5 w-full rounded-full bg-foreground/[0.06] overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-primary transition-all duration-500"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
+          {/* Play icon on hover */}
+          <div className="absolute inset-0 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500">
+            <div className="h-14 w-14 rounded-full bg-primary/90 backdrop-blur-sm flex items-center justify-center shadow-2xl shadow-primary/40 scale-75 group-hover:scale-100 transition-transform duration-500">
+              <Play className="h-6 w-6 text-white fill-white ml-0.5" />
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* CTA button */}
-        <div className="px-5 pb-5">
-          <div className="flex items-center justify-center py-3 rounded-xl bg-primary text-white text-sm font-black uppercase tracking-wider group-hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
-            {progress > 0 ? "Continue" : "Watch Now"}
+          {/* Bottom content zone — sits on the gradient */}
+          <div className="absolute bottom-0 left-0 right-0 z-20 p-5 pb-4">
+            {/* Difficulty */}
+            <div className="flex items-end gap-2 mb-2.5">
+              {course.difficultyMeterImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={course.difficultyMeterImage}
+                  alt={`${course.difficulty} difficulty`}
+                  width={80}
+                  height={20}
+                  className="block h-5 w-auto shrink-0 object-contain object-bottom drop-shadow-lg"
+                  loading="lazy"
+                  decoding="async"
+                />
+              ) : (
+                <span className="flex gap-0.5 items-end pb-px">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <span
+                      key={i}
+                      className={cn(
+                        "h-1.5 w-1.5 rounded-full shrink-0",
+                        i < diff.dots ? diff.color : "bg-white/[0.15]"
+                      )}
+                    />
+                  ))}
+                </span>
+              )}
+              <span className="text-[10px] font-bold uppercase tracking-widest text-white/50 leading-none">
+                {course.difficulty}
+              </span>
+            </div>
+
+            {/* Title */}
+            <h3 className="font-black text-[22px] uppercase tracking-tight leading-[1.1] text-white mb-2 drop-shadow-lg group-hover:text-primary transition-colors duration-300">
+              {course.title}
+            </h3>
+
+            {/* Tagline */}
+            <p className="text-[13px] text-white/40 leading-relaxed line-clamp-2 mb-3">
+              {course.tagline}
+            </p>
+
+            {/* Divider */}
+            <div className="w-10 h-[2px] bg-primary mb-3 group-hover:w-16 transition-all duration-500" />
+
+            {/* Meta row */}
+            <div className="flex items-center gap-3 text-[11px] text-white/35">
+              {/* Instructor */}
+              <div className="flex items-center gap-1.5">
+                {course.instructor.image ? (
+                  <Image
+                    src={course.instructor.image}
+                    alt={course.instructor.name}
+                    width={18}
+                    height={18}
+                    className="rounded-full object-cover ring-1 ring-white/10"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="h-[18px] w-[18px] rounded-full bg-white/[0.08] flex items-center justify-center ring-1 ring-white/10">
+                    <User className="h-2.5 w-2.5 text-white/40" />
+                  </div>
+                )}
+                <span className="font-medium">{course.instructor.name}</span>
+              </div>
+
+              <span className="text-white/15">|</span>
+              <span className="font-semibold">{episodes.length} ep</span>
+              <span className="text-white/15">|</span>
+              <span className="font-semibold">{duration}</span>
+            </div>
           </div>
         </div>
+
+        {/* Progress strip — sits flush below the poster */}
+        {progress > 0 ? (
+          <div className="px-4 py-3 bg-[#0a0a0a]">
+            <div className="flex items-center justify-between text-[10px] mb-1.5">
+              <span className="font-bold uppercase tracking-widest text-white/30">Progress</span>
+              <span className="font-black text-primary tabular-nums">{progress}%</span>
+            </div>
+            <div className="h-1 w-full rounded-full bg-white/[0.06] overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-primary to-primary/80 transition-all duration-700"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="h-1 w-full bg-gradient-to-r from-transparent via-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        )}
       </div>
     </Link>
   );
