@@ -170,7 +170,7 @@ export function CourseCard({ course, episodes, className }: CourseCardProps) {
 
         {/* Progress strip — sits flush below the poster */}
         {progress > 0 ? (
-          <div className="px-4 py-3 bg-[#0a0a0a]">
+          <div className="px-4 pt-3 pb-5 bg-[#0a0a0a]">
             <div className="flex items-center justify-between text-[10px] mb-1.5">
               <span className="font-bold uppercase tracking-widest text-white/30">Progress</span>
               <span className="font-black text-primary tabular-nums">{progress}%</span>
