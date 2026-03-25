@@ -27,9 +27,12 @@ export interface ContinueWatchingItem {
   updated_at: string;
 }
 
-const POINTS_PER_LEVEL = 1000;
-const POINTS_PER_SECOND = 0.5;
-const POINTS_PER_COMPLETION = 100;
+import {
+  getLevelFromPoints,
+  POINTS_PER_SECOND,
+  POINTS_PER_COMPLETION,
+} from "@/lib/gamification";
+
 const FLUSH_INTERVAL_MS = 5_000;
 
 interface EpisodeCache {
@@ -174,9 +177,6 @@ export function useProgress() {
     };
   }, [user, flush]);
 
-  const calculateLevel = (points: number) =>
-    Math.floor(points / POINTS_PER_LEVEL) + 1;
-
   const computeStats = useCallback((): UserStats => {
     let totalWatchTime = 0;
     let completedCount = 0;
@@ -186,10 +186,11 @@ export function useProgress() {
       if (ep.completed) completedCount++;
     }
 
-    const watchPoints = Math.floor(totalWatchTime * POINTS_PER_SECOND);
+    const streakMult = serverStreakStats.multiplier;
+    const watchPoints = Math.floor(totalWatchTime * POINTS_PER_SECOND * streakMult);
     const completionPoints = completedCount * POINTS_PER_COMPLETION;
     const totalPoints = watchPoints + completionPoints + serverAssignmentStats.points;
-    const newLevel = calculateLevel(totalPoints);
+    const newLevel = getLevelFromPoints(totalPoints);
 
     if (prevLevelRef.current > 0 && newLevel > prevLevelRef.current) {
       setLevelUpFrom(prevLevelRef.current);

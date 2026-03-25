@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getLevelFromPoints } from "@/lib/gamification";
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest) {
       leaderboard.push({
         userId,
         totalPoints,
-        level: Math.floor(totalPoints / 1000) + 1,
+        level: getLevelFromPoints(totalPoints),
         watchTime: progress.watchTime,
         completedEpisodes: progress.completedEpisodes,
         assignmentsApproved: assignments.count,

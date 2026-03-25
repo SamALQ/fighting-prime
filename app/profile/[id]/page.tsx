@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
+import { getTier, getNextTier, getLevelsToNextTier, getXpProgress, getPointsToNextLevel } from "@/lib/gamification";
 
 interface ProfileData {
   profile: {
@@ -43,14 +44,6 @@ interface ProfileData {
     currentStreak: number;
     longestStreak: number;
   };
-}
-
-function getTier(level: number) {
-  if (level >= 50) return { name: "Diamond", color: "text-cyan-400", bg: "bg-cyan-400/10 border-cyan-400/20" };
-  if (level >= 30) return { name: "Gold", color: "text-yellow-400", bg: "bg-yellow-400/10 border-yellow-400/20" };
-  if (level >= 20) return { name: "Silver", color: "text-gray-300", bg: "bg-gray-300/10 border-gray-300/20" };
-  if (level >= 10) return { name: "Bronze", color: "text-amber-600", bg: "bg-amber-600/10 border-amber-600/20" };
-  return { name: "Rookie", color: "text-foreground/40", bg: "bg-foreground/[0.04] border-foreground/[0.08]" };
 }
 
 function formatTime(seconds: number) {
@@ -172,8 +165,10 @@ export default function ProfilePage() {
 
   const { profile, stats } = data;
   const tier = getTier(stats.level);
-  const pointsInLevel = stats.totalPoints % 1000;
-  const progressPct = (pointsInLevel / 1000) * 100;
+  const nextTier = getNextTier(stats.level);
+  const levelsToNextTier = getLevelsToNextTier(stats.level);
+  const progressPct = getXpProgress(stats.totalPoints);
+  const pointsToNext = getPointsToNextLevel(stats.totalPoints);
 
   const statCards = [
     { label: "Total Points", value: stats.totalPoints.toLocaleString(), icon: Trophy, color: "text-primary" },
@@ -191,7 +186,7 @@ export default function ProfilePage() {
           <div className="max-w-3xl mx-auto space-y-8">
             {/* Header */}
             <div className="rounded-2xl border border-foreground/[0.06] bg-foreground/[0.02] p-8 text-center relative">
-              <div className="h-20 w-20 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center text-2xl font-bold text-primary mx-auto mb-4">
+              <div className="h-20 w-20 rounded-full border-2 flex items-center justify-center text-2xl font-bold mx-auto mb-4" style={{ color: tier.color, backgroundColor: `${tier.color}15`, borderColor: `${tier.color}40` }}>
                 {getInitials(profile.displayName)}
               </div>
 
@@ -231,7 +226,7 @@ export default function ProfilePage() {
                     {profile.role === "admin" && (
                       <Badge className="bg-red-500/10 text-red-400 border-red-500/20 text-xs">Admin</Badge>
                     )}
-                    <Badge className={cn("text-xs border", tier.bg, tier.color)}>
+                    <Badge className="text-xs border" style={{ color: tier.color, backgroundColor: `${tier.color}15`, borderColor: `${tier.color}30` }}>
                       Lvl {stats.level} · {tier.name}
                     </Badge>
                   </div>
@@ -269,14 +264,20 @@ export default function ProfilePage() {
               )}
 
               {/* Level progress bar */}
-              <div className="mt-6 max-w-xs mx-auto">
+              <div className="mt-6 max-w-sm mx-auto">
                 <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-foreground/30 mb-1">
                   <span>Level {stats.level}</span>
-                  <span>{1000 - pointsInLevel} pts to level {stats.level + 1}</span>
+                  <span>{pointsToNext} pts to level {stats.level + 1}</span>
                 </div>
                 <div className="h-1.5 bg-foreground/[0.06] rounded-full overflow-hidden">
-                  <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: `${progressPct}%` }} />
+                  <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progressPct}%`, backgroundColor: tier.color }} />
                 </div>
+                {nextTier && levelsToNextTier !== null && (
+                  <p className="text-[10px] text-foreground/25 mt-2 text-center">
+                    <span style={{ color: nextTier.color }} className="font-bold">{nextTier.name}</span>
+                    {" "}tier in {levelsToNextTier} levels — {nextTier.rewardDescription}
+                  </p>
+                )}
               </div>
             </div>
 

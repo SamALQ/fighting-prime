@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
+import { getTier } from "@/lib/gamification";
 
 interface LeaderboardEntry {
   rank: number;
@@ -42,11 +43,8 @@ function getRankDisplay(rank: number) {
 }
 
 function getTierName(level: number) {
-  if (level >= 50) return { name: "Diamond", color: "text-cyan-400" };
-  if (level >= 30) return { name: "Gold", color: "text-yellow-400" };
-  if (level >= 20) return { name: "Silver", color: "text-gray-300" };
-  if (level >= 10) return { name: "Bronze", color: "text-amber-600" };
-  return { name: "Rookie", color: "text-foreground/40" };
+  const t = getTier(level);
+  return { name: t.name, color: t.color };
 }
 
 function getInitials(name: string) {
@@ -117,14 +115,14 @@ export function LeaderboardTab() {
                 <div className={cn("inline-flex items-center justify-center h-8 w-8 rounded-full border mb-3", rankInfo.bg)}>
                   <RankIcon className={cn("h-4 w-4", rankInfo.color)} />
                 </div>
-                <div className={cn(
-                  "h-14 w-14 rounded-full mx-auto mb-3 flex items-center justify-center text-lg font-bold border",
-                  actualRank === 1 ? "bg-yellow-400/10 border-yellow-400/30 text-yellow-400" : "bg-foreground/[0.04] border-foreground/[0.08] text-foreground/50"
-                )}>
+                <div
+                  className="h-14 w-14 rounded-full mx-auto mb-3 flex items-center justify-center text-lg font-bold border"
+                  style={{ color: tier.color, backgroundColor: `${tier.color}15`, borderColor: `${tier.color}40` }}
+                >
                   {getInitials(entry.displayName)}
                 </div>
                 <Link href={`/profile/${entry.userId}`} className={cn("font-bold text-sm truncate hover:text-primary transition-colors block", isMe && "text-primary")}>{entry.displayName}</Link>
-                <p className={cn("text-xs font-medium mt-0.5", tier.color)}>Lvl {entry.level} · {tier.name}</p>
+                <p className="text-xs font-medium mt-0.5" style={{ color: tier.color }}>Lvl {entry.level} · {tier.name}</p>
                 <p className="text-2xl font-bold mt-2 text-primary">{entry.totalPoints.toLocaleString()}</p>
                 <p className="text-[10px] uppercase tracking-wider text-foreground/30 font-bold">points</p>
                 {entry.role === "instructor" && (
@@ -173,7 +171,10 @@ export function LeaderboardTab() {
               </div>
 
               <div className="col-span-4 flex items-center gap-3 min-w-0">
-                <div className="h-9 w-9 rounded-full bg-foreground/[0.04] border border-foreground/[0.08] flex items-center justify-center text-xs font-bold text-foreground/50 shrink-0">
+                <div
+                  className="h-9 w-9 rounded-full border flex items-center justify-center text-xs font-bold shrink-0"
+                  style={{ color: tier.color, backgroundColor: `${tier.color}12`, borderColor: `${tier.color}30` }}
+                >
                   {getInitials(entry.displayName)}
                 </div>
                 <div className="min-w-0">
@@ -181,7 +182,7 @@ export function LeaderboardTab() {
                     {entry.displayName}
                     {isMe && <span className="text-primary/60 ml-1.5 text-xs">(you)</span>}
                   </Link>
-                  <p className={cn("text-[11px]", tier.color)}>Lvl {entry.level} · {tier.name}</p>
+                  <p className="text-[11px]" style={{ color: tier.color }}>Lvl {entry.level} · {tier.name}</p>
                 </div>
                 {entry.role === "instructor" && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-bold shrink-0 hidden sm:inline">

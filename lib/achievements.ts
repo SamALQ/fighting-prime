@@ -14,6 +14,9 @@ import {
   Send,
   Trophy,
   Eye,
+  Gem,
+  Crown,
+  Sparkles,
 } from "lucide-react";
 import { createElement } from "react";
 
@@ -148,11 +151,75 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     category: "milestones",
     accent: "#D71212",
   },
+  {
+    id: "tier-silver",
+    title: "Silver Tier",
+    description: "Reach the Silver tier (Level 10)",
+    icon: "Gem",
+    category: "milestones",
+    accent: "#d9f6ff",
+  },
+  {
+    id: "tier-platinum",
+    title: "Platinum Tier",
+    description: "Reach the Platinum tier (Level 50)",
+    icon: "Gem",
+    category: "milestones",
+    accent: "#cac0ff",
+  },
+  {
+    id: "tier-gold",
+    title: "Gold Tier",
+    description: "Reach the Gold tier (Level 100)",
+    icon: "Crown",
+    category: "milestones",
+    accent: "#ffa90a",
+  },
+  {
+    id: "tier-diamond",
+    title: "Diamond Tier",
+    description: "Reach the Diamond tier (Level 130)",
+    icon: "Gem",
+    category: "milestones",
+    accent: "#a7cdff",
+  },
+  {
+    id: "tier-lightning",
+    title: "Lightning Tier",
+    description: "Reach the Lightning tier (Level 165)",
+    icon: "Zap",
+    category: "milestones",
+    accent: "#ffa03b",
+  },
+  {
+    id: "tier-obsidian",
+    title: "Obsidian Tier",
+    description: "Reach the Obsidian tier (Level 200)",
+    icon: "Gem",
+    category: "milestones",
+    accent: "#660fc3",
+  },
+  {
+    id: "tier-meteorite",
+    title: "Meteorite Tier",
+    description: "Reach the Meteorite tier (Level 230)",
+    icon: "Sparkles",
+    category: "milestones",
+    accent: "#06d65d",
+  },
+  {
+    id: "tier-cosmic",
+    title: "Cosmic Tier",
+    description: "Reach the legendary Cosmic tier (Level 265)",
+    icon: "Sparkles",
+    category: "milestones",
+    accent: "#ff3366",
+  },
 ];
 
 const ICON_MAP: Record<string, React.FC<{ className?: string }>> = {
   Eye, Target, Footprints, Calendar, Swords, Zap, Shield, Heart, Flame,
-  BookOpen, Star, Award, MessageSquare, Send, Trophy,
+  BookOpen, Star, Award, MessageSquare, Send, Trophy, Gem, Crown, Sparkles,
 };
 
 export function getAchievementIcon(iconName: string, className = "h-6 w-6") {
@@ -197,6 +264,14 @@ export function checkAchievements(
     ["centurion", snapshot.totalPoints >= 10000],
     ["elite-fighter", snapshot.level >= 10],
     ["power-hour", snapshot.totalWatchTimeSeconds >= 3600],
+    ["tier-silver", snapshot.level >= 10],
+    ["tier-platinum", snapshot.level >= 50],
+    ["tier-gold", snapshot.level >= 100],
+    ["tier-diamond", snapshot.level >= 130],
+    ["tier-lightning", snapshot.level >= 165],
+    ["tier-obsidian", snapshot.level >= 200],
+    ["tier-meteorite", snapshot.level >= 230],
+    ["tier-cosmic", snapshot.level >= 265],
   ];
 
   for (const [id, condition] of checks) {

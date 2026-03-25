@@ -8,20 +8,12 @@ import { Flame, Bell, MessageCircle, Trophy, Clock, CheckCircle2, ChevronUp, Ext
 import { useAuth } from "@/lib/auth-context";
 import { useProgress } from "@/lib/hooks/use-progress";
 import { useHudNotifications } from "./use-hud-notifications";
+import { getTier, getXpProgress, getPointsToNextLevel, getNextTier, getLevelsToNextTier } from "@/lib/gamification";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import confetti from "canvas-confetti";
 
 const HIDDEN_ROUTES = ["/login", "/signup", "/onboarding", "/reset-password", "/forgot-password"];
-const POINTS_PER_LEVEL = 1000;
-
-function getTier(level: number) {
-  if (level >= 50) return { name: "Diamond", color: "text-cyan-400" };
-  if (level >= 30) return { name: "Gold", color: "text-yellow-400" };
-  if (level >= 20) return { name: "Silver", color: "text-gray-300" };
-  if (level >= 10) return { name: "Bronze", color: "text-amber-600" };
-  return { name: "Rookie", color: "text-foreground/50" };
-}
 
 function formatTime(seconds: number) {
   const h = Math.floor(seconds / 3600);
@@ -40,15 +32,57 @@ function AnimatedNumber({ value }: { value: number }) {
   return <motion.span>{display}</motion.span>;
 }
 
-function MiniXpRing({ progress, size = 36, strokeWidth = 2.5 }: { progress: number; size?: number; strokeWidth?: number }) {
+function MiniXpRing({ progress, size = 36, strokeWidth = 2.5, color }: { progress: number; size?: number; strokeWidth?: number; color?: string }) {
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const offset = circumference - (progress / 100) * circumference;
   return (
     <svg width={size} height={size} className="absolute inset-0 -rotate-90">
       <circle cx={size / 2} cy={size / 2} r={radius} stroke="currentColor" strokeWidth={strokeWidth} fill="none" className="text-white/[0.08]" />
-      <motion.circle cx={size / 2} cy={size / 2} r={radius} stroke="currentColor" strokeWidth={strokeWidth} fill="none" strokeDasharray={circumference} strokeLinecap="round" className="text-primary" initial={{ strokeDashoffset: circumference }} animate={{ strokeDashoffset: offset }} transition={{ duration: 0.8, ease: "easeOut" }} />
+      <motion.circle cx={size / 2} cy={size / 2} r={radius} stroke={color || "currentColor"} strokeWidth={strokeWidth} fill="none" strokeDasharray={circumference} strokeLinecap="round" className={color ? undefined : "text-primary"} initial={{ strokeDashoffset: circumference }} animate={{ strokeDashoffset: offset }} transition={{ duration: 0.8, ease: "easeOut" }} />
     </svg>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Tier Promotion Modal                                               */
+/* ------------------------------------------------------------------ */
+
+function TierPromotionModal({ tier, onClose }: { tier: { name: string; color: string; reward: string }; onClose: () => void }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setReady(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  useEffect(() => {
+    const handle = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handle);
+    return () => document.removeEventListener("keydown", handle);
+  }, [onClose]);
+
+  return createPortal(
+    <div className="fixed inset-0 z-[80] flex items-center justify-center">
+      <div className={cn("absolute inset-0 bg-black/70 transition-opacity duration-300", ready ? "opacity-100" : "opacity-0")} onClick={onClose} />
+      <div
+        className={cn("relative max-w-sm w-[calc(100vw-2rem)] rounded-2xl border p-8 text-center shadow-2xl transition-all duration-500", ready ? "opacity-100 scale-100" : "opacity-0 scale-90")}
+        style={{ backgroundColor: "#111", borderColor: `${tier.color}40` }}
+      >
+        <div className="h-20 w-20 rounded-full mx-auto mb-4 flex items-center justify-center border-2" style={{ borderColor: tier.color, backgroundColor: `${tier.color}15` }}>
+          <span className="text-3xl font-black" style={{ color: tier.color }}>{tier.name.charAt(0)}</span>
+        </div>
+        <p className="text-xs font-black uppercase tracking-[0.2em] mb-2" style={{ color: tier.color }}>Tier Promotion</p>
+        <h2 className="text-2xl font-black text-white mb-2">{tier.name} Tier</h2>
+        <p className="text-sm text-white/50 mb-6">{tier.reward}</p>
+        <button
+          onClick={onClose}
+          className="px-6 py-2 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-80"
+          style={{ backgroundColor: tier.color }}
+        >
+          Continue
+        </button>
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -72,19 +106,19 @@ function StatsPanel({ onClose, panelProps }: { onClose: () => void; panelProps: 
     return () => document.removeEventListener("keydown", handle);
   }, [onClose]);
 
-  const { initials, user, level, tier, xpProgress, pointsInLevel, points, userStats, rankLoading, leaderboardRank } = panelProps;
+  const { initials, user, level, tier, xpProgress, pointsToNext, points, userStats, rankLoading, leaderboardRank, nextTier, levelsToNextTier } = panelProps;
 
   const content = (
     <>
       <div className="p-5 pb-4">
         <div className="flex items-center gap-3 mb-4">
-          <div className="relative h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center text-lg font-bold text-primary shrink-0">
+          <div className="relative h-12 w-12 rounded-full flex items-center justify-center text-lg font-bold shrink-0" style={{ color: tier.color, backgroundColor: `${tier.color}20` }}>
             {initials}
-            <MiniXpRing progress={xpProgress} size={48} strokeWidth={2.5} />
+            <MiniXpRing progress={xpProgress} size={48} strokeWidth={2.5} color={tier.color} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-bold text-white text-sm truncate">{user?.email?.split("@")[0] ?? "Fighter"}</p>
-            <span className={cn("text-[10px] font-black uppercase tracking-wider", tier.color)}>
+            <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: tier.color }}>
               Lvl {level} · {tier.name}
             </span>
           </div>
@@ -95,17 +129,17 @@ function StatsPanel({ onClose, panelProps }: { onClose: () => void; panelProps: 
 
         <div className="mb-4">
           <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-white/30 mb-1.5">
-            <span><AnimatedNumber value={pointsInLevel} /> / {POINTS_PER_LEVEL} XP</span>
+            <span>{pointsToNext} pts to next level</span>
             <span>Level {level + 1}</span>
           </div>
           <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-            <div className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70 transition-all duration-700 ease-out" style={{ width: `${xpProgress}%` }} />
+            <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${xpProgress}%`, backgroundColor: tier.color }} />
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-2 mb-4">
           <div className="rounded-xl bg-white/[0.04] p-2.5 text-center">
-            <Trophy className="h-3.5 w-3.5 text-primary mx-auto mb-1" />
+            <Trophy className="h-3.5 w-3.5 mx-auto mb-1" style={{ color: tier.color }} />
             <p className="text-sm font-bold text-white"><AnimatedNumber value={points} /></p>
             <p className="text-[9px] text-white/30 uppercase tracking-wider font-bold">Points</p>
           </div>
@@ -121,10 +155,10 @@ function StatsPanel({ onClose, panelProps }: { onClose: () => void; panelProps: 
           </div>
         </div>
 
-        <div className="flex items-center justify-between rounded-xl bg-white/[0.04] px-3 py-2.5">
+        <div className="flex items-center justify-between rounded-xl bg-white/[0.04] px-3 py-2.5 mb-3">
           <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
-              <ChevronUp className="h-4 w-4 text-primary" />
+            <div className="h-7 w-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${tier.color}15` }}>
+              <ChevronUp className="h-4 w-4" style={{ color: tier.color }} />
             </div>
             <div>
               <p className="text-xs font-bold text-white">
@@ -133,8 +167,20 @@ function StatsPanel({ onClose, panelProps }: { onClose: () => void; panelProps: 
               <p className="text-[10px] text-white/30">Keep training to climb</p>
             </div>
           </div>
-          <Link href="/community" onClick={onClose} className="text-[10px] font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-wider">View</Link>
+          <Link href="/community" onClick={onClose} className="text-[10px] font-bold hover:opacity-80 transition-opacity uppercase tracking-wider" style={{ color: tier.color }}>View</Link>
         </div>
+
+        {nextTier && levelsToNextTier !== null && (
+          <div className="rounded-xl px-3 py-2.5 border" style={{ backgroundColor: `${nextTier.color}08`, borderColor: `${nextTier.color}20` }}>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: nextTier.color }}>
+                Next: {nextTier.name} Tier
+              </p>
+              <p className="text-[10px] font-bold text-white/30">{levelsToNextTier} levels away</p>
+            </div>
+            <p className="text-[10px] text-white/40">{nextTier.rewardDescription}</p>
+          </div>
+        )}
       </div>
 
       {userStats.currentStreak > 0 && (
@@ -146,7 +192,7 @@ function StatsPanel({ onClose, panelProps }: { onClose: () => void; panelProps: 
               <p className="text-[10px] text-white/30">Longest: {userStats.longestStreak}d</p>
             </div>
             {userStats.streakMultiplier > 1 && (
-              <span className="text-[10px] font-black text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full">{userStats.streakMultiplier}x</span>
+              <span className="text-[10px] font-black text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full">{userStats.streakMultiplier}x pts</span>
             )}
           </div>
         </div>
@@ -187,11 +233,13 @@ interface PanelProps {
   level: number;
   tier: { name: string; color: string };
   xpProgress: number;
-  pointsInLevel: number;
+  pointsToNext: number;
   points: number;
   userStats: { watchTime: number; episodesCompleted: number; currentStreak: number; longestStreak: number; streakMultiplier: number };
   rankLoading: boolean;
   leaderboardRank: number | null;
+  nextTier: { name: string; color: string; minLevel: number; rewardDescription: string } | null;
+  levelsToNextTier: number | null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -211,17 +259,21 @@ export function HudPill() {
   const hudRef = useRef<HTMLDivElement>(null);
 
   const prevLevelRef = useRef(0);
+  const prevTierRef = useRef<string>("");
   const prevStreakRef = useRef(0);
   const [levelPulse, setLevelPulse] = useState(false);
   const [streakPulse, setStreakPulse] = useState(false);
   const [notifPulse, setNotifPulse] = useState(false);
+  const [tierPromotion, setTierPromotion] = useState<{ name: string; color: string; reward: string } | null>(null);
   const prevUnreadRef = useRef(0);
 
   const level = userStats.level;
   const points = userStats.points;
-  const pointsInLevel = points % POINTS_PER_LEVEL;
-  const xpProgress = (pointsInLevel / POINTS_PER_LEVEL) * 100;
+  const xpProgress = getXpProgress(points);
+  const pointsToNext = getPointsToNextLevel(points);
   const tier = getTier(level);
+  const nextTier = getNextTier(level);
+  const levelsToNextTier = getLevelsToNextTier(level);
   const hotStreak = userStats.currentStreak >= 3;
 
   useEffect(() => {
@@ -235,6 +287,15 @@ export function HudPill() {
     }
     prevLevelRef.current = level;
   }, [level]);
+
+  useEffect(() => {
+    const currentTierSlug = tier.slug;
+    if (prevTierRef.current && prevTierRef.current !== currentTierSlug) {
+      setTierPromotion({ name: tier.name, color: tier.color, reward: tier.rewardDescription });
+      confetti({ particleCount: 120, spread: 90, origin: { y: 0.6 }, colors: [tier.color, "#ffffff", "#ffd700"], startVelocity: 35, gravity: 0.8, scalar: 1.1 });
+    }
+    prevTierRef.current = currentTierSlug;
+  }, [tier]);
 
   useEffect(() => {
     if (prevStreakRef.current > 0 && userStats.currentStreak > prevStreakRef.current) {
@@ -280,11 +341,16 @@ export function HudPill() {
   const panelProps: PanelProps = {
     initials,
     user: user ? { id: user.id, email: user.email } : null,
-    level, tier, xpProgress, pointsInLevel, points, userStats, rankLoading, leaderboardRank,
+    level, tier: { name: tier.name, color: tier.color }, xpProgress, pointsToNext, points, userStats, rankLoading, leaderboardRank,
+    nextTier: nextTier ? { name: nextTier.name, color: nextTier.color, minLevel: nextTier.minLevel, rewardDescription: nextTier.rewardDescription } : null,
+    levelsToNextTier,
   };
 
   return (
     <>
+      {/* Tier promotion modal */}
+      {tierPromotion && <TierPromotionModal tier={tierPromotion} onClose={() => setTierPromotion(null)} />}
+
       {/* Portal: only mounted when panel is open — nothing in the DOM when closed */}
       {panelOpen && <StatsPanel onClose={() => setPanelOpen(false)} panelProps={panelProps} />}
 
@@ -316,10 +382,11 @@ export function HudPill() {
           <div className="relative z-10 flex items-center gap-1.5 px-2 py-2">
             <button
               onClick={() => setPanelOpen((v) => !v)}
-              className="relative h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary shrink-0 active:scale-95 transition-transform"
+              className="relative h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 active:scale-95 transition-transform"
+              style={{ color: tier.color, backgroundColor: `${tier.color}20` }}
             >
               {initials}
-              <MiniXpRing progress={xpProgress} size={40} strokeWidth={2.5} />
+              <MiniXpRing progress={xpProgress} size={40} strokeWidth={2.5} color={tier.color} />
             </button>
 
             <div className="flex items-center gap-1.5">

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getStreakMultiplier } from "@/lib/achievements";
+import { getLevelFromPoints } from "@/lib/gamification";
 
 export async function GET() {
   const supabase = await createClient();
@@ -88,7 +89,7 @@ export async function GET() {
     episodes,
     stats: {
       totalPoints,
-      level: Math.floor(totalPoints / 1000) + 1,
+      level: getLevelFromPoints(totalPoints),
       totalWatchTime,
       completedCount,
       coursesStarted,

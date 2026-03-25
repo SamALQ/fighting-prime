@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { checkAchievements, type UserProgressSnapshot } from "@/lib/achievements";
 import { createNotification } from "@/lib/notifications";
 import { ACHIEVEMENTS } from "@/lib/achievements";
+import { getLevelFromPoints } from "@/lib/gamification";
 
 export async function GET() {
   const supabase = await createClient();
@@ -102,7 +103,7 @@ export async function POST() {
     eliteFeedbackReceived: (eliteResult.data ?? []).length,
     coursesStarted: (courseResult.data ?? []).length,
     totalPoints,
-    level: Math.floor(totalPoints / 1000) + 1,
+    level: getLevelFromPoints(totalPoints),
   };
 
   const alreadyUnlocked = new Set(

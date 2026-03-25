@@ -3,14 +3,16 @@
 import { useProgress } from "@/lib/hooks/use-progress";
 import { Trophy, Target, Clock, CheckCircle2, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getTier, getNextTier, getLevelsToNextTier, getXpProgress, getPointsToNextLevel } from "@/lib/gamification";
 
 export function DashboardStats() {
   const { userStats, isLoading, formatWatchTime } = useProgress();
 
-  const pointsPerLevel = 1000;
-  const currentLevelPoints = userStats.points % pointsPerLevel;
-  const progressToNextLevel = (currentLevelPoints / pointsPerLevel) * 100;
-  const pointsToNext = pointsPerLevel - currentLevelPoints;
+  const tier = getTier(userStats.level);
+  const nextTier = getNextTier(userStats.level);
+  const levelsToNext = getLevelsToNextTier(userStats.level);
+  const progressToNextLevel = getXpProgress(userStats.points);
+  const pointsToNext = getPointsToNextLevel(userStats.points);
 
   const multiplierLabel = userStats.streakMultiplier > 1
     ? `${userStats.streakMultiplier}x streak bonus active`
@@ -18,12 +20,17 @@ export function DashboardStats() {
       ? "2x first-watch bonus!"
       : "Lifetime Earned";
 
+  const tierSubtitle = nextTier && levelsToNext !== null
+    ? `${tier.name} Tier · ${nextTier.name} in ${levelsToNext} lvls`
+    : `${tier.name} Tier`;
+
   const stats = [
     {
       label: "Current Level",
       value: userStats.level,
-      subtitle: userStats.level >= 20 ? "Silver Tier" : "Bronze Tier",
-      icon: <Trophy className="h-5 w-5 text-primary" />,
+      subtitle: tierSubtitle,
+      icon: <Trophy className="h-5 w-5" style={{ color: tier.color }} />,
+      borderColor: tier.color,
       extra: (
         <div className="mt-4 space-y-2">
           <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-foreground/30">
@@ -31,9 +38,9 @@ export function DashboardStats() {
             <span>{pointsToNext} pts to level {userStats.level + 1}</span>
           </div>
           <div className="relative h-1.5 w-full bg-foreground/[0.06] rounded-full overflow-hidden">
-            <div 
-              className="absolute top-0 left-0 h-full bg-primary transition-all duration-1000"
-              style={{ width: `${progressToNextLevel}%` }}
+            <div
+              className="absolute top-0 left-0 h-full rounded-full transition-all duration-1000"
+              style={{ width: `${progressToNextLevel}%`, backgroundColor: tier.color }}
             />
           </div>
         </div>
@@ -76,7 +83,11 @@ export function DashboardStats() {
       {stats.map((stat) => (
         <div
           key={stat.label}
-          className="group rounded-2xl border border-foreground/[0.06] bg-foreground/[0.02] overflow-hidden hover:border-primary/20 transition-all"
+          className={cn(
+            "group rounded-2xl border bg-foreground/[0.02] overflow-hidden transition-all",
+            "borderColor" in stat ? "" : "border-foreground/[0.06] hover:border-primary/20"
+          )}
+          style={"borderColor" in stat && stat.borderColor ? { borderColor: `${stat.borderColor}30` } : undefined}
         >
           <div className="p-6 relative h-full flex flex-col justify-between">
             <div className="relative flex items-center justify-between">
