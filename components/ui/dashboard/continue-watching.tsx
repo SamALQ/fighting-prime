@@ -88,7 +88,7 @@ export function ContinueWatching({ episodes, courses }: ContinueWatchingProps) {
               )}
               <div className="flex items-center gap-2 mt-1.5 text-[11px] text-foreground/25">
                 <span className={cn("font-bold", item.percent_watched > 50 ? "text-primary/60" : "text-foreground/30")}>
-                  {item.percent_watched}% watched
+                  {Math.floor(item.percent_watched)}% watched
                 </span>
                 <span className="flex items-center gap-0.5">
                   <Clock className="h-3 w-3" />
