@@ -146,20 +146,33 @@ export function CourseCard({ course, episodes, className }: CourseCardProps) {
               </span>
             )}
             {/* Difficulty */}
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-foreground/[0.1] bg-foreground/[0.04] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-foreground/50">
-              <span className="flex gap-0.5">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <span
-                    key={i}
-                    className={cn(
-                      "h-1.5 w-1.5 rounded-full",
-                      i < diff.dots ? diff.color : "bg-foreground/[0.1]"
-                    )}
-                  />
-                ))}
+            {course.difficultyMeterImage ? (
+              <span className="inline-flex items-center rounded-md border border-foreground/[0.1] bg-foreground/[0.04] px-2 py-1">
+                <Image
+                  src={course.difficultyMeterImage}
+                  alt={`${course.difficulty} difficulty`}
+                  width={80}
+                  height={20}
+                  className="h-4 w-auto object-contain"
+                  unoptimized
+                />
               </span>
-              {diff.label}
-            </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-foreground/[0.1] bg-foreground/[0.04] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-foreground/50">
+                <span className="flex gap-0.5">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <span
+                      key={i}
+                      className={cn(
+                        "h-1.5 w-1.5 rounded-full",
+                        i < diff.dots ? diff.color : "bg-foreground/[0.1]"
+                      )}
+                    />
+                  ))}
+                </span>
+                {diff.label}
+              </span>
+            )}
           </div>
 
           {/* Progress bar (only when started) */}
