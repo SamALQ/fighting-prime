@@ -38,7 +38,32 @@ export function DashboardClient({ courses, episodes }: DashboardClientProps) {
   }, [isProgressLoading, checkAchievementsNow]);
 
   if (isProgressLoading) {
-    return null;
+    return (
+      <MainLayout>
+        <section className="relative py-16 md:py-24 lg:py-32 pb-24 overflow-hidden">
+          <Container>
+            <div className="space-y-8 animate-pulse">
+              <div className="space-y-3">
+                <div className="h-3 w-32 bg-foreground/[0.06] rounded" />
+                <div className="h-10 w-80 bg-foreground/[0.06] rounded" />
+                <div className="h-4 w-64 bg-foreground/[0.06] rounded" />
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="h-28 bg-foreground/[0.06] rounded-2xl" />
+                ))}
+              </div>
+              <div className="h-px bg-foreground/[0.06]" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-48 bg-foreground/[0.06] rounded-2xl" />
+                ))}
+              </div>
+            </div>
+          </Container>
+        </section>
+      </MainLayout>
+    );
   }
 
   return (
