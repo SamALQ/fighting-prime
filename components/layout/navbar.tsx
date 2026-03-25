@@ -39,8 +39,11 @@ export function NavBar() {
   const { user, isLoggedIn, isLoading, logout, userEmail, role } = useAuth();
   const [isCoursesHovered, setIsCoursesHovered] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [featuredCourses, setFeaturedCourses] = useState<Course[]>([]);
+
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     fetch("/api/courses")
@@ -465,7 +468,7 @@ export function NavBar() {
   return (
     <>
       {navElement}
-      {typeof document !== "undefined" && createPortal(mobileDrawer, document.body)}
+      {mounted && createPortal(mobileDrawer, document.body)}
     </>
   );
 }

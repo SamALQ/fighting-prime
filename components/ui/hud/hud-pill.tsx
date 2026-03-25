@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
-import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
+import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { Flame, Bell, MessageCircle, Trophy, Clock, CheckCircle2, ChevronUp, ExternalLink, X } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useProgress } from "@/lib/hooks/use-progress";
@@ -205,7 +205,6 @@ export function HudPill() {
   const { unreadCount } = useHudNotifications();
 
   const [panelOpen, setPanelOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
   const [leaderboardRank, setLeaderboardRank] = useState<number | null>(null);
   const [rankLoading, setRankLoading] = useState(false);
   const rankFetchedRef = useRef(false);
@@ -252,21 +251,6 @@ export function HudPill() {
     }
     prevUnreadRef.current = unreadCount;
   }, [unreadCount]);
-
-  // Scroll collapse — desktop only (sm+)
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 640px)");
-    if (!mq.matches) return;
-    let lastY = window.scrollY;
-    const handleScroll = () => {
-      const y = window.scrollY;
-      if (y > lastY + 50 && y > 200) setCollapsed(true);
-      if (y < lastY - 30 || y < 100) setCollapsed(false);
-      lastY = y;
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   // Fetch leaderboard rank when panel opens
   const fetchRank = useCallback(async () => {
@@ -338,46 +322,35 @@ export function HudPill() {
               <MiniXpRing progress={xpProgress} size={32} strokeWidth={2} />
             </button>
 
-            <AnimatePresence initial={false}>
-              {!collapsed && (
-                <motion.div
-                  key="hud-stats"
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: "auto", opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex items-center gap-1 overflow-hidden"
-                >
-                  <motion.div animate={levelPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }} className="flex items-center gap-1 px-2 py-1 rounded-full bg-white/[0.04]">
-                    <span className="text-[10px] font-black text-white/50 uppercase tracking-wider">Lvl</span>
-                    <span className="text-xs font-black text-white tabular-nums">{level}</span>
-                  </motion.div>
+            <div className="flex items-center gap-1">
+              <motion.div animate={levelPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }} className="flex items-center gap-1 px-2 py-1 rounded-full bg-white/[0.04]">
+                <span className="text-[10px] font-black text-white/50 uppercase tracking-wider">Lvl</span>
+                <span className="text-xs font-black text-white tabular-nums">{level}</span>
+              </motion.div>
 
-                  <motion.div animate={streakPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }} className={cn("flex items-center gap-1 px-2 py-1 rounded-full", userStats.currentStreak > 0 ? "bg-orange-500/[0.08]" : "bg-white/[0.04]")}>
-                    <Flame className={cn("h-3 w-3", userStats.currentStreak > 0 ? "text-orange-500" : "text-white/30")} />
-                    <span className={cn("text-xs font-bold tabular-nums", userStats.currentStreak > 0 ? "text-orange-400" : "text-white/30")}>{userStats.currentStreak}</span>
-                  </motion.div>
+              <motion.div animate={streakPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }} className={cn("flex items-center gap-1 px-2 py-1 rounded-full", userStats.currentStreak > 0 ? "bg-orange-500/[0.08]" : "bg-white/[0.04]")}>
+                <Flame className={cn("h-3 w-3", userStats.currentStreak > 0 ? "text-orange-500" : "text-white/30")} />
+                <span className={cn("text-xs font-bold tabular-nums", userStats.currentStreak > 0 ? "text-orange-400" : "text-white/30")}>{userStats.currentStreak}</span>
+              </motion.div>
 
-                  <motion.div animate={notifPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }}>
-                    <Link href="/dashboard" className="relative flex items-center justify-center h-7 w-7 rounded-full bg-white/[0.04]">
-                      <Bell className="h-3 w-3 text-white/40" />
-                      {unreadCount > 0 && (
-                        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", damping: 12, stiffness: 400 }} className="absolute -top-0.5 -right-0.5 h-3.5 min-w-[14px] rounded-full bg-primary text-[8px] font-bold text-white flex items-center justify-center px-0.5">
-                          {unreadCount > 9 ? "9+" : unreadCount}
-                        </motion.span>
-                      )}
-                    </Link>
-                  </motion.div>
+              <motion.div animate={notifPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }}>
+                <Link href="/dashboard" className="relative flex items-center justify-center h-7 w-7 rounded-full bg-white/[0.04]">
+                  <Bell className="h-3 w-3 text-white/40" />
+                  {unreadCount > 0 && (
+                    <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", damping: 12, stiffness: 400 }} className="absolute -top-0.5 -right-0.5 h-3.5 min-w-[14px] rounded-full bg-primary text-[8px] font-bold text-white flex items-center justify-center px-0.5">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </motion.span>
+                  )}
+                </Link>
+              </motion.div>
 
-                  <div className="group relative hidden sm:block">
-                    <div className="flex items-center justify-center h-7 w-7 rounded-full bg-white/[0.04] cursor-not-allowed">
-                      <MessageCircle className="h-3 w-3 text-white/20" />
-                    </div>
-                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-lg bg-black/90 border border-white/10 text-[10px] font-bold text-white/50 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Coming Soon</div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+              <div className="group relative hidden sm:block">
+                <div className="flex items-center justify-center h-7 w-7 rounded-full bg-white/[0.04] cursor-not-allowed">
+                  <MessageCircle className="h-3 w-3 text-white/20" />
+                </div>
+                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-lg bg-black/90 border border-white/10 text-[10px] font-bold text-white/50 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Coming Soon</div>
+              </div>
+            </div>
           </div>
         </motion.div>
       </div>
