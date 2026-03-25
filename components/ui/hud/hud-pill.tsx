@@ -68,8 +68,7 @@ function MiniXpRing({ progress, size = 36, strokeWidth = 2.5 }: { progress: numb
   );
 }
 
-function StatsPanel({
-  open,
+function StatsPanelContent({
   onClose,
   initials,
   user,
@@ -82,7 +81,6 @@ function StatsPanel({
   rankLoading,
   leaderboardRank,
 }: {
-  open: boolean;
   onClose: () => void;
   initials: string;
   user: { id: string; email?: string | null } | null;
@@ -95,11 +93,7 @@ function StatsPanel({
   rankLoading: boolean;
   leaderboardRank: number | null;
 }) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
-  if (!mounted) return null;
-
-  const content = (
+  return (
     <>
       <div className="p-5 pb-4">
         <div className="flex items-center gap-3 mb-4">
@@ -191,59 +185,6 @@ function StatsPanel({
       )}
     </>
   );
-
-  return createPortal(
-    <AnimatePresence>
-      {open && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            key="hud-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[70] bg-black/60 sm:bg-black/20"
-            onClick={onClose}
-          />
-
-          {/* Mobile: bottom sheet */}
-          <motion.div
-            key="hud-sheet-mobile"
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 350 }}
-            className="fixed inset-x-0 bottom-0 z-[71] flex flex-col sm:hidden max-h-[80vh] rounded-t-2xl bg-[#111] border-t border-white/[0.1] shadow-2xl"
-            style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-          >
-            <div className="relative flex items-center justify-center px-5 pt-3 pb-1 shrink-0">
-              <div className="w-10 h-1 rounded-full bg-white/20" />
-              <button onClick={onClose} className="absolute right-4 top-2.5 h-8 w-8 rounded-full bg-white/[0.06] flex items-center justify-center active:bg-white/[0.12]">
-                <X className="h-4 w-4 text-white/40" />
-              </button>
-            </div>
-            <div className="overflow-y-auto flex-1 overscroll-contain">
-              {content}
-            </div>
-          </motion.div>
-
-          {/* Desktop: floating card */}
-          <motion.div
-            key="hud-card-desktop"
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            transition={{ type: "spring", damping: 25, stiffness: 350 }}
-            className="hidden sm:block fixed bottom-20 left-1/2 -translate-x-1/2 z-[71] w-80 rounded-2xl bg-black/80 backdrop-blur-2xl border border-white/[0.1] shadow-2xl shadow-black/50 overflow-hidden"
-          >
-            {content}
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>,
-    document.body
-  );
 }
 
 export function HudPill() {
@@ -258,6 +199,7 @@ export function HudPill() {
   const [rankLoading, setRankLoading] = useState(false);
   const rankFetchedRef = useRef(false);
   const hudRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
 
   const prevLevelRef = useRef(0);
   const prevStreakRef = useRef(0);
@@ -265,6 +207,8 @@ export function HudPill() {
   const [streakPulse, setStreakPulse] = useState(false);
   const [notifPulse, setNotifPulse] = useState(false);
   const prevUnreadRef = useRef(0);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const level = userStats.level;
   const points = userStats.points;
@@ -303,7 +247,7 @@ export function HudPill() {
     prevUnreadRef.current = unreadCount;
   }, [unreadCount]);
 
-  // Scroll collapse — desktop only (768px+ = sm breakpoint)
+  // Scroll collapse — desktop only
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 640px)");
     if (!mq.matches) return;
@@ -350,22 +294,73 @@ export function HudPill() {
 
   const initials = (user?.email ?? "?").charAt(0).toUpperCase();
 
+  const panelProps = {
+    onClose: () => setPanelOpen(false),
+    initials,
+    user: user ? { id: user.id, email: user.email } : null,
+    level,
+    tier,
+    xpProgress,
+    pointsInLevel,
+    points,
+    userStats,
+    rankLoading,
+    leaderboardRank,
+  };
+
   return (
     <>
-      <StatsPanel
-        open={panelOpen}
-        onClose={() => setPanelOpen(false)}
-        initials={initials}
-        user={user ? { id: user.id, email: user.email } : null}
-        level={level}
-        tier={tier}
-        xpProgress={xpProgress}
-        pointsInLevel={pointsInLevel}
-        points={points}
-        userStats={userStats}
-        rankLoading={rankLoading}
-        leaderboardRank={leaderboardRank}
-      />
+      {/* Stats panel — portaled to body, always in DOM, toggled with CSS transitions */}
+      {mounted && createPortal(
+        <div
+          className={cn(
+            "fixed inset-0 z-[70] transition-all duration-300",
+            panelOpen ? "visible" : "invisible pointer-events-none"
+          )}
+        >
+          {/* Backdrop */}
+          <div
+            className={cn(
+              "absolute inset-0 bg-black/60 transition-opacity duration-300",
+              panelOpen ? "opacity-100" : "opacity-0"
+            )}
+            onClick={() => setPanelOpen(false)}
+          />
+
+          {/* Mobile bottom sheet */}
+          <div
+            className={cn(
+              "absolute inset-x-0 bottom-0 sm:hidden max-h-[80vh] flex flex-col rounded-t-2xl bg-[#111] border-t border-white/[0.1] shadow-2xl transition-transform duration-300 ease-out",
+              panelOpen ? "translate-y-0" : "translate-y-full"
+            )}
+            style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+          >
+            <div className="relative flex items-center justify-center px-5 pt-3 pb-1 shrink-0">
+              <div className="w-10 h-1 rounded-full bg-white/20" />
+              <button
+                onClick={() => setPanelOpen(false)}
+                className="absolute right-4 top-2.5 h-8 w-8 rounded-full bg-white/[0.06] flex items-center justify-center active:bg-white/[0.12]"
+              >
+                <X className="h-4 w-4 text-white/40" />
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-1 overscroll-contain">
+              <StatsPanelContent {...panelProps} />
+            </div>
+          </div>
+
+          {/* Desktop floating card */}
+          <div
+            className={cn(
+              "hidden sm:block absolute bottom-20 left-1/2 -translate-x-1/2 w-80 rounded-2xl bg-black/80 backdrop-blur-2xl border border-white/[0.1] shadow-2xl shadow-black/50 overflow-hidden transition-all duration-300 ease-out",
+              panelOpen ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-95"
+            )}
+          >
+            <StatsPanelContent {...panelProps} />
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* Pill */}
       <div
@@ -395,7 +390,7 @@ export function HudPill() {
           <div className="relative z-10 flex items-center gap-1 px-1.5 py-1.5">
             {/* Avatar */}
             <button
-              onClick={() => setPanelOpen(!panelOpen)}
+              onClick={() => setPanelOpen((v) => !v)}
               className="relative h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary shrink-0 active:scale-95 transition-transform"
             >
               {initials}
@@ -413,7 +408,6 @@ export function HudPill() {
                   transition={{ duration: 0.2 }}
                   className="flex items-center gap-1 overflow-hidden"
                 >
-                  {/* Level */}
                   <motion.div
                     animate={levelPulse ? { scale: [1, 1.3, 1] } : {}}
                     transition={{ duration: 0.4 }}
@@ -423,7 +417,6 @@ export function HudPill() {
                     <span className="text-xs font-black text-white tabular-nums">{level}</span>
                   </motion.div>
 
-                  {/* Streak */}
                   <motion.div
                     animate={streakPulse ? { scale: [1, 1.3, 1] } : {}}
                     transition={{ duration: 0.4 }}
@@ -438,12 +431,8 @@ export function HudPill() {
                     </span>
                   </motion.div>
 
-                  {/* Notifications */}
                   <motion.div animate={notifPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }}>
-                    <Link
-                      href="/dashboard"
-                      className="relative flex items-center justify-center h-7 w-7 rounded-full bg-white/[0.04]"
-                    >
+                    <Link href="/dashboard" className="relative flex items-center justify-center h-7 w-7 rounded-full bg-white/[0.04]">
                       <Bell className="h-3 w-3 text-white/40" />
                       {unreadCount > 0 && (
                         <motion.span
@@ -458,7 +447,6 @@ export function HudPill() {
                     </Link>
                   </motion.div>
 
-                  {/* DMs placeholder — hidden on mobile to save space */}
                   <div className="group relative hidden sm:block">
                     <div className="flex items-center justify-center h-7 w-7 rounded-full bg-white/[0.04] cursor-not-allowed">
                       <MessageCircle className="h-3 w-3 text-white/20" />
