@@ -33,12 +33,10 @@ function formatTime(seconds: number) {
 function AnimatedNumber({ value }: { value: number }) {
   const mv = useMotionValue(0);
   const display = useTransform(mv, (v) => Math.round(v).toLocaleString());
-
   useEffect(() => {
     const controls = animate(mv, value, { duration: 0.6, ease: "easeOut" });
     return controls.stop;
   }, [value, mv]);
-
   return <motion.span>{display}</motion.span>;
 }
 
@@ -46,54 +44,37 @@ function MiniXpRing({ progress, size = 36, strokeWidth = 2.5 }: { progress: numb
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const offset = circumference - (progress / 100) * circumference;
-
   return (
     <svg width={size} height={size} className="absolute inset-0 -rotate-90">
       <circle cx={size / 2} cy={size / 2} r={radius} stroke="currentColor" strokeWidth={strokeWidth} fill="none" className="text-white/[0.08]" />
-      <motion.circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        stroke="currentColor"
-        strokeWidth={strokeWidth}
-        fill="none"
-        strokeDasharray={circumference}
-        strokeLinecap="round"
-        className="text-primary"
-        initial={{ strokeDashoffset: circumference }}
-        animate={{ strokeDashoffset: offset }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-      />
+      <motion.circle cx={size / 2} cy={size / 2} r={radius} stroke="currentColor" strokeWidth={strokeWidth} fill="none" strokeDasharray={circumference} strokeLinecap="round" className="text-primary" initial={{ strokeDashoffset: circumference }} animate={{ strokeDashoffset: offset }} transition={{ duration: 0.8, ease: "easeOut" }} />
     </svg>
   );
 }
 
-function StatsPanelContent({
-  onClose,
-  initials,
-  user,
-  level,
-  tier,
-  xpProgress,
-  pointsInLevel,
-  points,
-  userStats,
-  rankLoading,
-  leaderboardRank,
-}: {
-  onClose: () => void;
-  initials: string;
-  user: { id: string; email?: string | null } | null;
-  level: number;
-  tier: { name: string; color: string };
-  xpProgress: number;
-  pointsInLevel: number;
-  points: number;
-  userStats: { watchTime: number; episodesCompleted: number; currentStreak: number; longestStreak: number; streakMultiplier: number };
-  rankLoading: boolean;
-  leaderboardRank: number | null;
-}) {
-  return (
+/* ------------------------------------------------------------------ */
+/*  Stats panel — rendered via portal ONLY when open                  */
+/* ------------------------------------------------------------------ */
+
+function StatsPanel({ onClose, panelProps }: { onClose: () => void; panelProps: PanelProps }) {
+  const [sheetReady, setSheetReady] = useState(false);
+
+  // Two-phase mount: render off-screen, then slide in on the next frame
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setSheetReady(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  // Close on Escape
+  useEffect(() => {
+    const handle = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handle);
+    return () => document.removeEventListener("keydown", handle);
+  }, [onClose]);
+
+  const { initials, user, level, tier, xpProgress, pointsInLevel, points, userStats, rankLoading, leaderboardRank } = panelProps;
+
+  const content = (
     <>
       <div className="p-5 pb-4">
         <div className="flex items-center gap-3 mb-4">
@@ -107,11 +88,7 @@ function StatsPanelContent({
               Lvl {level} · {tier.name}
             </span>
           </div>
-          <Link
-            href={`/profile/${user?.id}`}
-            onClick={onClose}
-            className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors"
-          >
+          <Link href={`/profile/${user?.id}`} onClick={onClose} className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors">
             <ExternalLink className="h-3.5 w-3.5 text-white/40" />
           </Link>
         </div>
@@ -122,12 +99,7 @@ function StatsPanelContent({
             <span>Level {level + 1}</span>
           </div>
           <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-            <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70"
-              initial={{ width: 0 }}
-              animate={{ width: `${xpProgress}%` }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-            />
+            <div className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70 transition-all duration-700 ease-out" style={{ width: `${xpProgress}%` }} />
           </div>
         </div>
 
@@ -161,9 +133,7 @@ function StatsPanelContent({
               <p className="text-[10px] text-white/30">Keep training to climb</p>
             </div>
           </div>
-          <Link href="/community" onClick={onClose} className="text-[10px] font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-wider">
-            View
-          </Link>
+          <Link href="/community" onClick={onClose} className="text-[10px] font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-wider">View</Link>
         </div>
       </div>
 
@@ -176,16 +146,73 @@ function StatsPanelContent({
               <p className="text-[10px] text-white/30">Longest: {userStats.longestStreak}d</p>
             </div>
             {userStats.streakMultiplier > 1 && (
-              <span className="text-[10px] font-black text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full">
-                {userStats.streakMultiplier}x
-              </span>
+              <span className="text-[10px] font-black text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full">{userStats.streakMultiplier}x</span>
             )}
           </div>
         </div>
       )}
     </>
   );
+
+  return createPortal(
+    <div className="fixed inset-0 z-[70]">
+      {/* Backdrop */}
+      <div
+        className={cn("absolute inset-0 bg-black/60 transition-opacity duration-200", sheetReady ? "opacity-100" : "opacity-0")}
+        onClick={onClose}
+      />
+
+      {/* Mobile bottom sheet */}
+      <div
+        className={cn(
+          "absolute inset-x-0 bottom-0 sm:hidden max-h-[80vh] flex flex-col rounded-t-2xl bg-[#111] border-t border-white/[0.1] shadow-2xl transition-transform duration-300 ease-out will-change-transform",
+          sheetReady ? "translate-y-0" : "translate-y-full"
+        )}
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
+        <div className="relative flex items-center justify-center px-5 pt-3 pb-1 shrink-0">
+          <div className="w-10 h-1 rounded-full bg-white/20" />
+          <button onClick={onClose} className="absolute right-4 top-2.5 h-8 w-8 rounded-full bg-white/[0.06] flex items-center justify-center active:bg-white/[0.12]">
+            <X className="h-4 w-4 text-white/40" />
+          </button>
+        </div>
+        <div className="overflow-y-auto flex-1 overscroll-contain">{content}</div>
+      </div>
+
+      {/* Desktop floating card */}
+      <div
+        className={cn(
+          "hidden sm:block absolute bottom-20 left-1/2 -translate-x-1/2 w-80 rounded-2xl bg-black/80 backdrop-blur-2xl border border-white/[0.1] shadow-2xl shadow-black/50 overflow-hidden transition-all duration-200 ease-out",
+          sheetReady ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-95"
+        )}
+      >
+        {content}
+      </div>
+    </div>,
+    document.body
+  );
 }
+
+/* ------------------------------------------------------------------ */
+/*  Types                                                              */
+/* ------------------------------------------------------------------ */
+
+interface PanelProps {
+  initials: string;
+  user: { id: string; email?: string | null } | null;
+  level: number;
+  tier: { name: string; color: string };
+  xpProgress: number;
+  pointsInLevel: number;
+  points: number;
+  userStats: { watchTime: number; episodesCompleted: number; currentStreak: number; longestStreak: number; streakMultiplier: number };
+  rankLoading: boolean;
+  leaderboardRank: number | null;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Main HUD Pill                                                      */
+/* ------------------------------------------------------------------ */
 
 export function HudPill() {
   const pathname = usePathname();
@@ -199,7 +226,6 @@ export function HudPill() {
   const [rankLoading, setRankLoading] = useState(false);
   const rankFetchedRef = useRef(false);
   const hudRef = useRef<HTMLDivElement>(null);
-  const [mounted, setMounted] = useState(false);
 
   const prevLevelRef = useRef(0);
   const prevStreakRef = useRef(0);
@@ -207,8 +233,6 @@ export function HudPill() {
   const [streakPulse, setStreakPulse] = useState(false);
   const [notifPulse, setNotifPulse] = useState(false);
   const prevUnreadRef = useRef(0);
-
-  useEffect(() => { setMounted(true); }, []);
 
   const level = userStats.level;
   const points = userStats.points;
@@ -222,9 +246,7 @@ export function HudPill() {
       setLevelPulse(true);
       if (hudRef.current) {
         const rect = hudRef.current.getBoundingClientRect();
-        const x = (rect.left + rect.width / 2) / window.innerWidth;
-        const y = rect.top / window.innerHeight;
-        confetti({ particleCount: 30, spread: 60, origin: { x, y }, colors: ["#ef4444", "#f97316", "#eab308"], startVelocity: 20, gravity: 1.2, scalar: 0.7 });
+        confetti({ particleCount: 30, spread: 60, origin: { x: (rect.left + rect.width / 2) / window.innerWidth, y: rect.top / window.innerHeight }, colors: ["#ef4444", "#f97316", "#eab308"], startVelocity: 20, gravity: 1.2, scalar: 0.7 });
       }
       setTimeout(() => setLevelPulse(false), 800);
     }
@@ -247,11 +269,10 @@ export function HudPill() {
     prevUnreadRef.current = unreadCount;
   }, [unreadCount]);
 
-  // Scroll collapse — desktop only
+  // Scroll collapse — desktop only (sm+)
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 640px)");
     if (!mq.matches) return;
-
     let lastY = window.scrollY;
     const handleScroll = () => {
       const y = window.scrollY;
@@ -263,13 +284,7 @@ export function HudPill() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => {
-    if (!panelOpen) return;
-    const handle = (e: KeyboardEvent) => { if (e.key === "Escape") setPanelOpen(false); };
-    document.addEventListener("keydown", handle);
-    return () => document.removeEventListener("keydown", handle);
-  }, [panelOpen]);
-
+  // Fetch leaderboard rank when panel opens
   const fetchRank = useCallback(async () => {
     if (!user || rankFetchedRef.current) return;
     rankFetchedRef.current = true;
@@ -294,78 +309,21 @@ export function HudPill() {
 
   const initials = (user?.email ?? "?").charAt(0).toUpperCase();
 
-  const panelProps = {
-    onClose: () => setPanelOpen(false),
+  const panelProps: PanelProps = {
     initials,
     user: user ? { id: user.id, email: user.email } : null,
-    level,
-    tier,
-    xpProgress,
-    pointsInLevel,
-    points,
-    userStats,
-    rankLoading,
-    leaderboardRank,
+    level, tier, xpProgress, pointsInLevel, points, userStats, rankLoading, leaderboardRank,
   };
 
   return (
     <>
-      {/* Stats panel — portaled to body, always in DOM, toggled with CSS transitions */}
-      {mounted && createPortal(
-        <div
-          className={cn(
-            "fixed inset-0 z-[70] transition-all duration-300",
-            panelOpen ? "visible" : "invisible pointer-events-none"
-          )}
-        >
-          {/* Backdrop */}
-          <div
-            className={cn(
-              "absolute inset-0 bg-black/60 transition-opacity duration-300",
-              panelOpen ? "opacity-100" : "opacity-0"
-            )}
-            onClick={() => setPanelOpen(false)}
-          />
+      {/* Portal: only mounted when panel is open — nothing in the DOM when closed */}
+      {panelOpen && <StatsPanel onClose={() => setPanelOpen(false)} panelProps={panelProps} />}
 
-          {/* Mobile bottom sheet */}
-          <div
-            className={cn(
-              "absolute inset-x-0 bottom-0 sm:hidden max-h-[80vh] flex flex-col rounded-t-2xl bg-[#111] border-t border-white/[0.1] shadow-2xl transition-transform duration-300 ease-out",
-              panelOpen ? "translate-y-0" : "translate-y-full"
-            )}
-            style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-          >
-            <div className="relative flex items-center justify-center px-5 pt-3 pb-1 shrink-0">
-              <div className="w-10 h-1 rounded-full bg-white/20" />
-              <button
-                onClick={() => setPanelOpen(false)}
-                className="absolute right-4 top-2.5 h-8 w-8 rounded-full bg-white/[0.06] flex items-center justify-center active:bg-white/[0.12]"
-              >
-                <X className="h-4 w-4 text-white/40" />
-              </button>
-            </div>
-            <div className="overflow-y-auto flex-1 overscroll-contain">
-              <StatsPanelContent {...panelProps} />
-            </div>
-          </div>
-
-          {/* Desktop floating card */}
-          <div
-            className={cn(
-              "hidden sm:block absolute bottom-20 left-1/2 -translate-x-1/2 w-80 rounded-2xl bg-black/80 backdrop-blur-2xl border border-white/[0.1] shadow-2xl shadow-black/50 overflow-hidden transition-all duration-300 ease-out",
-              panelOpen ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-95"
-            )}
-          >
-            <StatsPanelContent {...panelProps} />
-          </div>
-        </div>,
-        document.body
-      )}
-
-      {/* Pill */}
+      {/* Pill — z-[39] so it sits below the navbar mobile drawer (z-40) */}
       <div
         ref={hudRef}
-        className="fixed bottom-4 sm:bottom-6 left-0 right-0 z-[60] flex justify-center pointer-events-none"
+        className="fixed bottom-4 sm:bottom-6 left-0 right-0 z-[39] flex justify-center pointer-events-none"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <motion.div
@@ -388,7 +346,6 @@ export function HudPill() {
           )}
 
           <div className="relative z-10 flex items-center gap-1 px-1.5 py-1.5">
-            {/* Avatar */}
             <button
               onClick={() => setPanelOpen((v) => !v)}
               className="relative h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary shrink-0 active:scale-95 transition-transform"
@@ -397,7 +354,6 @@ export function HudPill() {
               <MiniXpRing progress={xpProgress} size={32} strokeWidth={2} />
             </button>
 
-            {/* Stats — always visible on mobile, collapsible on desktop */}
             <AnimatePresence initial={false}>
               {!collapsed && (
                 <motion.div
@@ -408,39 +364,21 @@ export function HudPill() {
                   transition={{ duration: 0.2 }}
                   className="flex items-center gap-1 overflow-hidden"
                 >
-                  <motion.div
-                    animate={levelPulse ? { scale: [1, 1.3, 1] } : {}}
-                    transition={{ duration: 0.4 }}
-                    className="flex items-center gap-1 px-2 py-1 rounded-full bg-white/[0.04]"
-                  >
+                  <motion.div animate={levelPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }} className="flex items-center gap-1 px-2 py-1 rounded-full bg-white/[0.04]">
                     <span className="text-[10px] font-black text-white/50 uppercase tracking-wider">Lvl</span>
                     <span className="text-xs font-black text-white tabular-nums">{level}</span>
                   </motion.div>
 
-                  <motion.div
-                    animate={streakPulse ? { scale: [1, 1.3, 1] } : {}}
-                    transition={{ duration: 0.4 }}
-                    className={cn(
-                      "flex items-center gap-1 px-2 py-1 rounded-full",
-                      userStats.currentStreak > 0 ? "bg-orange-500/[0.08]" : "bg-white/[0.04]"
-                    )}
-                  >
+                  <motion.div animate={streakPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }} className={cn("flex items-center gap-1 px-2 py-1 rounded-full", userStats.currentStreak > 0 ? "bg-orange-500/[0.08]" : "bg-white/[0.04]")}>
                     <Flame className={cn("h-3 w-3", userStats.currentStreak > 0 ? "text-orange-500" : "text-white/30")} />
-                    <span className={cn("text-xs font-bold tabular-nums", userStats.currentStreak > 0 ? "text-orange-400" : "text-white/30")}>
-                      {userStats.currentStreak}
-                    </span>
+                    <span className={cn("text-xs font-bold tabular-nums", userStats.currentStreak > 0 ? "text-orange-400" : "text-white/30")}>{userStats.currentStreak}</span>
                   </motion.div>
 
                   <motion.div animate={notifPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }}>
                     <Link href="/dashboard" className="relative flex items-center justify-center h-7 w-7 rounded-full bg-white/[0.04]">
                       <Bell className="h-3 w-3 text-white/40" />
                       {unreadCount > 0 && (
-                        <motion.span
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ type: "spring", damping: 12, stiffness: 400 }}
-                          className="absolute -top-0.5 -right-0.5 h-3.5 min-w-[14px] rounded-full bg-primary text-[8px] font-bold text-white flex items-center justify-center px-0.5"
-                        >
+                        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", damping: 12, stiffness: 400 }} className="absolute -top-0.5 -right-0.5 h-3.5 min-w-[14px] rounded-full bg-primary text-[8px] font-bold text-white flex items-center justify-center px-0.5">
                           {unreadCount > 9 ? "9+" : unreadCount}
                         </motion.span>
                       )}
@@ -451,9 +389,7 @@ export function HudPill() {
                     <div className="flex items-center justify-center h-7 w-7 rounded-full bg-white/[0.04] cursor-not-allowed">
                       <MessageCircle className="h-3 w-3 text-white/20" />
                     </div>
-                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-lg bg-black/90 border border-white/10 text-[10px] font-bold text-white/50 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                      Coming Soon
-                    </div>
+                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-lg bg-black/90 border border-white/10 text-[10px] font-bold text-white/50 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Coming Soon</div>
                   </div>
                 </motion.div>
               )}
