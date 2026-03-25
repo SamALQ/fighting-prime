@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Play, X } from "lucide-react";
 
 interface CourseHeroClientProps {
@@ -10,6 +11,9 @@ interface CourseHeroClientProps {
 export function CourseHeroClient({ trailerUrl }: CourseHeroClientProps) {
   const [showTrailer, setShowTrailer] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     if (!showTrailer) return;
@@ -26,6 +30,34 @@ export function CourseHeroClient({ trailerUrl }: CourseHeroClientProps) {
     }
   }, [showTrailer]);
 
+  const modal = showTrailer ? (
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95"
+      onClick={() => setShowTrailer(false)}
+    >
+      <button
+        onClick={() => setShowTrailer(false)}
+        className="absolute top-6 right-6 z-10 h-10 w-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+      >
+        <X className="h-5 w-5 text-white" />
+      </button>
+      <div
+        className="w-full max-w-5xl aspect-video rounded-2xl overflow-hidden shadow-2xl bg-black mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <video
+          ref={videoRef}
+          src={trailerUrl}
+          className="w-full h-full"
+          controls
+          autoPlay
+          playsInline
+          preload="auto"
+        />
+      </div>
+    </div>
+  ) : null;
+
   return (
     <>
       <button
@@ -35,34 +67,7 @@ export function CourseHeroClient({ trailerUrl }: CourseHeroClientProps) {
         Watch Trailer
         <Play className="h-4 w-4 fill-current" />
       </button>
-
-      {showTrailer && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95"
-          onClick={() => setShowTrailer(false)}
-        >
-          <button
-            onClick={() => setShowTrailer(false)}
-            className="absolute top-6 right-6 z-10 h-10 w-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
-          >
-            <X className="h-5 w-5 text-white" />
-          </button>
-          <div
-            className="w-full max-w-5xl aspect-video rounded-2xl overflow-hidden shadow-2xl bg-black"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <video
-              ref={videoRef}
-              src={trailerUrl}
-              className="w-full h-full"
-              controls
-              autoPlay
-              playsInline
-              preload="auto"
-            />
-          </div>
-        </div>
-      )}
+      {mounted && modal && createPortal(modal, document.body)}
     </>
   );
 }
