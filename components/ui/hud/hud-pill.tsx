@@ -313,31 +313,31 @@ export function HudPill() {
             />
           )}
 
-          <div className="relative z-10 flex items-center gap-1 px-1.5 py-1.5">
+          <div className="relative z-10 flex items-center gap-1.5 px-2 py-2">
             <button
               onClick={() => setPanelOpen((v) => !v)}
-              className="relative h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary shrink-0 active:scale-95 transition-transform"
+              className="relative h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary shrink-0 active:scale-95 transition-transform"
             >
               {initials}
-              <MiniXpRing progress={xpProgress} size={32} strokeWidth={2} />
+              <MiniXpRing progress={xpProgress} size={40} strokeWidth={2.5} />
             </button>
 
-            <div className="flex items-center gap-1">
-              <motion.div animate={levelPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }} className="flex items-center gap-1 px-2 py-1 rounded-full bg-white/[0.04]">
-                <span className="text-[10px] font-black text-white/50 uppercase tracking-wider">Lvl</span>
-                <span className="text-xs font-black text-white tabular-nums">{level}</span>
+            <div className="flex items-center gap-1.5">
+              <motion.div animate={levelPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }} className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-white/[0.04]">
+                <span className="text-[11px] font-black text-white/50 uppercase tracking-wider">Lvl</span>
+                <span className="text-sm font-black text-white tabular-nums">{level}</span>
               </motion.div>
 
-              <motion.div animate={streakPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }} className={cn("flex items-center gap-1 px-2 py-1 rounded-full", userStats.currentStreak > 0 ? "bg-orange-500/[0.08]" : "bg-white/[0.04]")}>
-                <Flame className={cn("h-3 w-3", userStats.currentStreak > 0 ? "text-orange-500" : "text-white/30")} />
-                <span className={cn("text-xs font-bold tabular-nums", userStats.currentStreak > 0 ? "text-orange-400" : "text-white/30")}>{userStats.currentStreak}</span>
+              <motion.div animate={streakPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }} className={cn("flex items-center gap-1 px-2.5 py-1.5 rounded-full", userStats.currentStreak > 0 ? "bg-orange-500/[0.08]" : "bg-white/[0.04]")}>
+                <Flame className={cn("h-3.5 w-3.5", userStats.currentStreak > 0 ? "text-orange-500" : "text-white/30")} />
+                <span className={cn("text-sm font-bold tabular-nums", userStats.currentStreak > 0 ? "text-orange-400" : "text-white/30")}>{userStats.currentStreak}</span>
               </motion.div>
 
               <motion.div animate={notifPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }}>
-                <Link href="/dashboard" className="relative flex items-center justify-center h-7 w-7 rounded-full bg-white/[0.04]">
-                  <Bell className="h-3 w-3 text-white/40" />
+                <Link href="/dashboard" className="relative flex items-center justify-center h-8 w-8 rounded-full bg-white/[0.04]">
+                  <Bell className="h-3.5 w-3.5 text-white/40" />
                   {unreadCount > 0 && (
-                    <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", damping: 12, stiffness: 400 }} className="absolute -top-0.5 -right-0.5 h-3.5 min-w-[14px] rounded-full bg-primary text-[8px] font-bold text-white flex items-center justify-center px-0.5">
+                    <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", damping: 12, stiffness: 400 }} className="absolute -top-0.5 -right-0.5 h-4 min-w-[16px] rounded-full bg-primary text-[9px] font-bold text-white flex items-center justify-center px-0.5">
                       {unreadCount > 9 ? "9+" : unreadCount}
                     </motion.span>
                   )}
@@ -345,8 +345,8 @@ export function HudPill() {
               </motion.div>
 
               <div className="group relative hidden sm:block">
-                <div className="flex items-center justify-center h-7 w-7 rounded-full bg-white/[0.04] cursor-not-allowed">
-                  <MessageCircle className="h-3 w-3 text-white/20" />
+                <div className="flex items-center justify-center h-8 w-8 rounded-full bg-white/[0.04] cursor-not-allowed">
+                  <MessageCircle className="h-3.5 w-3.5 text-white/20" />
                 </div>
                 <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-lg bg-black/90 border border-white/10 text-[10px] font-bold text-white/50 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Coming Soon</div>
               </div>
