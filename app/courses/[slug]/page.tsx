@@ -77,10 +77,10 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-[#0a0a0a] to-[#0a0a0a]" />
           )}
 
-          {/* Multi-layer gradient for cinematic depth */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-80" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-transparent" />
+          {/* Multi-layer gradient for cinematic depth — pure black, not theme grey */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-transparent" />
 
           {/* Vignette */}
           <div className="absolute inset-0 shadow-[inset_0_0_150px_rgba(0,0,0,0.6)]" />
@@ -91,7 +91,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
 
         {/* Content overlay */}
         <div className="relative z-10 w-full">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-16 pt-48">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-32 pt-48">
             <div className="max-w-3xl">
               {/* Release date badge */}
               {course.releaseDate && (
@@ -195,7 +195,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
         </div>
 
         {/* Bottom fade into page */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent z-[5]" />
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black to-transparent z-[5]" />
       </section>
 
       {/* Course content below the splash */}
