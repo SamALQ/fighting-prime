@@ -106,16 +106,18 @@ export function CourseCard({ course, episodes, className }: CourseCardProps) {
             {course.title}
           </h3>
 
-          {/* Difficulty indicator */}
+          {/* Difficulty indicator — plain img avoids Next/Image span + line-box centering */}
           <div className="flex items-end gap-2 mb-3">
             {course.difficultyMeterImage ? (
-              <Image
+              // eslint-disable-next-line @next/next/no-img-element -- inline layout asset; Next Image wrapper breaks vertical align with label
+              <img
                 src={course.difficultyMeterImage}
                 alt={`${course.difficulty} difficulty`}
                 width={80}
                 height={20}
-                className="h-4 w-auto object-contain object-bottom shrink-0"
-                unoptimized
+                className="block h-[22px] w-auto shrink-0 object-contain object-bottom"
+                loading="lazy"
+                decoding="async"
               />
             ) : (
               <span className="flex gap-0.5 items-end pb-px">
@@ -130,7 +132,7 @@ export function CourseCard({ course, episodes, className }: CourseCardProps) {
                 ))}
               </span>
             )}
-            <span className="text-[11px] font-bold uppercase tracking-wide text-foreground/40 leading-none pb-px">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-foreground/40 leading-none">
               {course.difficulty}
             </span>
           </div>
