@@ -102,12 +102,8 @@ export function CourseCard({ course, episodes, className }: CourseCardProps) {
 
         {/* Content */}
         <div className="px-5 pt-4 pb-2 flex-1 flex flex-col">
-          <h3 className="font-black text-xl uppercase tracking-tight leading-tight mb-2 group-hover:text-primary transition-colors">
-            {course.title}
-          </h3>
-
           {/* Difficulty indicator — plain img avoids Next/Image span + line-box centering */}
-          <div className="flex items-end gap-2 mb-3">
+          <div className="flex items-end gap-2 mb-2">
             {course.difficultyMeterImage ? (
               // eslint-disable-next-line @next/next/no-img-element -- inline layout asset; Next Image wrapper breaks vertical align with label
               <img
@@ -136,6 +132,10 @@ export function CourseCard({ course, episodes, className }: CourseCardProps) {
               {course.difficulty}
             </span>
           </div>
+
+          <h3 className="font-black text-xl uppercase tracking-tight leading-tight mb-2 group-hover:text-primary transition-colors">
+            {course.title}
+          </h3>
 
           <p className="text-sm text-foreground/45 leading-relaxed mb-4 line-clamp-2">
             {course.tagline}
