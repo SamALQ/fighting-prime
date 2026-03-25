@@ -105,6 +105,36 @@ export function CourseCard({ course, episodes, className }: CourseCardProps) {
           <h3 className="font-black text-xl uppercase tracking-tight leading-tight mb-2 group-hover:text-primary transition-colors">
             {course.title}
           </h3>
+
+          {/* Difficulty indicator */}
+          <div className="flex items-center gap-2 mb-3">
+            {course.difficultyMeterImage ? (
+              <Image
+                src={course.difficultyMeterImage}
+                alt={`${course.difficulty} difficulty`}
+                width={80}
+                height={20}
+                className="h-4 w-auto object-contain"
+                unoptimized
+              />
+            ) : (
+              <span className="flex gap-0.5">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <span
+                    key={i}
+                    className={cn(
+                      "h-1.5 w-1.5 rounded-full",
+                      i < diff.dots ? diff.color : "bg-foreground/[0.1]"
+                    )}
+                  />
+                ))}
+              </span>
+            )}
+            <span className="text-[11px] font-bold uppercase tracking-wide text-foreground/40">
+              {course.difficulty}
+            </span>
+          </div>
+
           <p className="text-sm text-foreground/45 leading-relaxed mb-4 line-clamp-2">
             {course.tagline}
           </p>
@@ -143,34 +173,6 @@ export function CourseCard({ course, episodes, className }: CourseCardProps) {
               <span className="inline-flex items-center gap-1 rounded-md border border-foreground/[0.1] bg-foreground/[0.04] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-foreground/50">
                 <Sparkles className="h-3 w-3 text-primary/60" />
                 {course.totalPoints} POINTS
-              </span>
-            )}
-            {/* Difficulty */}
-            {course.difficultyMeterImage ? (
-              <span className="inline-flex items-center rounded-md border border-foreground/[0.1] bg-foreground/[0.04] px-2 py-1">
-                <Image
-                  src={course.difficultyMeterImage}
-                  alt={`${course.difficulty} difficulty`}
-                  width={80}
-                  height={20}
-                  className="h-4 w-auto object-contain"
-                  unoptimized
-                />
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 rounded-md border border-foreground/[0.1] bg-foreground/[0.04] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-foreground/50">
-                <span className="flex gap-0.5">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <span
-                      key={i}
-                      className={cn(
-                        "h-1.5 w-1.5 rounded-full",
-                        i < diff.dots ? diff.color : "bg-foreground/[0.1]"
-                      )}
-                    />
-                  ))}
-                </span>
-                {diff.label}
               </span>
             )}
           </div>
