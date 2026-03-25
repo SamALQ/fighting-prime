@@ -30,6 +30,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { NotificationBell } from "@/components/ui/notification-bell";
 import { GlobalSearch } from "@/components/ui/global-search";
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { Course } from "@/data/courses";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -91,7 +92,7 @@ export function NavBar() {
     { href: "/about", label: "About", always: true },
   ];
 
-  return (
+  const navElement = (
     <nav className="bg-background/90 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70 sticky top-0 z-50 border-b border-foreground/[0.06]">
       <Container>
         <div className="flex h-16 items-center justify-between">
@@ -330,132 +331,141 @@ export function NavBar() {
         </div>
       </Container>
 
-      {/* Mobile drawer */}
+    </nav>
+  );
+
+  const mobileDrawer = (
+    <div
+      className={cn(
+        "fixed inset-0 top-16 z-[9999] lg:hidden transition-all duration-300",
+        mobileOpen
+          ? "opacity-100 pointer-events-auto"
+          : "opacity-0 pointer-events-none"
+      )}
+    >
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60"
+        onClick={closeMobile}
+      />
+
+      {/* Drawer panel */}
       <div
         className={cn(
-          "fixed inset-0 top-16 z-40 lg:hidden transition-all duration-300",
-          mobileOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
+          "absolute top-0 right-0 w-72 h-full bg-background border-l border-border shadow-2xl transition-transform duration-300 flex flex-col",
+          mobileOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
-        {/* Backdrop */}
-        <div
-          className="absolute inset-0 bg-black/60"
-          onClick={closeMobile}
-        />
+        <div className="flex-1 overflow-y-auto py-4 px-4">
+          {/* Nav links */}
+          <div className="space-y-1">
+            {navLinks.map((link) => {
+              if (link.auth && !isLoggedIn) return null;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={closeMobile}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-colors"
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </div>
 
-        {/* Drawer panel */}
-        <div
-          className={cn(
-            "absolute top-0 right-0 w-72 h-full bg-background border-l border-border shadow-2xl transition-transform duration-300 flex flex-col",
-            mobileOpen ? "translate-x-0" : "translate-x-full"
-          )}
-        >
-          <div className="flex-1 overflow-y-auto py-4 px-4">
-            {/* Nav links */}
-            <div className="space-y-1">
-              {navLinks.map((link) => {
-                if (link.auth && !isLoggedIn) return null;
-                return (
+          {/* Auth section */}
+          {!isLoading && (
+            <>
+              <div className="my-4 border-t border-border" />
+
+              {isLoggedIn ? (
+                <div className="space-y-1">
+                  {userEmail && (
+                    <div className="px-3 py-2 text-xs text-muted-foreground truncate">
+                      {userEmail}
+                    </div>
+                  )}
+                  {user && (
+                    <Link
+                      href={`/profile/${user.id}`}
+                      onClick={closeMobile}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-colors"
+                    >
+                      <User className="h-4 w-4" />
+                      My Profile
+                    </Link>
+                  )}
+                  {(role === "instructor" || role === "admin") && (
+                    <Link
+                      href="/instructor"
+                      onClick={closeMobile}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-colors"
+                    >
+                      <BarChart3 className="h-4 w-4" />
+                      Instructor Portal
+                    </Link>
+                  )}
+                  {role === "admin" && (
+                    <Link
+                      href="/admin"
+                      onClick={closeMobile}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-colors"
+                    >
+                      <Shield className="h-4 w-4" />
+                      Admin
+                    </Link>
+                  )}
                   <Link
-                    key={link.href}
-                    href={link.href}
+                    href="/account"
                     onClick={closeMobile}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-colors"
                   >
-                    {link.label}
+                    <Settings className="h-4 w-4" />
+                    Account Settings
                   </Link>
-                );
-              })}
-            </div>
+                  <Link
+                    href="/pricing"
+                    onClick={closeMobile}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-colors"
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    Subscription
+                  </Link>
 
-            {/* Auth section */}
-            {!isLoading && (
-              <>
-                <div className="my-4 border-t border-border" />
+                  <div className="my-3 border-t border-border" />
 
-                {isLoggedIn ? (
-                  <div className="space-y-1">
-                    {userEmail && (
-                      <div className="px-3 py-2 text-xs text-muted-foreground truncate">
-                        {userEmail}
-                      </div>
-                    )}
-                    {user && (
-                      <Link
-                        href={`/profile/${user.id}`}
-                        onClick={closeMobile}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-colors"
-                      >
-                        <User className="h-4 w-4" />
-                        My Profile
-                      </Link>
-                    )}
-                    {(role === "instructor" || role === "admin") && (
-                      <Link
-                        href="/instructor"
-                        onClick={closeMobile}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-colors"
-                      >
-                        <BarChart3 className="h-4 w-4" />
-                        Instructor Portal
-                      </Link>
-                    )}
-                    {role === "admin" && (
-                      <Link
-                        href="/admin"
-                        onClick={closeMobile}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-colors"
-                      >
-                        <Shield className="h-4 w-4" />
-                        Admin
-                      </Link>
-                    )}
-                    <Link
-                      href="/account"
-                      onClick={closeMobile}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-colors"
-                    >
-                      <Settings className="h-4 w-4" />
-                      Account Settings
-                    </Link>
-                    <Link
-                      href="/pricing"
-                      onClick={closeMobile}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-colors"
-                    >
-                      <CreditCard className="h-4 w-4" />
-                      Subscription
-                    </Link>
-
-                    <div className="my-3 border-t border-border" />
-
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors w-full text-left"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      Logout
-                    </button>
-                  </div>
-                ) : (
-                  <div className="px-3 space-y-2">
-                    <Link href="/login" onClick={closeMobile}>
-                      <Button className="w-full">Login</Button>
-                    </Link>
-                    <Link href="/signup" onClick={closeMobile}>
-                      <Button variant="outline" className="w-full">
-                        Sign Up
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors w-full text-left"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <div className="px-3 space-y-2">
+                  <Link href="/login" onClick={closeMobile}>
+                    <Button className="w-full">Login</Button>
+                  </Link>
+                  <Link href="/signup" onClick={closeMobile}>
+                    <Button variant="outline" className="w-full">
+                      Sign Up
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
-    </nav>
+    </div>
+  );
+
+  return (
+    <>
+      {navElement}
+      {typeof document !== "undefined" && createPortal(mobileDrawer, document.body)}
+    </>
   );
 }

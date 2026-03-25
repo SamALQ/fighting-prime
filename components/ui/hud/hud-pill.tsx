@@ -162,27 +162,11 @@ function StatsPanel({ onClose, panelProps }: { onClose: () => void; panelProps: 
         onClick={onClose}
       />
 
-      {/* Mobile bottom sheet */}
+      {/* Floating card — same style on mobile and desktop */}
       <div
         className={cn(
-          "absolute inset-x-0 bottom-0 sm:hidden max-h-[80vh] flex flex-col rounded-t-2xl bg-[#111] border-t border-white/[0.1] shadow-2xl transition-transform duration-300 ease-out will-change-transform",
-          sheetReady ? "translate-y-0" : "translate-y-full"
-        )}
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-      >
-        <div className="relative flex items-center justify-center px-5 pt-3 pb-1 shrink-0">
-          <div className="w-10 h-1 rounded-full bg-white/20" />
-          <button onClick={onClose} className="absolute right-4 top-2.5 h-8 w-8 rounded-full bg-white/[0.06] flex items-center justify-center active:bg-white/[0.12]">
-            <X className="h-4 w-4 text-white/40" />
-          </button>
-        </div>
-        <div className="overflow-y-auto flex-1 overscroll-contain">{content}</div>
-      </div>
-
-      {/* Desktop floating card */}
-      <div
-        className={cn(
-          "hidden sm:block absolute bottom-20 left-1/2 -translate-x-1/2 w-80 rounded-2xl bg-black/80 backdrop-blur-2xl border border-white/[0.1] shadow-2xl shadow-black/50 overflow-hidden transition-all duration-200 ease-out",
+          "absolute left-1/2 -translate-x-1/2 w-[calc(100vw-2rem)] sm:w-80 max-w-80 rounded-2xl bg-black/80 backdrop-blur-2xl border border-white/[0.1] shadow-2xl shadow-black/50 overflow-hidden transition-all duration-200 ease-out",
+          "bottom-20 sm:bottom-20",
           sheetReady ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-95"
         )}
       >
