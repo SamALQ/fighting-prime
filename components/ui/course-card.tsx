@@ -83,37 +83,6 @@ export function CourseCard({ course, episodes, className }: CourseCardProps) {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-[#111111] via-[#111111]/40 to-transparent" />
 
-          {/* Difficulty — top of poster so it reads clearly above the title */}
-          <div className="absolute top-4 left-4 right-4 z-10 flex items-end gap-2">
-            {course.difficultyMeterImage ? (
-              // eslint-disable-next-line @next/next/no-img-element -- inline layout asset; Next Image wrapper breaks vertical align with label
-              <img
-                src={course.difficultyMeterImage}
-                alt={`${course.difficulty} difficulty`}
-                width={80}
-                height={20}
-                className="block h-[22px] w-auto shrink-0 object-contain object-bottom drop-shadow-md"
-                loading="lazy"
-                decoding="async"
-              />
-            ) : (
-              <span className="flex gap-0.5 items-end pb-px">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <span
-                    key={i}
-                    className={cn(
-                      "h-1.5 w-1.5 rounded-full shrink-0",
-                      i < diff.dots ? diff.color : "bg-foreground/[0.1]"
-                    )}
-                  />
-                ))}
-              </span>
-            )}
-            <span className="text-[11px] font-bold uppercase tracking-wide text-white/80 leading-none drop-shadow-md">
-              {course.difficulty}
-            </span>
-          </div>
-
           {/* Badge overlay */}
           {badgeLabel && (
             <div className="absolute bottom-4 left-4 z-10">
@@ -133,6 +102,37 @@ export function CourseCard({ course, episodes, className }: CourseCardProps) {
 
         {/* Content */}
         <div className="px-5 pt-4 pb-2 flex-1 flex flex-col">
+          {/* Difficulty indicator */}
+          <div className="flex items-end gap-2 mb-2">
+            {course.difficultyMeterImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={course.difficultyMeterImage}
+                alt={`${course.difficulty} difficulty`}
+                width={80}
+                height={20}
+                className="block h-[22px] w-auto shrink-0 object-contain object-bottom"
+                loading="lazy"
+                decoding="async"
+              />
+            ) : (
+              <span className="flex gap-0.5 items-end pb-px">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <span
+                    key={i}
+                    className={cn(
+                      "h-1.5 w-1.5 rounded-full shrink-0",
+                      i < diff.dots ? diff.color : "bg-foreground/[0.1]"
+                    )}
+                  />
+                ))}
+              </span>
+            )}
+            <span className="text-[11px] font-bold uppercase tracking-wide text-foreground/40 leading-none">
+              {course.difficulty}
+            </span>
+          </div>
+
           <h3 className="font-black text-xl uppercase tracking-tight leading-tight mb-2 group-hover:text-primary transition-colors">
             {course.title}
           </h3>
