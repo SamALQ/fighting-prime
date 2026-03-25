@@ -107,30 +107,30 @@ export function CourseCard({ course, episodes, className }: CourseCardProps) {
           </h3>
 
           {/* Difficulty indicator */}
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-end gap-2 mb-3">
             {course.difficultyMeterImage ? (
               <Image
                 src={course.difficultyMeterImage}
                 alt={`${course.difficulty} difficulty`}
                 width={80}
                 height={20}
-                className="h-4 w-auto object-contain"
+                className="h-4 w-auto object-contain object-bottom shrink-0"
                 unoptimized
               />
             ) : (
-              <span className="flex gap-0.5">
+              <span className="flex gap-0.5 items-end pb-px">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <span
                     key={i}
                     className={cn(
-                      "h-1.5 w-1.5 rounded-full",
+                      "h-1.5 w-1.5 rounded-full shrink-0",
                       i < diff.dots ? diff.color : "bg-foreground/[0.1]"
                     )}
                   />
                 ))}
               </span>
             )}
-            <span className="text-[11px] font-bold uppercase tracking-wide text-foreground/40">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-foreground/40 leading-none pb-px">
               {course.difficulty}
             </span>
           </div>
