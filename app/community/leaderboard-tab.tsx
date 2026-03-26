@@ -145,7 +145,12 @@ function PointsGuide() {
                   {/* Horizontal track */}
                   <div className="relative mx-4 mb-2">
                     <div className="h-1 rounded-full bg-foreground/[0.06] overflow-hidden">
-                      <div className="h-full rounded-full bg-gradient-to-r from-[#ababab] via-[#ffa90a] via-[#a7cdff] to-[#ff3366]" />
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          background: `linear-gradient(to right, ${TIERS.map((t, i) => `${t.color} ${(i / (TIERS.length - 1)) * 100}%`).join(", ")})`,
+                        }}
+                      />
                     </div>
                   </div>
                   <div className="grid" style={{ gridTemplateColumns: `repeat(${TIERS.length}, 1fr)` }}>
