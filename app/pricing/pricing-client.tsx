@@ -128,7 +128,7 @@ export function PricingClient({ faqs }: PricingClientProps) {
               className={cn(
                 "px-6 py-2.5 rounded-full text-sm font-bold transition-all",
                 interval === "monthly"
-                  ? "bg-primary text-white shadow-lg shadow-primary/25"
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
                   : "text-foreground/50 hover:text-foreground"
               )}
             >
@@ -139,7 +139,7 @@ export function PricingClient({ faqs }: PricingClientProps) {
               className={cn(
                 "px-6 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2",
                 interval === "yearly"
-                  ? "bg-primary text-white shadow-lg shadow-primary/25"
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
                   : "text-foreground/50 hover:text-foreground"
               )}
             >
@@ -147,7 +147,7 @@ export function PricingClient({ faqs }: PricingClientProps) {
               <span className={cn(
                 "text-[10px] px-2 py-0.5 rounded-full font-bold",
                 interval === "yearly"
-                  ? "bg-white/20 text-white"
+                  ? "bg-primary-foreground/20 text-primary-foreground"
                   : "bg-green-500/15 text-green-400"
               )}>
                 Save 50%

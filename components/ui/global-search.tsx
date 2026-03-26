@@ -79,7 +79,7 @@ export function GlobalSearch() {
 
   return (
     <>
-      <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" onClick={close} />
+      <div className="fixed inset-0 z-50 bg-black/30 dark:bg-black/60 backdrop-blur-sm" onClick={close} />
       <div className="fixed top-[10vh] left-1/2 -translate-x-1/2 z-50 w-full max-w-lg px-4">
         <div className="bg-background border border-foreground/10 rounded-xl shadow-2xl overflow-hidden">
           <div className="flex items-center gap-3 px-4 py-3 border-b border-foreground/[0.06]">

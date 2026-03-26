@@ -38,7 +38,7 @@ function MiniXpRing({ progress, size = 36, strokeWidth = 2.5, color }: { progres
   const offset = circumference - (progress / 100) * circumference;
   return (
     <svg width={size} height={size} className="absolute inset-0 -rotate-90">
-      <circle cx={size / 2} cy={size / 2} r={radius} stroke="currentColor" strokeWidth={strokeWidth} fill="none" className="text-white/[0.08]" />
+      <circle cx={size / 2} cy={size / 2} r={radius} stroke="currentColor" strokeWidth={strokeWidth} fill="none" className="text-foreground/[0.08]" />
       <motion.circle cx={size / 2} cy={size / 2} r={radius} stroke={color || "currentColor"} strokeWidth={strokeWidth} fill="none" strokeDasharray={circumference} strokeLinecap="round" className={color ? undefined : "text-primary"} initial={{ strokeDashoffset: circumference }} animate={{ strokeDashoffset: offset }} transition={{ duration: 0.8, ease: "easeOut" }} />
     </svg>
   );
@@ -62,17 +62,17 @@ function TierPromotionModal({ tier, onClose }: { tier: { name: string; color: st
 
   return createPortal(
     <div className="fixed inset-0 z-[80] flex items-center justify-center">
-      <div className={cn("absolute inset-0 bg-black/70 transition-opacity duration-300", ready ? "opacity-100" : "opacity-0")} onClick={onClose} />
+      <div className={cn("absolute inset-0 bg-black/50 dark:bg-black/70 transition-opacity duration-300", ready ? "opacity-100" : "opacity-0")} onClick={onClose} />
       <div
-        className={cn("relative max-w-sm w-[calc(100vw-2rem)] rounded-2xl border p-8 text-center shadow-2xl transition-all duration-500", ready ? "opacity-100 scale-100" : "opacity-0 scale-90")}
-        style={{ backgroundColor: "#111", borderColor: `${tier.color}40` }}
+        className={cn("relative max-w-sm w-[calc(100vw-2rem)] rounded-2xl border bg-background p-8 text-center shadow-2xl transition-all duration-500", ready ? "opacity-100 scale-100" : "opacity-0 scale-90")}
+        style={{ borderColor: `${tier.color}40` }}
       >
         <div className="h-20 w-20 rounded-full mx-auto mb-4 flex items-center justify-center border-2" style={{ borderColor: tier.color, backgroundColor: `${tier.color}15` }}>
           <span className="text-3xl font-black" style={{ color: tier.color }}>{tier.name.charAt(0)}</span>
         </div>
         <p className="text-xs font-black uppercase tracking-[0.2em] mb-2" style={{ color: tier.color }}>Tier Promotion</p>
-        <h2 className="text-2xl font-black text-white mb-2">{tier.name} Tier</h2>
-        <p className="text-sm text-white/50 mb-6">{tier.reward}</p>
+        <h2 className="text-2xl font-black text-foreground mb-2">{tier.name} Tier</h2>
+        <p className="text-sm text-muted-foreground mb-6">{tier.reward}</p>
         <button
           onClick={onClose}
           className="px-6 py-2 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-80"
@@ -117,54 +117,54 @@ function StatsPanel({ onClose, panelProps }: { onClose: () => void; panelProps: 
             <MiniXpRing progress={xpProgress} size={48} strokeWidth={2.5} color={tier.color} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-white text-sm truncate">{user?.email?.split("@")[0] ?? "Fighter"}</p>
+            <p className="font-bold text-foreground text-sm truncate">{user?.email?.split("@")[0] ?? "Fighter"}</p>
             <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: tier.color }}>
               Lvl {level} · {tier.name}
             </span>
           </div>
-          <Link href={`/profile/${user?.id}`} onClick={onClose} className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors">
-            <ExternalLink className="h-3.5 w-3.5 text-white/40" />
+          <Link href={`/profile/${user?.id}`} onClick={onClose} className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-foreground/[0.08] transition-colors">
+            <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
           </Link>
         </div>
 
         <div className="mb-4">
-          <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-white/30 mb-1.5">
+          <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
             <span>{pointsToNext} pts to next level</span>
             <span>Level {level + 1}</span>
           </div>
-          <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+          <div className="h-1.5 rounded-full bg-foreground/[0.06] overflow-hidden">
             <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${xpProgress}%`, backgroundColor: tier.color }} />
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-2 mb-4">
-          <div className="rounded-xl bg-white/[0.04] p-2.5 text-center">
+          <div className="rounded-xl bg-foreground/[0.04] p-2.5 text-center">
             <Trophy className="h-3.5 w-3.5 mx-auto mb-1" style={{ color: tier.color }} />
-            <p className="text-sm font-bold text-white"><AnimatedNumber value={points} /></p>
-            <p className="text-[9px] text-white/30 uppercase tracking-wider font-bold">Points</p>
+            <p className="text-sm font-bold text-foreground"><AnimatedNumber value={points} /></p>
+            <p className="text-[9px] text-muted-foreground uppercase tracking-wider font-bold">Points</p>
           </div>
-          <div className="rounded-xl bg-white/[0.04] p-2.5 text-center">
+          <div className="rounded-xl bg-foreground/[0.04] p-2.5 text-center">
             <Clock className="h-3.5 w-3.5 text-blue-400 mx-auto mb-1" />
-            <p className="text-sm font-bold text-white">{formatTime(userStats.watchTime)}</p>
-            <p className="text-[9px] text-white/30 uppercase tracking-wider font-bold">Watch</p>
+            <p className="text-sm font-bold text-foreground">{formatTime(userStats.watchTime)}</p>
+            <p className="text-[9px] text-muted-foreground uppercase tracking-wider font-bold">Watch</p>
           </div>
-          <div className="rounded-xl bg-white/[0.04] p-2.5 text-center">
+          <div className="rounded-xl bg-foreground/[0.04] p-2.5 text-center">
             <CheckCircle2 className="h-3.5 w-3.5 text-green-500 mx-auto mb-1" />
-            <p className="text-sm font-bold text-white">{userStats.episodesCompleted}</p>
-            <p className="text-[9px] text-white/30 uppercase tracking-wider font-bold">Done</p>
+            <p className="text-sm font-bold text-foreground">{userStats.episodesCompleted}</p>
+            <p className="text-[9px] text-muted-foreground uppercase tracking-wider font-bold">Done</p>
           </div>
         </div>
 
-        <div className="flex items-center justify-between rounded-xl bg-white/[0.04] px-3 py-2.5 mb-3">
+        <div className="flex items-center justify-between rounded-xl bg-foreground/[0.04] px-3 py-2.5 mb-3">
           <div className="flex items-center gap-2">
             <div className="h-7 w-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${tier.color}15` }}>
               <ChevronUp className="h-4 w-4" style={{ color: tier.color }} />
             </div>
             <div>
-              <p className="text-xs font-bold text-white">
+              <p className="text-xs font-bold text-foreground">
                 {rankLoading ? "Loading..." : leaderboardRank && leaderboardRank > 0 ? `#${leaderboardRank} on Leaderboard` : "Unranked"}
               </p>
-              <p className="text-[10px] text-white/30">Keep training to climb</p>
+              <p className="text-[10px] text-muted-foreground">Keep training to climb</p>
             </div>
           </div>
           <Link href="/community" onClick={onClose} className="text-[10px] font-bold hover:opacity-80 transition-opacity uppercase tracking-wider" style={{ color: tier.color }}>View</Link>
@@ -176,9 +176,9 @@ function StatsPanel({ onClose, panelProps }: { onClose: () => void; panelProps: 
               <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: nextTier.color }}>
                 Next: {nextTier.name} Tier
               </p>
-              <p className="text-[10px] font-bold text-white/30">{levelsToNextTier} levels away</p>
+              <p className="text-[10px] font-bold text-muted-foreground">{levelsToNextTier} levels away</p>
             </div>
-            <p className="text-[10px] text-white/40">{nextTier.rewardDescription}</p>
+            <p className="text-[10px] text-muted-foreground">{nextTier.rewardDescription}</p>
           </div>
         )}
       </div>
@@ -188,8 +188,8 @@ function StatsPanel({ onClose, panelProps }: { onClose: () => void; panelProps: 
           <div className="flex items-center gap-2.5 rounded-xl bg-orange-500/[0.06] border border-orange-500/10 px-3 py-2.5">
             <Flame className="h-5 w-5 text-orange-500" />
             <div className="flex-1">
-              <p className="text-xs font-bold text-white">{userStats.currentStreak}-day streak</p>
-              <p className="text-[10px] text-white/30">Longest: {userStats.longestStreak}d</p>
+              <p className="text-xs font-bold text-foreground">{userStats.currentStreak}-day streak</p>
+              <p className="text-[10px] text-muted-foreground">Longest: {userStats.longestStreak}d</p>
             </div>
             {userStats.streakMultiplier > 1 && (
               <span className="text-[10px] font-black text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full">{userStats.streakMultiplier}x pts</span>
@@ -204,14 +204,14 @@ function StatsPanel({ onClose, panelProps }: { onClose: () => void; panelProps: 
     <div className="fixed inset-0 z-[70]">
       {/* Backdrop */}
       <div
-        className={cn("absolute inset-0 bg-black/60 transition-opacity duration-200", sheetReady ? "opacity-100" : "opacity-0")}
+        className={cn("absolute inset-0 bg-black/30 dark:bg-black/60 transition-opacity duration-200", sheetReady ? "opacity-100" : "opacity-0")}
         onClick={onClose}
       />
 
       {/* Floating card — same style on mobile and desktop */}
       <div
         className={cn(
-          "absolute left-1/2 -translate-x-1/2 w-[calc(100vw-2rem)] sm:w-80 max-w-80 rounded-2xl bg-black/80 backdrop-blur-2xl border border-white/[0.1] shadow-2xl shadow-black/50 overflow-hidden transition-all duration-200 ease-out",
+          "absolute left-1/2 -translate-x-1/2 w-[calc(100vw-2rem)] sm:w-80 max-w-80 rounded-2xl bg-background/95 backdrop-blur-2xl border border-border shadow-2xl shadow-black/10 dark:shadow-black/50 overflow-hidden transition-all duration-200 ease-out",
           "bottom-20 sm:bottom-20",
           sheetReady ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-95"
         )}
@@ -365,8 +365,8 @@ export function HudPill() {
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: "spring", damping: 22, stiffness: 300 }}
           className={cn(
-            "pointer-events-auto relative flex items-center rounded-full border backdrop-blur-2xl shadow-2xl shadow-black/40",
-            "bg-black/70 border-white/[0.08]",
+            "pointer-events-auto relative flex items-center rounded-full border backdrop-blur-2xl shadow-2xl shadow-black/10 dark:shadow-black/40",
+            "bg-white/80 dark:bg-black/70 border-border",
             hotStreak && "border-orange-500/30 shadow-orange-500/10",
           )}
         >
@@ -390,21 +390,21 @@ export function HudPill() {
             </button>
 
             <div className="flex items-center gap-1.5">
-              <motion.div animate={levelPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }} className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-white/[0.04]">
-                <span className="text-[11px] font-black text-white/50 uppercase tracking-wider">Lvl</span>
-                <span className="text-sm font-black text-white tabular-nums">{level}</span>
+              <motion.div animate={levelPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }} className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-foreground/[0.04]">
+                <span className="text-[11px] font-black text-muted-foreground uppercase tracking-wider">Lvl</span>
+                <span className="text-sm font-black text-foreground tabular-nums">{level}</span>
               </motion.div>
 
-              <motion.div animate={streakPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }} className={cn("flex items-center gap-1 px-2.5 py-1.5 rounded-full", userStats.currentStreak > 0 ? "bg-orange-500/[0.08]" : "bg-white/[0.04]")}>
-                <Flame className={cn("h-3.5 w-3.5", userStats.currentStreak > 0 ? "text-orange-500" : "text-white/30")} />
-                <span className={cn("text-sm font-bold tabular-nums", userStats.currentStreak > 0 ? "text-orange-400" : "text-white/30")}>{userStats.currentStreak}</span>
+              <motion.div animate={streakPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }} className={cn("flex items-center gap-1 px-2.5 py-1.5 rounded-full", userStats.currentStreak > 0 ? "bg-orange-500/[0.08]" : "bg-foreground/[0.04]")}>
+                <Flame className={cn("h-3.5 w-3.5", userStats.currentStreak > 0 ? "text-orange-500" : "text-muted-foreground/50")} />
+                <span className={cn("text-sm font-bold tabular-nums", userStats.currentStreak > 0 ? "text-orange-400 dark:text-orange-400" : "text-muted-foreground/50")}>{userStats.currentStreak}</span>
               </motion.div>
 
               <motion.div animate={notifPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }}>
-                <Link href="/dashboard" className="relative flex items-center justify-center h-8 w-8 rounded-full bg-white/[0.04]">
-                  <Bell className="h-3.5 w-3.5 text-white/40" />
+                <Link href="/dashboard" className="relative flex items-center justify-center h-8 w-8 rounded-full bg-foreground/[0.04]">
+                  <Bell className="h-3.5 w-3.5 text-muted-foreground" />
                   {unreadCount > 0 && (
-                    <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", damping: 12, stiffness: 400 }} className="absolute -top-0.5 -right-0.5 h-4 min-w-[16px] rounded-full bg-primary text-[9px] font-bold text-white flex items-center justify-center px-0.5">
+                    <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", damping: 12, stiffness: 400 }} className="absolute -top-0.5 -right-0.5 h-4 min-w-[16px] rounded-full bg-primary text-[9px] font-bold text-primary-foreground flex items-center justify-center px-0.5">
                       {unreadCount > 9 ? "9+" : unreadCount}
                     </motion.span>
                   )}
@@ -412,10 +412,10 @@ export function HudPill() {
               </motion.div>
 
               <div className="group relative hidden sm:block">
-                <div className="flex items-center justify-center h-8 w-8 rounded-full bg-white/[0.04] cursor-not-allowed">
-                  <MessageCircle className="h-3.5 w-3.5 text-white/20" />
+                <div className="flex items-center justify-center h-8 w-8 rounded-full bg-foreground/[0.04] cursor-not-allowed">
+                  <MessageCircle className="h-3.5 w-3.5 text-muted-foreground/40" />
                 </div>
-                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-lg bg-black/90 border border-white/10 text-[10px] font-bold text-white/50 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Coming Soon</div>
+                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-lg bg-popover border border-border text-[10px] font-bold text-muted-foreground whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Coming Soon</div>
               </div>
             </div>
           </div>

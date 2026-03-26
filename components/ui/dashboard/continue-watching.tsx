@@ -55,7 +55,7 @@ export function ContinueWatching({ episodes, courses }: ContinueWatchingProps) {
             href={`/courses/${item.course?.slug ?? "unknown"}/${item.episode.slug}`}
             className="group rounded-xl border border-foreground/[0.06] bg-foreground/[0.02] overflow-hidden hover:border-primary/20 transition-all"
           >
-            <div className="relative aspect-video bg-black/50">
+            <div className="relative aspect-video bg-muted">
               {item.episode.thumbnail && (
                 <Image
                   src={item.episode.thumbnail}
@@ -70,7 +70,7 @@ export function ContinueWatching({ episodes, courses }: ContinueWatchingProps) {
                 </div>
               </div>
               {/* Progress bar at bottom */}
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/50">
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-foreground/10">
                 <div
                   className="h-full bg-primary transition-all"
                   style={{ width: `${item.percent_watched}%` }}

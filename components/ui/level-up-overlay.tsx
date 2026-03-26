@@ -105,7 +105,7 @@ export function LevelUpOverlay({ fromLevel, toLevel, onDismiss }: LevelUpOverlay
           Level Up
         </div>
         <div className="flex items-center gap-4 justify-center">
-          <span className="text-4xl font-bold text-white/40">{fromLevel}</span>
+          <span className="text-4xl font-bold text-foreground/40">{fromLevel}</span>
           <div className="flex items-center gap-1">
             {Array.from({ length: 3 }).map((_, i) => (
               <div
@@ -117,11 +117,11 @@ export function LevelUpOverlay({ fromLevel, toLevel, onDismiss }: LevelUpOverlay
               />
             ))}
           </div>
-          <span className="text-6xl font-black text-white drop-shadow-[0_0_30px_rgba(215,18,18,0.5)]">
+          <span className="text-6xl font-black text-foreground drop-shadow-[0_0_30px_rgba(215,18,18,0.5)]">
             {toLevel}
           </span>
         </div>
-        <div className="mt-4 text-white/50 text-sm">Keep training, fighter!</div>
+        <div className="mt-4 text-foreground/50 text-sm">Keep training, fighter!</div>
       </div>
 
       <style jsx>{`
@@ -162,7 +162,7 @@ export function AchievementToast({ achievementIds, onDismiss }: AchievementToast
         visible ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"
       )}
     >
-      <div className="bg-black/90 backdrop-blur-xl border border-primary/30 rounded-xl p-4 shadow-2xl shadow-primary/10 max-w-sm">
+      <div className="bg-popover/95 backdrop-blur-xl border border-primary/30 rounded-xl p-4 shadow-2xl shadow-primary/10 max-w-sm">
         <div className="text-primary text-xs font-bold tracking-wider uppercase mb-2">
           Achievement{achievementIds.length > 1 ? "s" : ""} Unlocked!
         </div>
@@ -175,8 +175,8 @@ export function AchievementToast({ achievementIds, onDismiss }: AchievementToast
                   {require("@/lib/achievements").getAchievementIcon(def.icon, "h-5 w-5")}
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-white">{def.title}</div>
-                  <div className="text-xs text-white/50">{def.description}</div>
+                  <div className="text-sm font-semibold text-foreground">{def.title}</div>
+                  <div className="text-xs text-muted-foreground">{def.description}</div>
                 </div>
               </div>
             ) : null;

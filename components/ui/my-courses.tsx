@@ -59,7 +59,7 @@ export function MyCourses({ courses, episodes }: MyCoursesProps) {
             className={cn(
               "px-5 py-2 rounded-full text-sm font-bold transition-all",
               activeTab === tab.id
-                ? "bg-primary text-white shadow-lg shadow-primary/25"
+                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
                 : "text-foreground/40 hover:text-foreground"
             )}
           >

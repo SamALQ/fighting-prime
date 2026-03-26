@@ -32,28 +32,27 @@ export function AchievementsGrid({ unlockedIds = [] }: { unlockedIds?: string[] 
                 )}
                 style={{
                   borderRadius: 12,
-                  background: isUnlocked ? c : "rgba(255,255,255,0.08)",
+                  background: isUnlocked ? c : "var(--foreground, #888)10",
                 }}
               >
                 {/* Inner card */}
                 <div
-                  className="flex items-center justify-center relative overflow-hidden"
-                  style={{ width: 75, height: 75, borderRadius: 10, background: "#0C0C0C" }}
+                  className="flex items-center justify-center relative overflow-hidden bg-card"
+                  style={{ width: 75, height: 75, borderRadius: 10 }}
                 >
                   {/* Diagonal color wash */}
                   {isUnlocked && (
                     <div
                       className="absolute inset-0"
                       style={{
-                        background: `linear-gradient(135deg, color-mix(in srgb, ${c} 85%, #0C0C0C) 0%, color-mix(in srgb, ${c} 28%, #0C0C0C) 32%, color-mix(in srgb, ${c} 8%, #070707) 55%, #050505 100%)`,
+                        background: `linear-gradient(135deg, color-mix(in srgb, ${c} 85%, var(--card, #fff)) 0%, color-mix(in srgb, ${c} 28%, var(--card, #fff)) 32%, color-mix(in srgb, ${c} 8%, var(--card, #fff)) 55%, var(--card, #fff) 100%)`,
                       }}
                     />
                   )}
 
-                  {/* Icon — white when unlocked */}
+                  {/* Icon */}
                   <div
-                    className="relative z-10"
-                    style={{ color: isUnlocked ? "#FFFFFFDD" : "rgba(255,255,255,0.2)" }}
+                    className={cn("relative z-10", isUnlocked ? "text-white dark:text-white/90" : "text-foreground/20")}
                   >
                     {getAchievementIcon(achievement.icon, "h-8 w-8")}
                   </div>
@@ -61,12 +60,12 @@ export function AchievementsGrid({ unlockedIds = [] }: { unlockedIds?: string[] 
               </div>
 
               {/* Hover tooltip */}
-              <div className="absolute -top-14 left-1/2 -translate-x-1/2 bg-black/95 text-white text-[10px] py-2 px-3 rounded-lg border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 text-center shadow-xl backdrop-blur-sm">
+              <div className="absolute -top-14 left-1/2 -translate-x-1/2 bg-popover/95 text-popover-foreground text-[10px] py-2 px-3 rounded-lg border border-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 text-center shadow-xl backdrop-blur-sm">
                 <div className="font-bold text-[11px]" style={{ color: isUnlocked ? c : undefined }}>
                   {achievement.title}
                 </div>
-                <div className="text-white/50 mt-0.5">{achievement.description}</div>
-                {!isUnlocked && <div className="text-white/30 mt-0.5 italic">Locked</div>}
+                <div className="text-muted-foreground mt-0.5">{achievement.description}</div>
+                {!isUnlocked && <div className="text-muted-foreground/60 mt-0.5 italic">Locked</div>}
               </div>
             </div>
           );

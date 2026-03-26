@@ -67,7 +67,7 @@ export function CoursesClient({ courses, episodes }: CoursesClientProps) {
               className={cn(
                 "px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all",
                 selectedDifficulty === difficulty
-                  ? "bg-primary text-white shadow-lg shadow-primary/25"
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
                   : "border border-foreground/[0.08] text-foreground/50 hover:text-foreground hover:border-foreground/20"
               )}
             >

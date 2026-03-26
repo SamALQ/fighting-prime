@@ -348,7 +348,7 @@ export function NavBar() {
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60"
+        className="absolute inset-0 bg-black/30 dark:bg-black/60"
         onClick={closeMobile}
       />
 

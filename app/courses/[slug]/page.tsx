@@ -58,7 +58,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
 
   return (
     <MainLayout>
-      <div className="bg-black min-h-screen">
+      <div className="bg-background min-h-screen">
       <CourseJSONLD course={course} />
 
       {/* Cinematic splash hero */}
@@ -196,7 +196,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
         </div>
 
         {/* Bottom fade into page */}
-        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black to-transparent z-[5]" />
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-background to-transparent z-[5]" />
       </section>
 
       {/* Course content below the splash */}

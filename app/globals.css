@@ -251,7 +251,7 @@
   }
 
   .text-gradient-hero {
-    background: linear-gradient(to right, #ffffff, #ffffff 60%, rgba(215, 18, 18, 0.7));
+    background: linear-gradient(to right, var(--foreground), var(--foreground) 60%, rgba(215, 18, 18, 0.7));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

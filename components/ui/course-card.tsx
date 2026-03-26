@@ -45,7 +45,7 @@ export function CourseCard({ course, episodes, className }: CourseCardProps) {
 
   return (
     <Link href={`/courses/${course.slug}`} className={cn("group block", className)}>
-      <div className="relative rounded-2xl overflow-hidden h-full bg-[#0a0a0a] border border-white/[0.06] hover:border-white/[0.12] transition-all duration-500">
+      <div className="relative rounded-2xl overflow-hidden h-full bg-[#0a0a0a] border border-foreground/[0.06] hover:border-foreground/[0.12] transition-all duration-500">
         {/* Full-bleed poster — cinematic ratio */}
         <div className="relative aspect-[3/4] w-full overflow-hidden">
           {(course.teaserPortraitImage || course.posterImage || course.coverImage) ? (
