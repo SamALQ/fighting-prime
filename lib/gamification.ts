@@ -141,8 +141,8 @@ export interface Tier {
 export const TIERS: Tier[] = [
   { name: "Iron",      slug: "iron",      minLevel: 0,   color: "#ababab", bgColor: "hsla(0,0%,17%,1)",                     rewardDescription: "Welcome to Fighting Prime. Begin your journey." },
   { name: "Silver",    slug: "silver",    minLevel: 10,  color: "#d9f6ff", bgColor: "hsla(194,12%,38%,1)",                  rewardDescription: "Silver badge on your profile. Access to exclusive discussions." },
-  { name: "Platinum",  slug: "platinum",  minLevel: 50,  color: "#cac0ff", bgColor: "hsla(250,18%,33%,1)",                  rewardDescription: "Platinum badge. Priority access to new course releases." },
-  { name: "Gold",      slug: "gold",      minLevel: 100, color: "#ffa90a", bgColor: "hsla(45,83%,10%,1)",                   rewardDescription: "Gold badge. Free month of Athlete Pro." },
+  { name: "Gold",      slug: "gold",      minLevel: 50,  color: "#ffa90a", bgColor: "hsla(45,83%,10%,1)",                   rewardDescription: "Gold badge. Free month of Athlete Pro." },
+  { name: "Platinum",  slug: "platinum",  minLevel: 100, color: "#cac0ff", bgColor: "hsla(250,18%,33%,1)",                  rewardDescription: "Platinum badge. Priority access to new course releases." },
   { name: "Diamond",   slug: "diamond",   minLevel: 130, color: "#a7cdff", bgColor: "hsla(182,100%,24%,1)",                 rewardDescription: "Diamond badge. Free Fighter Elite analysis from a chosen instructor." },
   { name: "Lightning", slug: "lightning", minLevel: 165, color: "#ffa03b", bgColor: "hsla(216,100%,15%,1)",                 rewardDescription: "Lightning badge. Exclusive live session access." },
   { name: "Obsidian",  slug: "obsidian",  minLevel: 200, color: "#660fc3", bgColor: "hsla(269,100%,8%,1)",                  rewardDescription: "Obsidian badge. One-on-one session with an instructor." },
