@@ -5,6 +5,28 @@ import { Play, Pause, RotateCcw, Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+function GlowNumber({ value }: { value: number }) {
+  const [flash, setFlash] = useState(0);
+  const prevRef = useRef(value);
+
+  useEffect(() => {
+    if (prevRef.current !== value) {
+      setFlash((f) => f + 1);
+      prevRef.current = value;
+    }
+  }, [value]);
+
+  return (
+    <span
+      key={flash}
+      className="text-2xl font-bold tabular-nums w-16 text-center inline-block"
+      style={flash > 0 ? { animation: "number-glow 0.4s ease-out" } : undefined}
+    >
+      {value}
+    </span>
+  );
+}
+
 const PRESETS = [
   { name: "Quick Drill", rounds: 3, work: 60, rest: 30 },
   { name: "Standard", rounds: 5, work: 180, rest: 60 },
@@ -135,7 +157,7 @@ export function DrillTimer() {
                 <button onClick={() => set(Math.max(min, value - (label === "Rounds" ? 1 : 10)))} className="h-8 w-8 rounded-lg border border-foreground/[0.08] flex items-center justify-center hover:bg-foreground/[0.04]">
                   <Minus className="h-3 w-3" />
                 </button>
-                <span className="text-2xl font-bold tabular-nums w-16 text-center">{value}</span>
+                <GlowNumber value={value} />
                 <button onClick={() => set(Math.min(max, value + (label === "Rounds" ? 1 : 10)))} className="h-8 w-8 rounded-lg border border-foreground/[0.08] flex items-center justify-center hover:bg-foreground/[0.04]">
                   <Plus className="h-3 w-3" />
                 </button>

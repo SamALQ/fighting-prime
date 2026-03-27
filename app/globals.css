@@ -286,4 +286,15 @@
   .animate-pulse-glow {
     animation: pulse-glow 4s ease-in-out infinite;
   }
+
+  @keyframes number-glow {
+    0% {
+      text-shadow: 0 0 8px rgba(215, 18, 18, 0.8), 0 0 20px rgba(215, 18, 18, 0.4);
+      color: #D71212;
+    }
+    100% {
+      text-shadow: none;
+      color: inherit;
+    }
+  }
 }
