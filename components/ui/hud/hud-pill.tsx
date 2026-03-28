@@ -110,7 +110,7 @@ function StatsPanel({ onClose, panelProps }: { onClose: () => void; panelProps: 
 
   const content = (
     <>
-      <div className="p-5 pb-4">
+      <div className="p-5 pb-4 font-bruce">
         <div className="flex items-center gap-3 mb-4">
           <div className="relative h-12 w-12 rounded-full flex items-center justify-center text-lg font-bold shrink-0" style={{ color: tier.color, backgroundColor: `${tier.color}20` }}>
             {initials}
@@ -390,7 +390,7 @@ export function HudPill() {
               <MiniXpRing progress={xpProgress} size={40} strokeWidth={2.5} color={tier.color} />
             </button>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 font-bruce">
               <motion.div animate={levelPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }} className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-foreground/[0.04]">
                 <TierText tier={tier} className="text-[11px] font-black uppercase tracking-wider">Lvl</TierText>
                 <TierText tier={tier} className="text-sm font-black tabular-nums">{level}</TierText>

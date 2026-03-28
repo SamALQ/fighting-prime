@@ -136,6 +136,10 @@
 }
 
 @layer utilities {
+  .font-bruce {
+    font-family: "Bruce Forever", var(--font-inter), system-ui, sans-serif;
+  }
+
   /* Lightning animation for completed episodes */
   @keyframes lightning {
     0%, 100% {
