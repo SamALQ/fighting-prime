@@ -66,6 +66,7 @@ export function useProgress() {
   const [levelUpFrom, setLevelUpFrom] = useState<number | null>(null);
   const [newAchievements, setNewAchievements] = useState<string[]>([]);
   const prevLevelRef = useRef<number>(0);
+  const levelMountedRef = useRef(false);
 
   const pendingRef = useRef<Record<string, PendingUpdate>>({});
   const watchEventRef = useRef<Record<string, WatchEventDelta>>({});
@@ -192,10 +193,11 @@ export function useProgress() {
     const totalPoints = watchPoints + completionPoints + serverAssignmentStats.points;
     const newLevel = getLevelFromPoints(totalPoints);
 
-    if (prevLevelRef.current > 0 && newLevel > prevLevelRef.current) {
+    if (levelMountedRef.current && newLevel > prevLevelRef.current) {
       setLevelUpFrom(prevLevelRef.current);
     }
     prevLevelRef.current = newLevel;
+    levelMountedRef.current = true;
 
     return {
       level: newLevel,

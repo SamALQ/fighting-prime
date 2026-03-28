@@ -280,6 +280,7 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
   const prevAwardSeqRef = useRef(0);
   const prevLevelRef = useRef(0);
   const prevTierRef = useRef("");
+  const hasMountedRef = useRef(false);
   const hudRef = useRef<HTMLDivElement>(null);
 
   const [frozenPoints, setFrozenPoints] = useState<number | null>(null);
@@ -314,16 +315,17 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
 
   // Level-up fires when display level changes (after frozenPoints clears)
   useEffect(() => {
-    if (prevLevelRef.current > 0 && level > prevLevelRef.current) {
+    if (hasMountedRef.current && level > prevLevelRef.current) {
       fireLevelUpRef.current();
     }
     prevLevelRef.current = level;
+    hasMountedRef.current = true;
   }, [level]);
 
   // Tier change fires when display tier changes — delayed to play after level-up
   useEffect(() => {
     const slug = tier.slug;
-    if (prevTierRef.current && prevTierRef.current !== slug) {
+    if (hasMountedRef.current && prevTierRef.current !== slug) {
       if (tierFiredRef.current) return;
       tierFiredRef.current = true;
       const old = TIERS.find(t => t.slug === prevTierRef.current);

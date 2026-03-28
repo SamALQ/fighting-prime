@@ -438,6 +438,7 @@ export function HudPill() {
 
   const prevLevelRef = useRef(0);
   const prevTierRef = useRef<string>("");
+  const hasMountedRef = useRef(false);
   const prevStreakRef = useRef(0);
   const prevCompletedRef = useRef(-1);
   const prevAssignPtsRef = useRef(-1);
@@ -484,7 +485,7 @@ export function HudPill() {
 
   // Level-up: defer if bubble is active, otherwise fire immediately
   useEffect(() => {
-    if (prevLevelRef.current > 0 && level > prevLevelRef.current) {
+    if (hasMountedRef.current && level > prevLevelRef.current) {
       if (pointsEvent) {
         pendingLevelUpRef.current = true;
       } else {
@@ -492,13 +493,13 @@ export function HudPill() {
       }
     }
     prevLevelRef.current = level;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [level]);
+    hasMountedRef.current = true;
+  }, [level, pointsEvent]);
 
   // Tier promotion: defer if bubble is active
   useEffect(() => {
     const currentTierSlug = tier.slug;
-    if (prevTierRef.current && prevTierRef.current !== currentTierSlug) {
+    if (hasMountedRef.current && prevTierRef.current !== currentTierSlug) {
       if (pointsEvent) {
         pendingTierRef.current = true;
       } else {
@@ -506,8 +507,7 @@ export function HudPill() {
       }
     }
     prevTierRef.current = currentTierSlug;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tier]);
+  }, [tier, pointsEvent]);
 
   useEffect(() => {
     if (prevStreakRef.current > 0 && userStats.currentStreak > prevStreakRef.current) {
