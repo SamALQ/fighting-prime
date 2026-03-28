@@ -12,6 +12,7 @@ import { ContinueWatching } from "@/components/ui/dashboard/continue-watching";
 import { StreakCard } from "@/components/ui/dashboard/streak-card";
 import { LevelUpOverlay, AchievementToast } from "@/components/ui/level-up-overlay";
 import { useProgress } from "@/lib/hooks/use-progress";
+import { playAchievementSound } from "@/lib/sounds";
 import type { Course } from "@/data/courses";
 import type { Episode } from "@/data/episodes";
 
@@ -36,6 +37,10 @@ export function DashboardClient({ courses, episodes }: DashboardClientProps) {
       checkAchievementsNow();
     }
   }, [isProgressLoading, checkAchievementsNow]);
+
+  useEffect(() => {
+    if (newAchievements.length > 0) playAchievementSound();
+  }, [newAchievements]);
 
   if (isProgressLoading) {
     return (

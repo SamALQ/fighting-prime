@@ -8,10 +8,11 @@ import { Flame, Bell, MessageCircle, Trophy, Clock, CheckCircle2, ChevronUp, Ext
 import { useAuth } from "@/lib/auth-context";
 import { useProgress } from "@/lib/hooks/use-progress";
 import { useHudNotifications } from "./use-hud-notifications";
-import { getTier, getXpProgress, getPointsToNextLevel, getNextTier, getLevelsToNextTier, TierText } from "@/lib/gamification";
+import { getTier, getXpProgress, getPointsToNextLevel, getNextTier, getLevelsToNextTier, TierText, TIERS, POINTS_PER_COMPLETION } from "@/lib/gamification";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import confetti from "canvas-confetti";
+import { playPointsSound, playLevelUpSound, playTierSound, playAchievementSound } from "@/lib/sounds";
 
 const HIDDEN_ROUTES = ["/login", "/signup", "/onboarding", "/reset-password", "/forgot-password"];
 
@@ -56,15 +57,119 @@ function MiniXpRing({ progress, size = 36, strokeWidth = 2.5, color, gradientSto
 }
 
 /* ------------------------------------------------------------------ */
+/*  Points Bubble                                                      */
+/* ------------------------------------------------------------------ */
+
+function PointsBubble({
+  amount,
+  pointsToNext,
+  onLevelUp,
+  onDone,
+}: {
+  amount: number;
+  pointsToNext: number;
+  onLevelUp: () => void;
+  onDone: () => void;
+}) {
+  const mv = useMotionValue(0);
+  const display = useTransform(mv, (v) => `+${Math.round(v)}`);
+  const bubbleScale = useTransform(mv, [0, amount], [1, 1.15]);
+  const [phase, setPhase] = useState<"count" | "lock" | "exit">("count");
+  const [currentScale, setCurrentScale] = useState(1);
+  const levelFiredRef = useRef(false);
+
+  useEffect(() => {
+    const unsub = bubbleScale.on("change", (v) => setCurrentScale(v));
+    return unsub;
+  }, [bubbleScale]);
+
+  useEffect(() => {
+    const controls = animate(mv, amount, {
+      duration: Math.min(1.5, 0.5 + amount / 200),
+      ease: "easeOut",
+      onComplete: () => {
+        setPhase("lock");
+        setTimeout(() => setPhase("exit"), 1200);
+        setTimeout(onDone, 1800);
+      },
+    });
+    return controls.stop;
+  }, [amount, mv, onDone]);
+
+  useEffect(() => {
+    if (levelFiredRef.current) return;
+    const unsub = mv.on("change", (v) => {
+      if (v >= pointsToNext && pointsToNext > 0 && pointsToNext <= amount) {
+        levelFiredRef.current = true;
+        onLevelUp();
+      }
+    });
+    return unsub;
+  }, [mv, pointsToNext, amount, onLevelUp]);
+
+  return (
+    <motion.div
+      initial={{ scale: 0, opacity: 0, y: 4 }}
+      animate={
+        phase === "exit"
+          ? { scale: 0.8, opacity: 0, y: -8 }
+          : phase === "lock"
+            ? { scale: 1, opacity: 1, y: -4 }
+            : { scale: currentScale, opacity: 1, y: -4 }
+      }
+      transition={
+        phase === "lock"
+          ? { type: "spring", stiffness: 500, damping: 15 }
+          : phase === "exit"
+            ? { duration: 0.5, ease: "easeIn" }
+            : { type: "spring", stiffness: 300, damping: 20 }
+      }
+      className="absolute -top-9 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
+    >
+      <div
+        className={cn(
+          "px-3 py-1 rounded-full bg-black/70 dark:bg-black/80 backdrop-blur-sm border border-[#62fab6]/30 font-bruce whitespace-nowrap",
+          phase === "lock" && "animate-shimmer",
+        )}
+      >
+        <motion.span className="text-sm font-black tabular-nums" style={{ color: "#62fab6" }}>
+          {display}
+        </motion.span>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Tier Promotion Modal                                               */
 /* ------------------------------------------------------------------ */
 
-function TierPromotionModal({ tier, onClose }: { tier: { name: string; color: string; reward: string }; onClose: () => void }) {
+interface TierPromotionData {
+  name: string;
+  color: string;
+  reward: string;
+  previousColor: string;
+  previousName: string;
+  newLevel: number;
+}
+
+function TierPromotionModal({ tier, onClose }: { tier: TierPromotionData; onClose: () => void }) {
   const [ready, setReady] = useState(false);
+  const levelMv = useMotionValue(tier.newLevel - 1);
+  const levelDisplay = useTransform(levelMv, (v) => Math.round(v));
+
   useEffect(() => {
     const raf = requestAnimationFrame(() => setReady(true));
     return () => cancelAnimationFrame(raf);
   }, []);
+
+  useEffect(() => {
+    if (ready) {
+      const controls = animate(levelMv, tier.newLevel, { duration: 0.8, ease: "easeOut", delay: 0.6 });
+      return controls.stop;
+    }
+  }, [ready, tier.newLevel, levelMv]);
+
   useEffect(() => {
     const handle = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", handle);
@@ -78,11 +183,26 @@ function TierPromotionModal({ tier, onClose }: { tier: { name: string; color: st
         className={cn("relative max-w-sm w-[calc(100vw-2rem)] rounded-2xl border bg-background p-8 text-center shadow-2xl transition-all duration-500", ready ? "opacity-100 scale-100" : "opacity-0 scale-90")}
         style={{ borderColor: `${tier.color}40` }}
       >
-        <div className="h-20 w-20 rounded-full mx-auto mb-4 flex items-center justify-center border-2" style={{ borderColor: tier.color, backgroundColor: `${tier.color}15` }}>
-          <span className="text-3xl font-black" style={{ color: tier.color }}>{tier.name.charAt(0)}</span>
-        </div>
-        <p className="text-xs font-black uppercase tracking-[0.2em] mb-2" style={{ color: tier.color }}>Tier Promotion</p>
-        <h2 className="text-2xl font-black text-foreground mb-2">{tier.name} Tier</h2>
+        <motion.div
+          className="h-20 w-20 rounded-full mx-auto mb-4 flex items-center justify-center border-2"
+          initial={{ borderColor: tier.previousColor, backgroundColor: `${tier.previousColor}15` }}
+          animate={{ borderColor: tier.color, backgroundColor: `${tier.color}15` }}
+          transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
+        >
+          <motion.span
+            className="text-3xl font-black"
+            initial={{ color: tier.previousColor }}
+            animate={{ color: tier.color }}
+            transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
+          >
+            {tier.name.charAt(0)}
+          </motion.span>
+        </motion.div>
+        <p className="text-xs font-black uppercase tracking-[0.2em] mb-2 font-bruce" style={{ color: tier.color }}>Tier Earned</p>
+        <h2 className="text-2xl font-black text-foreground mb-1">{tier.name} Tier</h2>
+        <p className="text-sm text-muted-foreground mb-1">
+          <motion.span className="font-bold" style={{ color: tier.color }}>Level <motion.span>{levelDisplay}</motion.span></motion.span>
+        </p>
         <p className="text-sm text-muted-foreground mb-6">{tier.reward}</p>
         <button
           onClick={onClose}
@@ -273,10 +393,14 @@ export function HudPill() {
   const prevLevelRef = useRef(0);
   const prevTierRef = useRef<string>("");
   const prevStreakRef = useRef(0);
+  const prevCompletedRef = useRef(-1);
+  const prevAssignPtsRef = useRef(-1);
   const [levelPulse, setLevelPulse] = useState(false);
+  const [levelGlimmer, setLevelGlimmer] = useState(false);
   const [streakPulse, setStreakPulse] = useState(false);
   const [notifPulse, setNotifPulse] = useState(false);
-  const [tierPromotion, setTierPromotion] = useState<{ name: string; color: string; reward: string } | null>(null);
+  const [tierPromotion, setTierPromotion] = useState<TierPromotionData | null>(null);
+  const [pointsEvent, setPointsEvent] = useState<{ amount: number; pointsToNext: number } | null>(null);
   const prevUnreadRef = useRef(0);
 
   const level = userStats.level;
@@ -288,26 +412,58 @@ export function HudPill() {
   const levelsToNextTier = getLevelsToNextTier(level);
   const hotStreak = userStats.currentStreak >= 3;
 
+  // Points event detection: video completion and assignment approval
   useEffect(() => {
-    if (prevLevelRef.current > 0 && level > prevLevelRef.current) {
+    const completed = userStats.episodesCompleted;
+    if (prevCompletedRef.current >= 0 && completed > prevCompletedRef.current) {
+      const delta = (completed - prevCompletedRef.current) * POINTS_PER_COMPLETION;
+      setPointsEvent({ amount: delta, pointsToNext });
+      playPointsSound();
+    }
+    prevCompletedRef.current = completed;
+  }, [userStats.episodesCompleted, pointsToNext]);
+
+  useEffect(() => {
+    const pts = userStats.assignmentPoints;
+    if (prevAssignPtsRef.current >= 0 && pts > prevAssignPtsRef.current) {
+      const delta = pts - prevAssignPtsRef.current;
+      setPointsEvent({ amount: delta, pointsToNext });
+      playPointsSound();
+    }
+    prevAssignPtsRef.current = pts;
+  }, [userStats.assignmentPoints, pointsToNext]);
+
+  // Level-up: suppress pulse if a pointsEvent bubble is active (bubble handles timing)
+  useEffect(() => {
+    if (prevLevelRef.current > 0 && level > prevLevelRef.current && !pointsEvent) {
       setLevelPulse(true);
+      setLevelGlimmer(true);
+      playLevelUpSound();
       if (hudRef.current) {
         const rect = hudRef.current.getBoundingClientRect();
         confetti({ particleCount: 30, spread: 60, origin: { x: (rect.left + rect.width / 2) / window.innerWidth, y: rect.top / window.innerHeight }, colors: ["#ef4444", "#f97316", "#eab308"], startVelocity: 20, gravity: 1.2, scalar: 0.7 });
       }
       setTimeout(() => setLevelPulse(false), 800);
+      setTimeout(() => setLevelGlimmer(false), 1000);
     }
     prevLevelRef.current = level;
-  }, [level]);
+  }, [level, pointsEvent]);
 
+  // Tier promotion with previous tier info
   useEffect(() => {
     const currentTierSlug = tier.slug;
     if (prevTierRef.current && prevTierRef.current !== currentTierSlug) {
-      setTierPromotion({ name: tier.name, color: tier.color, reward: tier.rewardDescription });
+      const oldTier = TIERS.find(t => t.slug === prevTierRef.current);
+      setTierPromotion({
+        name: tier.name, color: tier.color, reward: tier.rewardDescription,
+        previousColor: oldTier?.color ?? tier.color, previousName: oldTier?.name ?? "",
+        newLevel: level,
+      });
+      playTierSound();
       confetti({ particleCount: 120, spread: 90, origin: { y: 0.6 }, colors: [tier.color, "#ffffff", "#ffd700"], startVelocity: 35, gravity: 0.8, scalar: 1.1 });
     }
     prevTierRef.current = currentTierSlug;
-  }, [tier]);
+  }, [tier, level]);
 
   useEffect(() => {
     if (prevStreakRef.current > 0 && userStats.currentStreak > prevStreakRef.current) {
@@ -324,6 +480,22 @@ export function HudPill() {
     }
     prevUnreadRef.current = unreadCount;
   }, [unreadCount]);
+
+  const handleBubbleLevelUp = useCallback(() => {
+    setLevelPulse(true);
+    setLevelGlimmer(true);
+    playLevelUpSound();
+    if (hudRef.current) {
+      const rect = hudRef.current.getBoundingClientRect();
+      confetti({ particleCount: 30, spread: 60, origin: { x: (rect.left + rect.width / 2) / window.innerWidth, y: rect.top / window.innerHeight }, colors: ["#ef4444", "#f97316", "#eab308"], startVelocity: 20, gravity: 1.2, scalar: 0.7 });
+    }
+    setTimeout(() => setLevelPulse(false), 800);
+    setTimeout(() => setLevelGlimmer(false), 1000);
+  }, []);
+
+  const handleBubbleDone = useCallback(() => {
+    setPointsEvent(null);
+  }, []);
 
   // Fetch leaderboard rank when panel opens
   const fetchRank = useCallback(async () => {
@@ -402,18 +574,31 @@ export function HudPill() {
             </button>
 
             <div className="flex items-center gap-1.5 font-bruce">
-              <motion.div
-                animate={levelPulse ? { scale: [1, 1.3, 1] } : {}}
-                transition={{ duration: 0.4 }}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-full border"
-                style={{
-                  background: `linear-gradient(135deg, ${tier.color}15, ${tier.color}08)`,
-                  borderColor: `${tier.color}30`,
-                }}
-              >
-                <TierText tier={tier} className="text-[11px] font-black uppercase tracking-wider">Lvl</TierText>
-                <TierText tier={tier} className="text-sm font-black tabular-nums">{level}</TierText>
-              </motion.div>
+              <div className="relative">
+                {pointsEvent && (
+                  <PointsBubble
+                    amount={pointsEvent.amount}
+                    pointsToNext={pointsEvent.pointsToNext}
+                    onLevelUp={handleBubbleLevelUp}
+                    onDone={handleBubbleDone}
+                  />
+                )}
+                <motion.div
+                  animate={levelPulse ? { scale: [1, 1.3, 1] } : {}}
+                  transition={{ duration: 0.4 }}
+                  className={cn(
+                    "flex items-center gap-1 px-2.5 py-1.5 rounded-full border relative overflow-hidden",
+                    levelGlimmer && "tier-glimmer-active",
+                  )}
+                  style={{
+                    background: `linear-gradient(135deg, ${tier.color}15, ${tier.color}08)`,
+                    borderColor: `${tier.color}30`,
+                  }}
+                >
+                  <TierText tier={tier} className="text-[11px] font-black uppercase tracking-wider">Lvl</TierText>
+                  <TierText tier={tier} className="text-sm font-black tabular-nums">{level}</TierText>
+                </motion.div>
+              </div>
 
               <motion.div animate={streakPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }} className={cn("flex items-center gap-1 px-2.5 py-1.5 rounded-full", userStats.currentStreak > 0 ? "bg-orange-500/[0.08]" : "bg-foreground/[0.04]")}>
                 <Flame className={cn("h-3.5 w-3.5", userStats.currentStreak > 0 ? "text-orange-500" : "text-muted-foreground/50")} />
