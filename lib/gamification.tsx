@@ -5,6 +5,8 @@
  * or level math anywhere else in the codebase.
  */
 
+import React from "react";
+
 /* ------------------------------------------------------------------ */
 /*  Level Lookup Table                                                 */
 /*  Levels 0-200 from the original Airtable design.                    */
@@ -135,19 +137,20 @@ export interface Tier {
   minLevel: number;
   color: string;
   bgColor: string;
+  gradient: string;
   rewardDescription: string;
 }
 
 export const TIERS: Tier[] = [
-  { name: "Iron",      slug: "iron",      minLevel: 0,   color: "#ababab", bgColor: "hsla(0,0%,17%,1)",                     rewardDescription: "Welcome to Fighting Prime. Begin your journey." },
-  { name: "Silver",    slug: "silver",    minLevel: 10,  color: "#d9f6ff", bgColor: "hsla(194,12%,38%,1)",                  rewardDescription: "Silver badge on your profile. Access to exclusive discussions." },
-  { name: "Gold",      slug: "gold",      minLevel: 50,  color: "#ffa90a", bgColor: "hsla(45,83%,10%,1)",                   rewardDescription: "Gold badge. Free month of Athlete Pro." },
-  { name: "Platinum",  slug: "platinum",  minLevel: 100, color: "#cac0ff", bgColor: "hsla(250,18%,33%,1)",                  rewardDescription: "Platinum badge. Priority access to new course releases." },
-  { name: "Diamond",   slug: "diamond",   minLevel: 130, color: "#a7cdff", bgColor: "hsla(182,100%,24%,1)",                 rewardDescription: "Diamond badge. Free Fighter Elite analysis from a chosen instructor." },
-  { name: "Lightning", slug: "lightning", minLevel: 165, color: "#ffa03b", bgColor: "hsla(216,100%,15%,1)",                 rewardDescription: "Lightning badge. Exclusive live session access." },
-  { name: "Obsidian",  slug: "obsidian",  minLevel: 200, color: "#660fc3", bgColor: "hsla(269,100%,8%,1)",                  rewardDescription: "Obsidian badge. One-on-one session with an instructor." },
-  { name: "Meteorite", slug: "meteorite", minLevel: 230, color: "#06d65d", bgColor: "hsla(145,100%,6%,1)",                  rewardDescription: "Meteorite badge. Hall of Fame status. Custom training regimen." },
-  { name: "Cosmic",    slug: "cosmic",    minLevel: 265, color: "#ff3366", bgColor: "hsla(345,100%,5%,1)",                  rewardDescription: "Cosmic badge. Legendary status. Lifetime perks unlocked." },
+  { name: "Iron",      slug: "iron",      minLevel: 0,   color: "#ababab", bgColor: "hsla(0,0%,17%,1)",     gradient: "linear-gradient(to bottom, #888, #e0e0e0 50%, #888)",                      rewardDescription: "Welcome to Fighting Prime. Begin your journey." },
+  { name: "Silver",    slug: "silver",    minLevel: 10,  color: "#d9f6ff", bgColor: "hsla(194,12%,38%,1)",  gradient: "linear-gradient(to bottom, #7ec8d9, #d9f6ff)",                              rewardDescription: "Silver badge on your profile. Access to exclusive discussions." },
+  { name: "Gold",      slug: "gold",      minLevel: 50,  color: "#ffa90a", bgColor: "hsla(45,83%,10%,1)",   gradient: "linear-gradient(to bottom, #f5d07a, #c87630)",                              rewardDescription: "Gold badge. Free month of Athlete Pro." },
+  { name: "Platinum",  slug: "platinum",  minLevel: 100, color: "#cac0ff", bgColor: "hsla(250,18%,33%,1)",  gradient: "linear-gradient(to bottom, #5b6abf, #b0c4ff)",                              rewardDescription: "Platinum badge. Priority access to new course releases." },
+  { name: "Diamond",   slug: "diamond",   minLevel: 130, color: "#a7cdff", bgColor: "hsla(182,100%,24%,1)", gradient: "linear-gradient(to bottom, #4a7cf7, #5ee8d0)",                              rewardDescription: "Diamond badge. Free Fighter Elite analysis from a chosen instructor." },
+  { name: "Lightning", slug: "lightning", minLevel: 165, color: "#ffa03b", bgColor: "hsla(216,100%,15%,1)", gradient: "linear-gradient(to bottom, #6888c8, #d4a843)",                              rewardDescription: "Lightning badge. Exclusive live session access." },
+  { name: "Obsidian",  slug: "obsidian",  minLevel: 200, color: "#660fc3", bgColor: "hsla(269,100%,8%,1)",  gradient: "linear-gradient(to bottom, #4a1a8a, #9b6ddb)",                              rewardDescription: "Obsidian badge. One-on-one session with an instructor." },
+  { name: "Meteorite", slug: "meteorite", minLevel: 230, color: "#06d65d", bgColor: "hsla(145,100%,6%,1)",  gradient: "linear-gradient(to bottom, #1a7a3a, #4deb7a)",                              rewardDescription: "Meteorite badge. Hall of Fame status. Custom training regimen." },
+  { name: "Cosmic",    slug: "cosmic",    minLevel: 265, color: "#ff3366", bgColor: "hsla(345,100%,5%,1)",  gradient: "linear-gradient(to bottom, #99102e, #ff5588)",                              rewardDescription: "Cosmic badge. Legendary status. Lifetime perks unlocked." },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -234,3 +237,30 @@ export { getStreakMultiplier, STREAK_MULTIPLIERS } from "./achievements";
 
 export const POINTS_PER_SECOND = 0.5;
 export const POINTS_PER_COMPLETION = 100;
+
+/* ------------------------------------------------------------------ */
+/*  Tier Gradient Text                                                 */
+/* ------------------------------------------------------------------ */
+
+const tierTextStyle = (gradient: string): React.CSSProperties => ({
+  backgroundImage: gradient,
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+  backgroundClip: "text",
+});
+
+export function TierText({
+  tier,
+  children,
+  className,
+}: {
+  tier: { gradient: string };
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <span className={className} style={tierTextStyle(tier.gradient)}>
+      {children}
+    </span>
+  );
+}

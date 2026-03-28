@@ -21,7 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
-import { getTier, getNextTier, getLevelsToNextTier, getXpProgress, getPointsToNextLevel } from "@/lib/gamification";
+import { getTier, getNextTier, getLevelsToNextTier, getXpProgress, getPointsToNextLevel, TierText } from "@/lib/gamification";
 
 interface ProfileData {
   profile: {
@@ -226,8 +226,9 @@ export default function ProfilePage() {
                     {profile.role === "admin" && (
                       <Badge className="bg-red-500/10 text-red-400 border-red-500/20 text-xs">Admin</Badge>
                     )}
-                    <Badge className="text-xs border" style={{ color: tier.color, backgroundColor: `${tier.color}15`, borderColor: `${tier.color}30` }}>
-                      Lvl {stats.level} · {tier.name}
+                    <Badge className="text-xs border" style={{ backgroundColor: `${tier.color}15`, borderColor: `${tier.color}30` }}>
+                      <TierText tier={tier}>Lvl {stats.level}</TierText>
+                      <span style={{ color: tier.color }}> · {tier.name}</span>
                     </Badge>
                   </div>
                   {profile.bio && (
@@ -266,7 +267,7 @@ export default function ProfilePage() {
               {/* Level progress bar */}
               <div className="mt-6 max-w-sm mx-auto">
                 <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-foreground/30 mb-1">
-                  <span>Level {stats.level}</span>
+                  <TierText tier={tier}>Level {stats.level}</TierText>
                   <span>{pointsToNext} pts to level {stats.level + 1}</span>
                 </div>
                 <div className="h-1.5 bg-foreground/[0.06] rounded-full overflow-hidden">

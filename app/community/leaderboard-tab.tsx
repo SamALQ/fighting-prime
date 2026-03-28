@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
-import { getTier, TIERS } from "@/lib/gamification";
+import { getTier, TIERS, TierText } from "@/lib/gamification";
 
 interface LeaderboardEntry {
   rank: number;
@@ -48,7 +48,7 @@ function getRankDisplay(rank: number) {
 
 function getTierName(level: number) {
   const t = getTier(level);
-  return { name: t.name, color: t.color };
+  return { name: t.name, color: t.color, gradient: t.gradient };
 }
 
 function getInitials(name: string) {
@@ -163,7 +163,7 @@ function PointsGuide() {
                           {tier.name.charAt(0)}
                         </div>
                         <p className="text-[11px] font-bold leading-tight" style={{ color: tier.color }}>{tier.name}</p>
-                        <p className="text-[10px] text-muted-foreground">Lvl {tier.minLevel}{tier.slug === "cosmic" ? "+" : ""}</p>
+                        <p className="text-[10px] text-muted-foreground"><TierText tier={tier}>Lvl {tier.minLevel}{tier.slug === "cosmic" ? "+" : ""}</TierText></p>
                       </div>
                     ))}
                   </div>
@@ -184,7 +184,7 @@ function PointsGuide() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-bold" style={{ color: tier.color }}>{tier.name}</span>
-                            <span className="text-[10px] text-muted-foreground font-bold">Lvl {tier.minLevel}{tier.slug === "cosmic" ? "+" : ""}</span>
+                            <TierText tier={tier} className="text-[10px] font-bold">Lvl {tier.minLevel}{tier.slug === "cosmic" ? "+" : ""}</TierText>
                           </div>
                           <p className="text-[11px] text-muted-foreground truncate">{tier.rewardDescription}</p>
                         </div>
@@ -278,7 +278,7 @@ export function LeaderboardTab() {
                   {getInitials(entry.displayName)}
                 </div>
                 <Link href={`/profile/${entry.userId}`} className={cn("font-bold text-sm truncate hover:text-primary transition-colors block", isMe && "text-primary")}>{entry.displayName}</Link>
-                <p className="text-xs font-medium mt-0.5" style={{ color: tier.color }}>Lvl {entry.level} · {tier.name}</p>
+                <p className="text-xs font-medium mt-0.5"><TierText tier={tier}>Lvl {entry.level}</TierText><span style={{ color: tier.color }}> · {tier.name}</span></p>
                 <p className="text-2xl font-bold mt-2 text-primary">{entry.totalPoints.toLocaleString()}</p>
                 <p className="text-[10px] uppercase tracking-wider text-foreground/30 font-bold">points</p>
                 {entry.role === "instructor" && (
@@ -338,7 +338,7 @@ export function LeaderboardTab() {
                     {entry.displayName}
                     {isMe && <span className="text-primary/60 ml-1.5 text-xs">(you)</span>}
                   </Link>
-                  <p className="text-[11px]" style={{ color: tier.color }}>Lvl {entry.level} · {tier.name}</p>
+                  <p className="text-[11px]"><TierText tier={tier}>Lvl {entry.level}</TierText><span style={{ color: tier.color }}> · {tier.name}</span></p>
                 </div>
                 {entry.role === "instructor" && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-bold shrink-0 hidden sm:inline">

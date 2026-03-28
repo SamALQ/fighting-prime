@@ -3,7 +3,7 @@
 import { useProgress } from "@/lib/hooks/use-progress";
 import { Trophy, Target, Clock, CheckCircle2, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getTier, getNextTier, getLevelsToNextTier, getXpProgress, getPointsToNextLevel } from "@/lib/gamification";
+import { getTier, getNextTier, getLevelsToNextTier, getXpProgress, getPointsToNextLevel, TierText } from "@/lib/gamification";
 
 export function DashboardStats() {
   const { userStats, isLoading, formatWatchTime } = useProgress();
@@ -31,6 +31,7 @@ export function DashboardStats() {
       subtitle: tierSubtitle,
       icon: <Trophy className="h-5 w-5" style={{ color: tier.color }} />,
       borderColor: tier.color,
+      tierGradient: tier,
       extra: (
         <div className="mt-4 space-y-2">
           <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-foreground/30">
@@ -96,7 +97,11 @@ export function DashboardStats() {
                   {stat.label}
                 </p>
                 <div className="flex items-baseline gap-2">
-                  <h3 className="text-3xl font-bold">{stat.value}</h3>
+                  {"tierGradient" in stat && stat.tierGradient ? (
+                    <h3 className="text-3xl font-bold"><TierText tier={stat.tierGradient}>{stat.value}</TierText></h3>
+                  ) : (
+                    <h3 className="text-3xl font-bold">{stat.value}</h3>
+                  )}
                 </div>
                 <p className="text-xs text-foreground/30">
                   {stat.subtitle}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import { getTier, TierText } from "@/lib/gamification";
 
 interface LevelUpOverlayProps {
   fromLevel: number;
@@ -10,6 +11,8 @@ interface LevelUpOverlayProps {
 }
 
 export function LevelUpOverlay({ fromLevel, toLevel, onDismiss }: LevelUpOverlayProps) {
+  const fromTier = getTier(fromLevel);
+  const toTier = getTier(toLevel);
   const [phase, setPhase] = useState<"enter" | "show" | "exit">("enter");
 
   useEffect(() => {
@@ -105,7 +108,7 @@ export function LevelUpOverlay({ fromLevel, toLevel, onDismiss }: LevelUpOverlay
           Level Up
         </div>
         <div className="flex items-center gap-4 justify-center">
-          <span className="text-4xl font-bold text-foreground/40">{fromLevel}</span>
+          <TierText tier={fromTier} className="text-4xl font-bold opacity-40">{fromLevel}</TierText>
           <div className="flex items-center gap-1">
             {Array.from({ length: 3 }).map((_, i) => (
               <div
@@ -117,9 +120,9 @@ export function LevelUpOverlay({ fromLevel, toLevel, onDismiss }: LevelUpOverlay
               />
             ))}
           </div>
-          <span className="text-6xl font-black text-foreground drop-shadow-[0_0_30px_rgba(215,18,18,0.5)]">
+          <TierText tier={toTier} className="text-6xl font-black drop-shadow-[0_0_30px_rgba(215,18,18,0.5)]">
             {toLevel}
-          </span>
+          </TierText>
         </div>
         <div className="mt-4 text-foreground/50 text-sm">Keep training, fighter!</div>
       </div>

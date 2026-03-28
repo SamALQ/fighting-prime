@@ -8,7 +8,7 @@ import { Flame, Bell, MessageCircle, Trophy, Clock, CheckCircle2, ChevronUp, Ext
 import { useAuth } from "@/lib/auth-context";
 import { useProgress } from "@/lib/hooks/use-progress";
 import { useHudNotifications } from "./use-hud-notifications";
-import { getTier, getXpProgress, getPointsToNextLevel, getNextTier, getLevelsToNextTier } from "@/lib/gamification";
+import { getTier, getXpProgress, getPointsToNextLevel, getNextTier, getLevelsToNextTier, TierText } from "@/lib/gamification";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import confetti from "canvas-confetti";
@@ -118,8 +118,9 @@ function StatsPanel({ onClose, panelProps }: { onClose: () => void; panelProps: 
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-bold text-foreground text-sm truncate">{user?.email?.split("@")[0] ?? "Fighter"}</p>
-            <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: tier.color }}>
-              Lvl {level} · {tier.name}
+            <span className="text-[10px] font-black uppercase tracking-wider">
+              <TierText tier={tier}>Lvl {level}</TierText>
+              <span style={{ color: tier.color }}> · {tier.name}</span>
             </span>
           </div>
           <Link href={`/profile/${user?.id}`} onClick={onClose} className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-foreground/[0.08] transition-colors">
@@ -231,7 +232,7 @@ interface PanelProps {
   initials: string;
   user: { id: string; email?: string | null } | null;
   level: number;
-  tier: { name: string; color: string };
+  tier: { name: string; color: string; gradient: string };
   xpProgress: number;
   pointsToNext: number;
   points: number;
@@ -341,7 +342,7 @@ export function HudPill() {
   const panelProps: PanelProps = {
     initials,
     user: user ? { id: user.id, email: user.email } : null,
-    level, tier: { name: tier.name, color: tier.color }, xpProgress, pointsToNext, points, userStats, rankLoading, leaderboardRank,
+    level, tier: { name: tier.name, color: tier.color, gradient: tier.gradient }, xpProgress, pointsToNext, points, userStats, rankLoading, leaderboardRank,
     nextTier: nextTier ? { name: nextTier.name, color: nextTier.color, minLevel: nextTier.minLevel, rewardDescription: nextTier.rewardDescription } : null,
     levelsToNextTier,
   };
@@ -391,8 +392,8 @@ export function HudPill() {
 
             <div className="flex items-center gap-1.5">
               <motion.div animate={levelPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }} className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-foreground/[0.04]">
-                <span className="text-[11px] font-black text-muted-foreground uppercase tracking-wider">Lvl</span>
-                <span className="text-sm font-black text-foreground tabular-nums">{level}</span>
+                <TierText tier={tier} className="text-[11px] font-black uppercase tracking-wider">Lvl</TierText>
+                <TierText tier={tier} className="text-sm font-black tabular-nums">{level}</TierText>
               </motion.div>
 
               <motion.div animate={streakPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }} className={cn("flex items-center gap-1 px-2.5 py-1.5 rounded-full", userStats.currentStreak > 0 ? "bg-orange-500/[0.08]" : "bg-foreground/[0.04]")}>
