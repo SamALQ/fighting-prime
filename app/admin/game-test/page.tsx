@@ -26,6 +26,9 @@ interface LocalStats {
   longestStreak: number;
   streakMultiplier: number;
   achievements: string[];
+  /** Tracks each discrete points award for the bubble animation */
+  _pointsAwardSeq: number;
+  _lastAwardAmount: number;
 }
 
 const INITIAL_STATS: LocalStats = {
@@ -36,6 +39,8 @@ const INITIAL_STATS: LocalStats = {
   longestStreak: 0,
   streakMultiplier: 1,
   achievements: [],
+  _pointsAwardSeq: 0,
+  _lastAwardAmount: 0,
 };
 
 /* ------------------------------------------------------------------ */
@@ -226,7 +231,7 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
 
   const prevLevelRef = useRef(0);
   const prevTierRef = useRef("");
-  const prevCompletedRef = useRef(-1);
+  const prevAwardSeqRef = useRef(0);
   const hudRef = useRef<HTMLDivElement>(null);
 
   const [levelPulse, setLevelPulse] = useState(false);
@@ -234,16 +239,15 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
   const [pointsEvent, setPointsEvent] = useState<{ amount: number; pointsToNext: number } | null>(null);
   const [tierPromotion, setTierPromotion] = useState<TierPromotionData | null>(null);
 
-  // Detect episode completion → points bubble
+  // Detect any points award → bubble
   useEffect(() => {
-    const completed = stats.episodesCompleted;
-    if (prevCompletedRef.current >= 0 && completed > prevCompletedRef.current) {
-      const delta = (completed - prevCompletedRef.current) * POINTS_PER_COMPLETION;
-      setPointsEvent({ amount: delta, pointsToNext });
+    const seq = stats._pointsAwardSeq;
+    if (seq > prevAwardSeqRef.current && stats._lastAwardAmount > 0) {
+      setPointsEvent({ amount: stats._lastAwardAmount, pointsToNext });
       playPointsSound();
     }
-    prevCompletedRef.current = completed;
-  }, [stats.episodesCompleted, pointsToNext]);
+    prevAwardSeqRef.current = seq;
+  }, [stats._pointsAwardSeq, stats._lastAwardAmount, pointsToNext]);
 
   // Level-up (only when no bubble is active)
   useEffect(() => {
@@ -449,14 +453,17 @@ export default function GameTestPage() {
   const level = getLevelFromPoints(stats.points);
   const tier = getTier(level);
 
-  const addPoints = (amount: number) => {
+  const addPoints = (amount: number, raw = false) => {
     setStats(prev => {
-      const newPoints = prev.points + amount;
+      const effective = raw ? amount : Math.floor(amount * prev.streakMultiplier);
+      const newPoints = prev.points + effective;
       const completions = amount >= POINTS_PER_COMPLETION ? Math.floor(amount / POINTS_PER_COMPLETION) : 0;
       return {
         ...prev,
         points: newPoints,
         episodesCompleted: prev.episodesCompleted + completions,
+        _pointsAwardSeq: prev._pointsAwardSeq + 1,
+        _lastAwardAmount: effective,
       };
     });
   };
@@ -516,16 +523,22 @@ export default function GameTestPage() {
                   <RotateCcw className="h-3 w-3" /> Reset All
                 </button>
               </div>
+              {stats.streakMultiplier > 1 && (
+                <p className="text-[10px] text-orange-400 font-bold mb-2">{stats.streakMultiplier}x streak multiplier active</p>
+              )}
               <div className="grid grid-cols-3 gap-2">
-                {pointAmounts.map((amt) => (
+                {pointAmounts.map((amt) => {
+                  const actual = Math.floor(amt * stats.streakMultiplier);
+                  return (
                   <button
                     key={amt}
                     onClick={() => addPoints(amt)}
                     className="px-3 py-2.5 rounded-xl border border-foreground/[0.06] bg-foreground/[0.03] hover:bg-foreground/[0.08] transition-colors text-sm font-bold text-foreground"
                   >
-                    +{amt}
+                    +{actual}{stats.streakMultiplier > 1 && <span className="text-[10px] text-muted-foreground ml-0.5">({amt})</span>}
                   </button>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -564,7 +577,7 @@ export default function GameTestPage() {
                       const targetLevel = nextTierObj.minLevel;
                       const targetPts = getPointsForLevel(targetLevel);
                       const delta = Math.max(100, targetPts - stats.points);
-                      addPoints(delta);
+                      addPoints(delta, true);
                     }
                   }}
                   className="w-full px-3 py-2.5 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors text-sm font-bold text-primary flex items-center gap-2"
