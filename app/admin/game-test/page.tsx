@@ -53,16 +53,12 @@ function PointsBubble({
   amount,
   baseAmount,
   streakMultiplier = 1,
-  pointsToNext,
-  onLevelUp,
   onDone,
   onStreakFlash,
 }: {
   amount: number;
   baseAmount?: number;
   streakMultiplier?: number;
-  pointsToNext: number;
-  onLevelUp: () => void;
   onDone: () => void;
   onStreakFlash?: () => void;
 }) {
@@ -74,13 +70,13 @@ function PointsBubble({
   const bubbleScale = useTransform(mv, [0, countTarget], [1, 1.15]);
   const [phase, setPhase] = useState<"count" | "lock" | "multiply" | "result" | "exit">("count");
   const [currentScale, setCurrentScale] = useState(1);
-  const levelFiredRef = useRef(false);
 
   useEffect(() => {
     const unsub = bubbleScale.on("change", (v) => setCurrentScale(v));
     return unsub;
   }, [bubbleScale]);
 
+  // Phase 1: count up to base (or full amount if no multiplier)
   useEffect(() => {
     const controls = animate(mv, countTarget, {
       duration: Math.min(1.5, 0.5 + countTarget / 200),
@@ -93,8 +89,6 @@ function PointsBubble({
             setPhase("multiply");
           }, 600);
           setTimeout(() => setPhase("result"), 1500);
-          setTimeout(() => setPhase("exit"), 2800);
-          setTimeout(onDone, 3400);
         } else {
           setTimeout(() => setPhase("exit"), 1200);
           setTimeout(onDone, 1800);
@@ -104,25 +98,21 @@ function PointsBubble({
     return controls.stop;
   }, [countTarget, mv, onDone, hasMultiplier, onStreakFlash]);
 
+  // Phase 2: animate base → final when multiplier is active
   useEffect(() => {
-    if (levelFiredRef.current) return;
-    const unsub = mv.on("change", (v) => {
-      if (v >= pointsToNext && pointsToNext > 0 && pointsToNext <= amount) {
-        levelFiredRef.current = true;
-        onLevelUp();
-      }
+    if (phase !== "result" || !hasMultiplier) return;
+    const controls = animate(mv, amount, {
+      duration: Math.min(1, 0.3 + (amount - countTarget) / 200),
+      ease: "easeOut",
+      onComplete: () => {
+        setTimeout(() => setPhase("exit"), 800);
+        setTimeout(onDone, 1400);
+      },
     });
-    return unsub;
-  }, [mv, pointsToNext, amount, onLevelUp]);
+    return controls.stop;
+  }, [phase, hasMultiplier, amount, countTarget, mv, onDone]);
 
-  useEffect(() => {
-    if (phase === "result" && !levelFiredRef.current && hasMultiplier) {
-      if (pointsToNext > 0 && pointsToNext <= amount && pointsToNext > countTarget) {
-        levelFiredRef.current = true;
-        onLevelUp();
-      }
-    }
-  }, [phase, amount, countTarget, pointsToNext, hasMultiplier, onLevelUp]);
+  const showMultiplier = hasMultiplier && (phase === "multiply" || phase === "result");
 
   return (
     <motion.div
@@ -130,20 +120,18 @@ function PointsBubble({
       animate={
         phase === "exit"
           ? { scale: 0.8, opacity: 0, y: -8 }
-          : phase === "result"
+          : phase === "lock"
             ? { scale: 1, opacity: 1, y: -4 }
-            : phase === "lock" || phase === "multiply"
+            : phase === "multiply" || phase === "result"
               ? { scale: 1, opacity: 1, y: -4 }
               : { scale: currentScale, opacity: 1, y: -4 }
       }
       transition={
-        phase === "result"
-          ? { type: "spring", stiffness: 400, damping: 12 }
-          : phase === "lock"
-            ? { type: "spring", stiffness: 500, damping: 15 }
-            : phase === "exit"
-              ? { duration: 0.5, ease: "easeIn" }
-              : { type: "spring", stiffness: 300, damping: 20 }
+        phase === "lock"
+          ? { type: "spring", stiffness: 500, damping: 15 }
+          : phase === "exit"
+            ? { duration: 0.5, ease: "easeIn" }
+            : { type: "spring", stiffness: 300, damping: 20 }
       }
       className="absolute -top-9 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
     >
@@ -151,33 +139,24 @@ function PointsBubble({
         className={cn(
           "px-3 py-1 rounded-full bg-black/70 dark:bg-black/80 backdrop-blur-sm font-bruce whitespace-nowrap transition-colors duration-300",
           phase === "lock" && "animate-shimmer",
-          phase === "multiply" ? "border border-orange-400/50" : "border border-[#62fab6]/30",
+          showMultiplier ? "border border-orange-400/50" : "border border-[#62fab6]/30",
         )}
       >
-        {phase === "multiply" ? (
-          <motion.span
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: "spring", stiffness: 500, damping: 15 }}
-            className="text-sm font-black tabular-nums text-orange-400"
-          >
-            ×{streakMultiplier}
-          </motion.span>
-        ) : phase === "result" ? (
-          <motion.span
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: [0.5, 1.25, 1] }}
-            transition={{ duration: 0.5, times: [0, 0.6, 1] }}
-            className="text-sm font-black tabular-nums animate-shimmer"
-            style={{ color: "#62fab6" }}
-          >
-            +{amount}
-          </motion.span>
-        ) : (
+        <div className="flex items-center">
           <motion.span className="text-sm font-black tabular-nums" style={{ color: "#62fab6" }}>
             {display}
           </motion.span>
-        )}
+          {showMultiplier && (
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: "auto", opacity: 1 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              className="overflow-hidden"
+            >
+              <span className="text-sm font-black text-orange-400 pl-1.5 whitespace-nowrap">×{streakMultiplier}</span>
+            </motion.div>
+          )}
+        </div>
       </div>
     </motion.div>
   );
@@ -286,46 +265,48 @@ function MiniXpRing({ progress, size = 40, strokeWidth = 2.5, gradientStops }: {
 /* ------------------------------------------------------------------ */
 
 function GameTestHudPill({ stats }: { stats: LocalStats }) {
-  const level = getLevelFromPoints(stats.points);
-  const tier = getTier(level);
-  const xpProgress = getXpProgress(stats.points);
-  const pointsToNext = getPointsToNextLevel(stats.points);
-
+  const prevAwardSeqRef = useRef(0);
   const prevLevelRef = useRef(0);
   const prevTierRef = useRef("");
-  const prevAwardSeqRef = useRef(0);
   const hudRef = useRef<HTMLDivElement>(null);
 
+  const [frozenPoints, setFrozenPoints] = useState<number | null>(null);
   const [levelPulse, setLevelPulse] = useState(false);
   const [levelGlimmer, setLevelGlimmer] = useState(false);
-  const [pointsEvent, setPointsEvent] = useState<{ amount: number; baseAmount?: number; streakMultiplier?: number; pointsToNext: number } | null>(null);
+  const [pointsEvent, setPointsEvent] = useState<{ amount: number; baseAmount?: number; streakMultiplier?: number } | null>(null);
   const [streakFlash, setStreakFlash] = useState(false);
   const [tierPromotion, setTierPromotion] = useState<TierPromotionData | null>(null);
 
-  // Detect any points award → bubble
+  // Visual display uses frozen points during bubble, real points otherwise
+  const displayPoints = frozenPoints !== null ? frozenPoints : stats.points;
+  const level = getLevelFromPoints(displayPoints);
+  const tier = getTier(level);
+  const xpProgress = getXpProgress(displayPoints);
+
+  // Detect any points award → freeze display + start bubble
   useEffect(() => {
     const seq = stats._pointsAwardSeq;
     if (seq > prevAwardSeqRef.current && stats._lastAwardAmount > 0) {
+      setFrozenPoints(prev => prev !== null ? prev : stats.points - stats._lastAwardAmount);
       setPointsEvent({
         amount: stats._lastAwardAmount,
         baseAmount: stats.streakMultiplier > 1 ? stats._lastBaseAmount : undefined,
         streakMultiplier: stats.streakMultiplier,
-        pointsToNext,
       });
       playPointsSound();
     }
     prevAwardSeqRef.current = seq;
-  }, [stats._pointsAwardSeq, stats._lastAwardAmount, stats._lastBaseAmount, stats.streakMultiplier, pointsToNext]);
+  }, [stats._pointsAwardSeq, stats._lastAwardAmount, stats._lastBaseAmount, stats.streakMultiplier, stats.points]);
 
-  // Level-up (only when no bubble is active)
+  // Level-up fires when display level changes (i.e. after bubble closes and frozenPoints clears)
   useEffect(() => {
-    if (prevLevelRef.current > 0 && level > prevLevelRef.current && !pointsEvent) {
+    if (prevLevelRef.current > 0 && level > prevLevelRef.current) {
       fireLevelUp();
     }
     prevLevelRef.current = level;
-  }, [level, pointsEvent]);
+  }, [level]);
 
-  // Tier change
+  // Tier change fires when display tier changes
   useEffect(() => {
     const slug = tier.slug;
     if (prevTierRef.current && prevTierRef.current !== slug) {
@@ -353,8 +334,10 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
     setTimeout(() => setLevelGlimmer(false), 1000);
   }, []);
 
-  const handleBubbleLevelUp = useCallback(() => { fireLevelUp(); }, [fireLevelUp]);
-  const handleBubbleDone = useCallback(() => { setPointsEvent(null); }, []);
+  const handleBubbleDone = useCallback(() => {
+    setPointsEvent(null);
+    setFrozenPoints(null);
+  }, []);
   const handleStreakFlash = useCallback(() => {
     setStreakFlash(true);
     setTimeout(() => setStreakFlash(false), 600);
@@ -399,8 +382,6 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
                     amount={pointsEvent.amount}
                     baseAmount={pointsEvent.baseAmount}
                     streakMultiplier={pointsEvent.streakMultiplier}
-                    pointsToNext={pointsEvent.pointsToNext}
-                    onLevelUp={handleBubbleLevelUp}
                     onDone={handleBubbleDone}
                     onStreakFlash={handleStreakFlash}
                   />
