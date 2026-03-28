@@ -78,6 +78,15 @@ function PointsBubble({
   const hasMultiplier = streakMultiplier > 1 && baseAmount !== undefined && baseAmount < amount;
   const countTarget = hasMultiplier ? baseAmount : amount;
 
+  // Stable refs for callbacks to prevent animation restarts from identity changes
+  const onDoneRef = useRef(onDone);
+  const onCountCompleteRef = useRef(onCountComplete);
+  const onStreakFlashRef = useRef(onStreakFlash);
+  onDoneRef.current = onDone;
+  onCountCompleteRef.current = onCountComplete;
+  onStreakFlashRef.current = onStreakFlash;
+  const countFiredRef = useRef(false);
+
   const mv = useMotionValue(0);
   const display = useTransform(mv, (v) => `+${Math.round(v)}`);
   const bubbleScale = useTransform(mv, [0, countTarget], [1, 1.15]);
@@ -98,34 +107,34 @@ function PointsBubble({
         setPhase("lock");
         if (hasMultiplier) {
           setTimeout(() => {
-            onStreakFlash?.();
+            onStreakFlashRef.current?.();
             setPhase("multiply");
           }, 600);
           setTimeout(() => setPhase("result"), 1500);
         } else {
-          onCountComplete();
+          if (!countFiredRef.current) {
+            countFiredRef.current = true;
+            onCountCompleteRef.current();
+          }
           setTimeout(() => setPhase("exit"), 1200);
-          setTimeout(onDone, 1800);
+          setTimeout(() => onDoneRef.current(), 1800);
         }
       },
     });
     return controls.stop;
-  }, [countTarget, mv, onDone, onCountComplete, hasMultiplier, onStreakFlash]);
+  }, [countTarget, mv, hasMultiplier]);
 
-  // Phase 2: animate base → final when multiplier is active
+  // Phase 2: snap to final amount when multiplier is active
   useEffect(() => {
     if (phase !== "result" || !hasMultiplier) return;
-    const controls = animate(mv, amount, {
-      duration: Math.min(1, 0.3 + (amount - countTarget) / 200),
-      ease: "easeOut",
-      onComplete: () => {
-        onCountComplete();
-        setTimeout(() => setPhase("exit"), 800);
-        setTimeout(onDone, 1400);
-      },
-    });
-    return controls.stop;
-  }, [phase, hasMultiplier, amount, countTarget, mv, onDone, onCountComplete]);
+    mv.set(amount);
+    if (!countFiredRef.current) {
+      countFiredRef.current = true;
+      onCountCompleteRef.current();
+    }
+    setTimeout(() => setPhase("exit"), 800);
+    setTimeout(() => onDoneRef.current(), 1400);
+  }, [phase, hasMultiplier, amount, mv]);
 
   const showMultiplier = hasMultiplier && (phase === "multiply" || phase === "result");
 
@@ -479,11 +488,12 @@ export function HudPill() {
       if (pointsEvent) {
         pendingLevelUpRef.current = true;
       } else {
-        fireLevelUp();
+        fireLevelUpRef.current();
       }
     }
     prevLevelRef.current = level;
-  }, [level, pointsEvent]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [level]);
 
   // Tier promotion: defer if bubble is active
   useEffect(() => {
@@ -492,11 +502,12 @@ export function HudPill() {
       if (pointsEvent) {
         pendingTierRef.current = true;
       } else {
-        fireTierPromotion();
+        fireTierPromotionRef.current();
       }
     }
     prevTierRef.current = currentTierSlug;
-  }, [tier, pointsEvent]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tier]);
 
   useEffect(() => {
     if (prevStreakRef.current > 0 && userStats.currentStreak > prevStreakRef.current) {
@@ -514,7 +525,8 @@ export function HudPill() {
     prevUnreadRef.current = unreadCount;
   }, [unreadCount]);
 
-  const fireLevelUp = useCallback(() => {
+  const fireLevelUpRef = useRef(() => {});
+  fireLevelUpRef.current = () => {
     setLevelPulse(true);
     setLevelGlimmer(true);
     playLevelUpSound();
@@ -524,9 +536,10 @@ export function HudPill() {
     }
     setTimeout(() => setLevelPulse(false), 800);
     setTimeout(() => setLevelGlimmer(false), 1000);
-  }, []);
+  };
 
-  const fireTierPromotion = useCallback(() => {
+  const fireTierPromotionRef = useRef(() => {});
+  fireTierPromotionRef.current = () => {
     const oldTier = TIERS.find(t => t.slug === prevTierRef.current);
     setTierPromotion({
       name: tier.name, color: tier.color, reward: tier.rewardDescription,
@@ -535,18 +548,18 @@ export function HudPill() {
     });
     playTierSound();
     confetti({ particleCount: 120, spread: 90, origin: { y: 0.6 }, colors: [tier.color, "#ffffff", "#ffd700"], startVelocity: 35, gravity: 0.8, scalar: 1.1 });
-  }, [tier, level]);
+  };
 
   const handleCountComplete = useCallback(() => {
     if (pendingLevelUpRef.current) {
       pendingLevelUpRef.current = false;
-      setTimeout(() => fireLevelUp(), 100);
+      fireLevelUpRef.current();
     }
     if (pendingTierRef.current) {
       pendingTierRef.current = false;
-      setTimeout(() => fireTierPromotion(), 900);
+      setTimeout(() => fireTierPromotionRef.current(), 1200);
     }
-  }, [fireLevelUp, fireTierPromotion]);
+  }, []);
 
   const handleBubbleDone = useCallback(() => {
     setPointsEvent(null);
