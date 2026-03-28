@@ -81,14 +81,19 @@ export function DashboardStats() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {stats.map((stat) => (
+      {stats.map((stat) => {
+        const hasTier = "tierGradient" in stat && stat.tierGradient;
+        return (
         <div
           key={stat.label}
           className={cn(
-            "group rounded-2xl border bg-foreground/[0.02] overflow-hidden transition-all",
-            "borderColor" in stat ? "" : "border-foreground/[0.06] hover:border-primary/20"
+            "group rounded-2xl border overflow-hidden transition-all",
+            hasTier ? "" : "bg-foreground/[0.02] border-foreground/[0.06] hover:border-primary/20"
           )}
-          style={"borderColor" in stat && stat.borderColor ? { borderColor: `${stat.borderColor}30` } : undefined}
+          style={hasTier && stat.borderColor ? {
+            borderColor: `${stat.borderColor}40`,
+            background: `linear-gradient(135deg, ${stat.borderColor}10, ${stat.borderColor}06)`,
+          } : undefined}
         >
           <div className="p-6 relative h-full flex flex-col justify-between">
             <div className="relative flex items-center justify-between">
@@ -116,7 +121,8 @@ export function DashboardStats() {
             {stat.extra && <div className="relative">{stat.extra}</div>}
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

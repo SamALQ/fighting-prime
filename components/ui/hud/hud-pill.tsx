@@ -32,14 +32,25 @@ function AnimatedNumber({ value }: { value: number }) {
   return <motion.span>{display}</motion.span>;
 }
 
-function MiniXpRing({ progress, size = 36, strokeWidth = 2.5, color }: { progress: number; size?: number; strokeWidth?: number; color?: string }) {
+let ringIdCounter = 0;
+function MiniXpRing({ progress, size = 36, strokeWidth = 2.5, color, gradientStops }: { progress: number; size?: number; strokeWidth?: number; color?: string; gradientStops?: [string, string] }) {
+  const idRef = useRef(`xp-ring-${++ringIdCounter}`);
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const offset = circumference - (progress / 100) * circumference;
+  const gradId = idRef.current;
   return (
     <svg width={size} height={size} className="absolute inset-0 -rotate-90">
+      {gradientStops && (
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor={gradientStops[0]} />
+            <stop offset="100%" stopColor={gradientStops[1]} />
+          </linearGradient>
+        </defs>
+      )}
       <circle cx={size / 2} cy={size / 2} r={radius} stroke="currentColor" strokeWidth={strokeWidth} fill="none" className="text-foreground/[0.08]" />
-      <motion.circle cx={size / 2} cy={size / 2} r={radius} stroke={color || "currentColor"} strokeWidth={strokeWidth} fill="none" strokeDasharray={circumference} strokeLinecap="round" className={color ? undefined : "text-primary"} initial={{ strokeDashoffset: circumference }} animate={{ strokeDashoffset: offset }} transition={{ duration: 0.8, ease: "easeOut" }} />
+      <motion.circle cx={size / 2} cy={size / 2} r={radius} stroke={gradientStops ? `url(#${gradId})` : (color || "currentColor")} strokeWidth={strokeWidth} fill="none" strokeDasharray={circumference} strokeLinecap="round" className={color && !gradientStops ? undefined : (!gradientStops ? "text-primary" : undefined)} initial={{ strokeDashoffset: circumference }} animate={{ strokeDashoffset: offset }} transition={{ duration: 0.8, ease: "easeOut" }} />
     </svg>
   );
 }
@@ -110,15 +121,15 @@ function StatsPanel({ onClose, panelProps }: { onClose: () => void; panelProps: 
 
   const content = (
     <>
-      <div className="p-5 pb-4 font-bruce">
+      <div className="p-5 pb-4">
         <div className="flex items-center gap-3 mb-4">
           <div className="relative h-12 w-12 rounded-full flex items-center justify-center text-lg font-bold shrink-0" style={{ color: tier.color, backgroundColor: `${tier.color}20` }}>
             {initials}
-            <MiniXpRing progress={xpProgress} size={48} strokeWidth={2.5} color={tier.color} />
+            <MiniXpRing progress={xpProgress} size={48} strokeWidth={2.5} color={tier.color} gradientStops={tier.gradientStops} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-bold text-foreground text-sm truncate">{user?.email?.split("@")[0] ?? "Fighter"}</p>
-            <span className="text-[10px] font-black uppercase tracking-wider">
+            <span className="text-[10px] font-black uppercase tracking-wider font-bruce">
               <TierText tier={tier}>Lvl {level}</TierText>
               <span style={{ color: tier.color }}> · {tier.name}</span>
             </span>
@@ -174,7 +185,7 @@ function StatsPanel({ onClose, panelProps }: { onClose: () => void; panelProps: 
         {nextTier && levelsToNextTier !== null && (
           <div className="rounded-xl px-3 py-2.5 border" style={{ backgroundColor: `${nextTier.color}08`, borderColor: `${nextTier.color}20` }}>
             <div className="flex items-center justify-between mb-1">
-              <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: nextTier.color }}>
+              <p className="text-[10px] font-black uppercase tracking-wider font-bruce" style={{ color: nextTier.color }}>
                 Next: {nextTier.name} Tier
               </p>
               <p className="text-[10px] font-bold text-muted-foreground">{levelsToNextTier} levels away</p>
@@ -232,7 +243,7 @@ interface PanelProps {
   initials: string;
   user: { id: string; email?: string | null } | null;
   level: number;
-  tier: { name: string; color: string; gradient: string };
+  tier: { name: string; color: string; gradient: string; gradientStops: [string, string] };
   xpProgress: number;
   pointsToNext: number;
   points: number;
@@ -342,7 +353,7 @@ export function HudPill() {
   const panelProps: PanelProps = {
     initials,
     user: user ? { id: user.id, email: user.email } : null,
-    level, tier: { name: tier.name, color: tier.color, gradient: tier.gradient }, xpProgress, pointsToNext, points, userStats, rankLoading, leaderboardRank,
+    level, tier: { name: tier.name, color: tier.color, gradient: tier.gradient, gradientStops: tier.gradientStops }, xpProgress, pointsToNext, points, userStats, rankLoading, leaderboardRank,
     nextTier: nextTier ? { name: nextTier.name, color: nextTier.color, minLevel: nextTier.minLevel, rewardDescription: nextTier.rewardDescription } : null,
     levelsToNextTier,
   };
@@ -387,11 +398,19 @@ export function HudPill() {
               style={{ color: tier.color, backgroundColor: `${tier.color}20` }}
             >
               {initials}
-              <MiniXpRing progress={xpProgress} size={40} strokeWidth={2.5} color={tier.color} />
+              <MiniXpRing progress={xpProgress} size={40} strokeWidth={2.5} color={tier.color} gradientStops={tier.gradientStops} />
             </button>
 
             <div className="flex items-center gap-1.5 font-bruce">
-              <motion.div animate={levelPulse ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.4 }} className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-foreground/[0.04]">
+              <motion.div
+                animate={levelPulse ? { scale: [1, 1.3, 1] } : {}}
+                transition={{ duration: 0.4 }}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-full border"
+                style={{
+                  background: `linear-gradient(135deg, ${tier.color}15, ${tier.color}08)`,
+                  borderColor: `${tier.color}30`,
+                }}
+              >
                 <TierText tier={tier} className="text-[11px] font-black uppercase tracking-wider">Lvl</TierText>
                 <TierText tier={tier} className="text-sm font-black tabular-nums">{level}</TierText>
               </motion.div>
