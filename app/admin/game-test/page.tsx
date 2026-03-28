@@ -29,6 +29,7 @@ interface LocalStats {
   /** Tracks each discrete points award for the bubble animation */
   _pointsAwardSeq: number;
   _lastAwardAmount: number;
+  _lastBaseAmount: number;
 }
 
 const INITIAL_STATS: LocalStats = {
@@ -41,6 +42,7 @@ const INITIAL_STATS: LocalStats = {
   achievements: [],
   _pointsAwardSeq: 0,
   _lastAwardAmount: 0,
+  _lastBaseAmount: 0,
 };
 
 /* ------------------------------------------------------------------ */
@@ -48,14 +50,29 @@ const INITIAL_STATS: LocalStats = {
 /* ------------------------------------------------------------------ */
 
 function PointsBubble({
-  amount, pointsToNext, onLevelUp, onDone,
+  amount,
+  baseAmount,
+  streakMultiplier = 1,
+  pointsToNext,
+  onLevelUp,
+  onDone,
+  onStreakFlash,
 }: {
-  amount: number; pointsToNext: number; onLevelUp: () => void; onDone: () => void;
+  amount: number;
+  baseAmount?: number;
+  streakMultiplier?: number;
+  pointsToNext: number;
+  onLevelUp: () => void;
+  onDone: () => void;
+  onStreakFlash?: () => void;
 }) {
+  const hasMultiplier = streakMultiplier > 1 && baseAmount !== undefined && baseAmount < amount;
+  const countTarget = hasMultiplier ? baseAmount : amount;
+
   const mv = useMotionValue(0);
   const display = useTransform(mv, (v) => `+${Math.round(v)}`);
-  const bubbleScale = useTransform(mv, [0, amount], [1, 1.15]);
-  const [phase, setPhase] = useState<"count" | "lock" | "exit">("count");
+  const bubbleScale = useTransform(mv, [0, countTarget], [1, 1.15]);
+  const [phase, setPhase] = useState<"count" | "lock" | "multiply" | "result" | "exit">("count");
   const [currentScale, setCurrentScale] = useState(1);
   const levelFiredRef = useRef(false);
 
@@ -65,17 +82,27 @@ function PointsBubble({
   }, [bubbleScale]);
 
   useEffect(() => {
-    const controls = animate(mv, amount, {
-      duration: Math.min(1.5, 0.5 + amount / 200),
+    const controls = animate(mv, countTarget, {
+      duration: Math.min(1.5, 0.5 + countTarget / 200),
       ease: "easeOut",
       onComplete: () => {
         setPhase("lock");
-        setTimeout(() => setPhase("exit"), 1200);
-        setTimeout(onDone, 1800);
+        if (hasMultiplier) {
+          setTimeout(() => {
+            onStreakFlash?.();
+            setPhase("multiply");
+          }, 600);
+          setTimeout(() => setPhase("result"), 1500);
+          setTimeout(() => setPhase("exit"), 2800);
+          setTimeout(onDone, 3400);
+        } else {
+          setTimeout(() => setPhase("exit"), 1200);
+          setTimeout(onDone, 1800);
+        }
       },
     });
     return controls.stop;
-  }, [amount, mv, onDone]);
+  }, [countTarget, mv, onDone, hasMultiplier, onStreakFlash]);
 
   useEffect(() => {
     if (levelFiredRef.current) return;
@@ -88,34 +115,69 @@ function PointsBubble({
     return unsub;
   }, [mv, pointsToNext, amount, onLevelUp]);
 
+  useEffect(() => {
+    if (phase === "result" && !levelFiredRef.current && hasMultiplier) {
+      if (pointsToNext > 0 && pointsToNext <= amount && pointsToNext > countTarget) {
+        levelFiredRef.current = true;
+        onLevelUp();
+      }
+    }
+  }, [phase, amount, countTarget, pointsToNext, hasMultiplier, onLevelUp]);
+
   return (
     <motion.div
       initial={{ scale: 0, opacity: 0, y: 4 }}
       animate={
         phase === "exit"
           ? { scale: 0.8, opacity: 0, y: -8 }
-          : phase === "lock"
+          : phase === "result"
             ? { scale: 1, opacity: 1, y: -4 }
-            : { scale: currentScale, opacity: 1, y: -4 }
+            : phase === "lock" || phase === "multiply"
+              ? { scale: 1, opacity: 1, y: -4 }
+              : { scale: currentScale, opacity: 1, y: -4 }
       }
       transition={
-        phase === "lock"
-          ? { type: "spring", stiffness: 500, damping: 15 }
-          : phase === "exit"
-            ? { duration: 0.5, ease: "easeIn" }
-            : { type: "spring", stiffness: 300, damping: 20 }
+        phase === "result"
+          ? { type: "spring", stiffness: 400, damping: 12 }
+          : phase === "lock"
+            ? { type: "spring", stiffness: 500, damping: 15 }
+            : phase === "exit"
+              ? { duration: 0.5, ease: "easeIn" }
+              : { type: "spring", stiffness: 300, damping: 20 }
       }
       className="absolute -top-9 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
     >
       <div
         className={cn(
-          "px-3 py-1 rounded-full bg-black/70 dark:bg-black/80 backdrop-blur-sm border border-[#62fab6]/30 font-bruce whitespace-nowrap",
+          "px-3 py-1 rounded-full bg-black/70 dark:bg-black/80 backdrop-blur-sm font-bruce whitespace-nowrap transition-colors duration-300",
           phase === "lock" && "animate-shimmer",
+          phase === "multiply" ? "border border-orange-400/50" : "border border-[#62fab6]/30",
         )}
       >
-        <motion.span className="text-sm font-black tabular-nums" style={{ color: "#62fab6" }}>
-          {display}
-        </motion.span>
+        {phase === "multiply" ? (
+          <motion.span
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: "spring", stiffness: 500, damping: 15 }}
+            className="text-sm font-black tabular-nums text-orange-400"
+          >
+            ×{streakMultiplier}
+          </motion.span>
+        ) : phase === "result" ? (
+          <motion.span
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: [0.5, 1.25, 1] }}
+            transition={{ duration: 0.5, times: [0, 0.6, 1] }}
+            className="text-sm font-black tabular-nums animate-shimmer"
+            style={{ color: "#62fab6" }}
+          >
+            +{amount}
+          </motion.span>
+        ) : (
+          <motion.span className="text-sm font-black tabular-nums" style={{ color: "#62fab6" }}>
+            {display}
+          </motion.span>
+        )}
       </div>
     </motion.div>
   );
@@ -236,18 +298,24 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
 
   const [levelPulse, setLevelPulse] = useState(false);
   const [levelGlimmer, setLevelGlimmer] = useState(false);
-  const [pointsEvent, setPointsEvent] = useState<{ amount: number; pointsToNext: number } | null>(null);
+  const [pointsEvent, setPointsEvent] = useState<{ amount: number; baseAmount?: number; streakMultiplier?: number; pointsToNext: number } | null>(null);
+  const [streakFlash, setStreakFlash] = useState(false);
   const [tierPromotion, setTierPromotion] = useState<TierPromotionData | null>(null);
 
   // Detect any points award → bubble
   useEffect(() => {
     const seq = stats._pointsAwardSeq;
     if (seq > prevAwardSeqRef.current && stats._lastAwardAmount > 0) {
-      setPointsEvent({ amount: stats._lastAwardAmount, pointsToNext });
+      setPointsEvent({
+        amount: stats._lastAwardAmount,
+        baseAmount: stats.streakMultiplier > 1 ? stats._lastBaseAmount : undefined,
+        streakMultiplier: stats.streakMultiplier,
+        pointsToNext,
+      });
       playPointsSound();
     }
     prevAwardSeqRef.current = seq;
-  }, [stats._pointsAwardSeq, stats._lastAwardAmount, pointsToNext]);
+  }, [stats._pointsAwardSeq, stats._lastAwardAmount, stats._lastBaseAmount, stats.streakMultiplier, pointsToNext]);
 
   // Level-up (only when no bubble is active)
   useEffect(() => {
@@ -287,6 +355,10 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
 
   const handleBubbleLevelUp = useCallback(() => { fireLevelUp(); }, [fireLevelUp]);
   const handleBubbleDone = useCallback(() => { setPointsEvent(null); }, []);
+  const handleStreakFlash = useCallback(() => {
+    setStreakFlash(true);
+    setTimeout(() => setStreakFlash(false), 600);
+  }, []);
 
   const hotStreak = stats.currentStreak >= 3;
 
@@ -325,9 +397,12 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
                 {pointsEvent && (
                   <PointsBubble
                     amount={pointsEvent.amount}
+                    baseAmount={pointsEvent.baseAmount}
+                    streakMultiplier={pointsEvent.streakMultiplier}
                     pointsToNext={pointsEvent.pointsToNext}
                     onLevelUp={handleBubbleLevelUp}
                     onDone={handleBubbleDone}
+                    onStreakFlash={handleStreakFlash}
                   />
                 )}
                 <motion.div
@@ -346,10 +421,18 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
                   <TierText tier={tier} className="text-sm font-black tabular-nums">{level}</TierText>
                 </motion.div>
               </div>
-              <div className={cn("flex items-center gap-1 px-2.5 py-1.5 rounded-full", stats.currentStreak > 0 ? "bg-orange-500/[0.08]" : "bg-foreground/[0.04]")}>
+              <motion.div
+                animate={
+                  streakFlash
+                    ? { scale: [1, 1.4, 1], boxShadow: ["0 0 0px rgba(249,115,22,0)", "0 0 16px rgba(249,115,22,0.8)", "0 0 0px rgba(249,115,22,0)"] }
+                    : {}
+                }
+                transition={{ duration: 0.5 }}
+                className={cn("flex items-center gap-1 px-2.5 py-1.5 rounded-full", stats.currentStreak > 0 ? "bg-orange-500/[0.08]" : "bg-foreground/[0.04]")}
+              >
                 <Flame className={cn("h-3.5 w-3.5", stats.currentStreak > 0 ? "text-orange-500" : "text-muted-foreground/50")} />
                 <span className={cn("text-sm font-bold tabular-nums", stats.currentStreak > 0 ? "text-orange-400" : "text-muted-foreground/50")}>{stats.currentStreak}</span>
-              </div>
+              </motion.div>
               <div className="flex items-center justify-center h-8 w-8 rounded-full bg-foreground/[0.04]">
                 <Bell className="h-3.5 w-3.5 text-muted-foreground" />
               </div>
@@ -464,6 +547,7 @@ export default function GameTestPage() {
         episodesCompleted: prev.episodesCompleted + completions,
         _pointsAwardSeq: prev._pointsAwardSeq + 1,
         _lastAwardAmount: effective,
+        _lastBaseAmount: raw ? amount : amount,
       };
     });
   };
