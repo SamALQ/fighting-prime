@@ -25,22 +25,40 @@ function playTone(
   osc.stop(ac.currentTime + delay + duration + 0.05);
 }
 
+const audioCache = new Map<string, AudioBuffer>();
+
+async function playSample(path: string, volume = 0.5) {
+  const ac = getCtx();
+  let buffer = audioCache.get(path);
+  if (!buffer) {
+    try {
+      const res = await fetch(path);
+      const arrayBuf = await res.arrayBuffer();
+      buffer = await ac.decodeAudioData(arrayBuf);
+      audioCache.set(path, buffer);
+    } catch {
+      return;
+    }
+  }
+  const source = ac.createBufferSource();
+  const gain = ac.createGain();
+  gain.gain.value = volume;
+  source.buffer = buffer;
+  source.connect(gain).connect(ac.destination);
+  source.start();
+}
+
 export function playPointsSound() {
   playTone(880, "sine", 0.12, 0.15);
   playTone(1100, "sine", 0.08, 0.12, 0.06);
 }
 
 export function playLevelUpSound() {
-  playTone(523, "sine", 0.14, 0.25, 0);
-  playTone(659, "sine", 0.14, 0.25, 0.1);
-  playTone(784, "sine", 0.14, 0.35, 0.2);
+  playSample("/sounds/level-up.wav", 0.6);
 }
 
 export function playTierSound() {
-  playTone(262, "sine", 0.12, 0.6, 0);
-  playTone(330, "sine", 0.12, 0.6, 0.05);
-  playTone(392, "sine", 0.12, 0.6, 0.1);
-  playTone(523, "sine", 0.14, 0.7, 0.15);
+  playSample("/sounds/tier-achieve.wav", 0.7);
 }
 
 export function playAchievementSound() {

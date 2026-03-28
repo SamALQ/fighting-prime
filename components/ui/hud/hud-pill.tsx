@@ -65,12 +65,14 @@ function PointsBubble({
   baseAmount,
   streakMultiplier = 1,
   onDone,
+  onCountComplete,
   onStreakFlash,
 }: {
   amount: number;
   baseAmount?: number;
   streakMultiplier?: number;
   onDone: () => void;
+  onCountComplete: () => void;
   onStreakFlash?: () => void;
 }) {
   const hasMultiplier = streakMultiplier > 1 && baseAmount !== undefined && baseAmount < amount;
@@ -101,13 +103,14 @@ function PointsBubble({
           }, 600);
           setTimeout(() => setPhase("result"), 1500);
         } else {
+          onCountComplete();
           setTimeout(() => setPhase("exit"), 1200);
           setTimeout(onDone, 1800);
         }
       },
     });
     return controls.stop;
-  }, [countTarget, mv, onDone, hasMultiplier, onStreakFlash]);
+  }, [countTarget, mv, onDone, onCountComplete, hasMultiplier, onStreakFlash]);
 
   // Phase 2: animate base → final when multiplier is active
   useEffect(() => {
@@ -116,12 +119,13 @@ function PointsBubble({
       duration: Math.min(1, 0.3 + (amount - countTarget) / 200),
       ease: "easeOut",
       onComplete: () => {
+        onCountComplete();
         setTimeout(() => setPhase("exit"), 800);
         setTimeout(onDone, 1400);
       },
     });
     return controls.stop;
-  }, [phase, hasMultiplier, amount, countTarget, mv, onDone]);
+  }, [phase, hasMultiplier, amount, countTarget, mv, onDone, onCountComplete]);
 
   const showMultiplier = hasMultiplier && (phase === "multiply" || phase === "result");
 
@@ -533,8 +537,7 @@ export function HudPill() {
     confetti({ particleCount: 120, spread: 90, origin: { y: 0.6 }, colors: [tier.color, "#ffffff", "#ffd700"], startVelocity: 35, gravity: 0.8, scalar: 1.1 });
   }, [tier, level]);
 
-  const handleBubbleDone = useCallback(() => {
-    setPointsEvent(null);
+  const handleCountComplete = useCallback(() => {
     if (pendingLevelUpRef.current) {
       pendingLevelUpRef.current = false;
       setTimeout(() => fireLevelUp(), 100);
@@ -544,6 +547,10 @@ export function HudPill() {
       setTimeout(() => fireTierPromotion(), 900);
     }
   }, [fireLevelUp, fireTierPromotion]);
+
+  const handleBubbleDone = useCallback(() => {
+    setPointsEvent(null);
+  }, []);
 
   const handleStreakFlash = useCallback(() => {
     setStreakFlash(true);
@@ -633,6 +640,7 @@ export function HudPill() {
                     amount={pointsEvent.amount}
                     baseAmount={pointsEvent.baseAmount}
                     streakMultiplier={pointsEvent.streakMultiplier}
+                    onCountComplete={handleCountComplete}
                     onDone={handleBubbleDone}
                     onStreakFlash={handleStreakFlash}
                   />

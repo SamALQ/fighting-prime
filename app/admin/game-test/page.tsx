@@ -54,12 +54,14 @@ function PointsBubble({
   baseAmount,
   streakMultiplier = 1,
   onDone,
+  onCountComplete,
   onStreakFlash,
 }: {
   amount: number;
   baseAmount?: number;
   streakMultiplier?: number;
   onDone: () => void;
+  onCountComplete: () => void;
   onStreakFlash?: () => void;
 }) {
   const hasMultiplier = streakMultiplier > 1 && baseAmount !== undefined && baseAmount < amount;
@@ -90,13 +92,14 @@ function PointsBubble({
           }, 600);
           setTimeout(() => setPhase("result"), 1500);
         } else {
+          onCountComplete();
           setTimeout(() => setPhase("exit"), 1200);
           setTimeout(onDone, 1800);
         }
       },
     });
     return controls.stop;
-  }, [countTarget, mv, onDone, hasMultiplier, onStreakFlash]);
+  }, [countTarget, mv, onDone, onCountComplete, hasMultiplier, onStreakFlash]);
 
   // Phase 2: animate base → final when multiplier is active
   useEffect(() => {
@@ -105,12 +108,13 @@ function PointsBubble({
       duration: Math.min(1, 0.3 + (amount - countTarget) / 200),
       ease: "easeOut",
       onComplete: () => {
+        onCountComplete();
         setTimeout(() => setPhase("exit"), 800);
         setTimeout(onDone, 1400);
       },
     });
     return controls.stop;
-  }, [phase, hasMultiplier, amount, countTarget, mv, onDone]);
+  }, [phase, hasMultiplier, amount, countTarget, mv, onDone, onCountComplete]);
 
   const showMultiplier = hasMultiplier && (phase === "multiply" || phase === "result");
 
@@ -334,9 +338,11 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
     setTimeout(() => setLevelGlimmer(false), 1000);
   }, []);
 
+  const handleCountComplete = useCallback(() => {
+    setFrozenPoints(null);
+  }, []);
   const handleBubbleDone = useCallback(() => {
     setPointsEvent(null);
-    setFrozenPoints(null);
   }, []);
   const handleStreakFlash = useCallback(() => {
     setStreakFlash(true);
@@ -382,6 +388,7 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
                     amount={pointsEvent.amount}
                     baseAmount={pointsEvent.baseAmount}
                     streakMultiplier={pointsEvent.streakMultiplier}
+                    onCountComplete={handleCountComplete}
                     onDone={handleBubbleDone}
                     onStreakFlash={handleStreakFlash}
                   />
