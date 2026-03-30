@@ -439,6 +439,7 @@ export function HudPill() {
   const prevLevelRef = useRef(0);
   const prevTierRef = useRef<string>("");
   const hasMountedRef = useRef(false);
+  const tierMountedRef = useRef(false);
   const prevStreakRef = useRef(0);
   const prevCompletedRef = useRef(-1);
   const prevAssignPtsRef = useRef(-1);
@@ -449,6 +450,7 @@ export function HudPill() {
   const [tierPromotion, setTierPromotion] = useState<TierPromotionData | null>(null);
   const [pointsEvent, setPointsEvent] = useState<{ amount: number; baseAmount?: number; streakMultiplier?: number } | null>(null);
   const [streakFlash, setStreakFlash] = useState(false);
+  const pointsSeqRef = useRef(0);
   const pendingLevelUpRef = useRef(false);
   const pendingTierRef = useRef(false);
   const prevUnreadRef = useRef(0);
@@ -467,6 +469,7 @@ export function HudPill() {
     const completed = userStats.episodesCompleted;
     if (prevCompletedRef.current >= 0 && completed > prevCompletedRef.current) {
       const delta = (completed - prevCompletedRef.current) * POINTS_PER_COMPLETION;
+      pointsSeqRef.current++;
       setPointsEvent({ amount: delta });
       playPointsSound();
     }
@@ -477,6 +480,7 @@ export function HudPill() {
     const pts = userStats.assignmentPoints;
     if (prevAssignPtsRef.current >= 0 && pts > prevAssignPtsRef.current) {
       const delta = pts - prevAssignPtsRef.current;
+      pointsSeqRef.current++;
       setPointsEvent({ amount: delta });
       playPointsSound();
     }
@@ -485,6 +489,7 @@ export function HudPill() {
 
   // Level-up: defer if bubble is active, otherwise fire immediately
   useEffect(() => {
+    if (progressLoading) return;
     if (hasMountedRef.current && level > prevLevelRef.current) {
       if (pointsEvent) {
         pendingLevelUpRef.current = true;
@@ -494,12 +499,13 @@ export function HudPill() {
     }
     prevLevelRef.current = level;
     hasMountedRef.current = true;
-  }, [level, pointsEvent]);
+  }, [level, pointsEvent, progressLoading]);
 
   // Tier promotion: defer if bubble is active
   useEffect(() => {
     const currentTierSlug = tier.slug;
-    if (hasMountedRef.current && prevTierRef.current !== currentTierSlug) {
+    if (progressLoading) return;
+    if (tierMountedRef.current && prevTierRef.current !== currentTierSlug) {
       if (pointsEvent) {
         pendingTierRef.current = true;
       } else {
@@ -507,7 +513,8 @@ export function HudPill() {
       }
     }
     prevTierRef.current = currentTierSlug;
-  }, [tier, pointsEvent]);
+    tierMountedRef.current = true;
+  }, [tier, pointsEvent, progressLoading]);
 
   useEffect(() => {
     if (prevStreakRef.current > 0 && userStats.currentStreak > prevStreakRef.current) {
@@ -650,6 +657,7 @@ export function HudPill() {
               <div className="relative">
                 {pointsEvent && (
                   <PointsBubble
+                    key={pointsSeqRef.current}
                     amount={pointsEvent.amount}
                     baseAmount={pointsEvent.baseAmount}
                     streakMultiplier={pointsEvent.streakMultiplier}

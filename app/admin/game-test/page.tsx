@@ -278,9 +278,8 @@ function MiniXpRing({ progress, size = 40, strokeWidth = 2.5, gradientStops }: {
 
 function GameTestHudPill({ stats }: { stats: LocalStats }) {
   const prevAwardSeqRef = useRef(0);
-  const prevLevelRef = useRef(0);
-  const prevTierRef = useRef("");
-  const hasMountedRef = useRef(false);
+  const animatedLevelRef = useRef(0);
+  const animatedTierRef = useRef("iron");
   const hudRef = useRef<HTMLDivElement>(null);
 
   const [frozenPoints, setFrozenPoints] = useState<number | null>(null);
@@ -290,7 +289,6 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
   const [streakFlash, setStreakFlash] = useState(false);
   const [tierPromotion, setTierPromotion] = useState<TierPromotionData | null>(null);
 
-  // Visual display uses frozen points during bubble, real points otherwise
   const displayPoints = frozenPoints !== null ? frozenPoints : stats.points;
   const level = getLevelFromPoints(displayPoints);
   const tier = getTier(level);
@@ -311,41 +309,7 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
     prevAwardSeqRef.current = seq;
   }, [stats._pointsAwardSeq, stats._lastAwardAmount, stats._lastBaseAmount, stats.streakMultiplier, stats.points]);
 
-  const tierFiredRef = useRef(false);
-
-  // Level-up fires when display level changes (after frozenPoints clears)
-  useEffect(() => {
-    if (hasMountedRef.current && level > prevLevelRef.current) {
-      fireLevelUpRef.current();
-    }
-    prevLevelRef.current = level;
-    hasMountedRef.current = true;
-  }, [level]);
-
-  // Tier change fires when display tier changes — delayed to play after level-up
-  useEffect(() => {
-    const slug = tier.slug;
-    if (hasMountedRef.current && prevTierRef.current !== slug) {
-      if (tierFiredRef.current) return;
-      tierFiredRef.current = true;
-      const old = TIERS.find(t => t.slug === prevTierRef.current);
-      const data = {
-        name: tier.name, color: tier.color, reward: tier.rewardDescription,
-        previousColor: old?.color ?? tier.color, previousName: old?.name ?? "",
-        newLevel: level,
-      };
-      setTimeout(() => {
-        setTierPromotion(data);
-        playTierSound();
-        confetti({ particleCount: 120, spread: 90, origin: { y: 0.6 }, colors: [tier.color, "#ffffff", "#ffd700"], startVelocity: 35, gravity: 0.8, scalar: 1.1 });
-        tierFiredRef.current = false;
-      }, 1200);
-    }
-    prevTierRef.current = slug;
-  }, [tier, level]);
-
-  const fireLevelUpRef = useRef(() => {});
-  fireLevelUpRef.current = () => {
+  const fireLevelUp = useCallback(() => {
     setLevelPulse(true);
     setLevelGlimmer(true);
     playLevelUpSound();
@@ -355,11 +319,33 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
     }
     setTimeout(() => setLevelPulse(false), 800);
     setTimeout(() => setLevelGlimmer(false), 1000);
-  };
+  }, []);
 
+  // All animation triggering happens here — when the bubble finishes counting
   const handleCountComplete = useCallback(() => {
     setFrozenPoints(null);
-  }, []);
+    const realLevel = getLevelFromPoints(stats.points);
+    const realTier = getTier(realLevel);
+    if (realLevel > animatedLevelRef.current) {
+      fireLevelUp();
+    }
+    if (animatedTierRef.current !== realTier.slug) {
+      const old = TIERS.find(t => t.slug === animatedTierRef.current);
+      const data = {
+        name: realTier.name, color: realTier.color, reward: realTier.rewardDescription,
+        previousColor: old?.color ?? realTier.color, previousName: old?.name ?? "",
+        newLevel: realLevel,
+      };
+      setTimeout(() => {
+        setTierPromotion(data);
+        playTierSound();
+        confetti({ particleCount: 120, spread: 90, origin: { y: 0.6 }, colors: [realTier.color, "#ffffff", "#ffd700"], startVelocity: 35, gravity: 0.8, scalar: 1.1 });
+      }, 1200);
+    }
+    animatedLevelRef.current = realLevel;
+    animatedTierRef.current = realTier.slug;
+  }, [stats.points, fireLevelUp]);
+
   const handleBubbleDone = useCallback(() => {
     setPointsEvent(null);
   }, []);
@@ -404,6 +390,7 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
               <div className="relative">
                 {pointsEvent && (
                   <PointsBubble
+                    key={stats._pointsAwardSeq}
                     amount={pointsEvent.amount}
                     baseAmount={pointsEvent.baseAmount}
                     streakMultiplier={pointsEvent.streakMultiplier}
