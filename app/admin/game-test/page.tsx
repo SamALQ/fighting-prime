@@ -12,7 +12,7 @@ import type { Tier } from "@/lib/gamification";
 import { ACHIEVEMENTS, getAchievementIcon } from "@/lib/achievements";
 import { playPointsSound, playLevelUpSound, playTierSound, playAchievementSound } from "@/lib/sounds";
 import { cn } from "@/lib/utils";
-import confetti from "canvas-confetti";
+
 
 /* ------------------------------------------------------------------ */
 /*  Local stats type (mirrors UserStats shape we care about)           */
@@ -313,10 +313,7 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
     setLevelPulse(true);
     setLevelGlimmer(true);
     playLevelUpSound();
-    if (hudRef.current) {
-      const rect = hudRef.current.getBoundingClientRect();
-      confetti({ particleCount: 30, spread: 60, origin: { x: (rect.left + rect.width / 2) / window.innerWidth, y: rect.top / window.innerHeight }, colors: ["#ef4444", "#f97316", "#eab308"], startVelocity: 20, gravity: 1.2, scalar: 0.7 });
-    }
+    
     setTimeout(() => setLevelPulse(false), 800);
     setTimeout(() => setLevelGlimmer(false), 1000);
   }, []);
@@ -339,7 +336,6 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
       setTimeout(() => {
         setTierPromotion(data);
         playTierSound();
-        confetti({ particleCount: 120, spread: 90, origin: { y: 0.6 }, colors: [realTier.color, "#ffffff", "#ffd700"], startVelocity: 35, gravity: 0.8, scalar: 1.1 });
       }, 1200);
     }
     animatedLevelRef.current = realLevel;

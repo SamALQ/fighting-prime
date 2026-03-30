@@ -11,7 +11,7 @@ import { useHudNotifications } from "./use-hud-notifications";
 import { getTier, getXpProgress, getPointsToNextLevel, getNextTier, getLevelsToNextTier, TierText, TIERS, POINTS_PER_COMPLETION } from "@/lib/gamification";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import confetti from "canvas-confetti";
+
 import { playPointsSound, playLevelUpSound, playTierSound, playAchievementSound } from "@/lib/sounds";
 
 const HIDDEN_ROUTES = ["/login", "/signup", "/onboarding", "/reset-password", "/forgot-password"];
@@ -537,10 +537,7 @@ export function HudPill() {
     setLevelPulse(true);
     setLevelGlimmer(true);
     playLevelUpSound();
-    if (hudRef.current) {
-      const rect = hudRef.current.getBoundingClientRect();
-      confetti({ particleCount: 30, spread: 60, origin: { x: (rect.left + rect.width / 2) / window.innerWidth, y: rect.top / window.innerHeight }, colors: ["#ef4444", "#f97316", "#eab308"], startVelocity: 20, gravity: 1.2, scalar: 0.7 });
-    }
+    
     setTimeout(() => setLevelPulse(false), 800);
     setTimeout(() => setLevelGlimmer(false), 1000);
   };
@@ -554,7 +551,6 @@ export function HudPill() {
       newLevel: level,
     });
     playTierSound();
-    confetti({ particleCount: 120, spread: 90, origin: { y: 0.6 }, colors: [tier.color, "#ffffff", "#ffd700"], startVelocity: 35, gravity: 0.8, scalar: 1.1 });
   };
 
   const handleCountComplete = useCallback(() => {

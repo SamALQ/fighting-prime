@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { Button } from "./button";
 import { useSubscription } from "@/lib/hooks/use-subscription";
-import confetti from "canvas-confetti";
+
 import { cn } from "@/lib/utils";
 
 interface VideoPlayerProps {
@@ -83,7 +83,7 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
   const [bookmarks, setBookmarks] = useState<{ id: string; timestamp_seconds: number; note: string }[]>([]);
   const [chapters, setChapters] = useState<{ id: string; title: string; timestamp_seconds: number }[]>([]);
 
-  const hasTriggeredConfetti = useRef(false);
+  
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const scrubBarRef = useRef<HTMLDivElement>(null);
@@ -270,15 +270,7 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
       }
       lastTickMs.current = now;
 
-      if (isComplete && !hasTriggeredConfetti.current) {
-        hasTriggeredConfetti.current = true;
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: ["#D71212", "#FFFFFF"],
-        });
-      }
+      
     };
 
     const handlePause = () => {
