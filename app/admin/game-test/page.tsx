@@ -13,7 +13,7 @@ import { ACHIEVEMENTS, getAchievementIcon } from "@/lib/achievements";
 import { startPointsBuildUp, stopPointsBuildUp, playPointsEnd, playLevelUpSound, playTierSound, playAchievementSound } from "@/lib/sounds";
 import type { PointsEndVariant } from "@/lib/sounds";
 import { cn } from "@/lib/utils";
-import { LevelUpOverlay } from "@/components/ui/level-up-overlay";
+
 
 
 /* ------------------------------------------------------------------ */
@@ -545,8 +545,6 @@ function TierRoadmap({ currentLevel }: { currentLevel: number }) {
 
 export default function GameTestPage() {
   const [stats, setStats] = useState<LocalStats>(INITIAL_STATS);
-  const [levelUpOverlay, setLevelUpOverlay] = useState<{ from: number; to: number } | null>(null);
-
   const level = getLevelFromPoints(stats.points);
   const tier = getTier(level);
 
@@ -595,13 +593,6 @@ export default function GameTestPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {levelUpOverlay && (
-        <LevelUpOverlay
-          fromLevel={levelUpOverlay.from}
-          toLevel={levelUpOverlay.to}
-          onDismiss={() => setLevelUpOverlay(null)}
-        />
-      )}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <p className="text-xs font-bold text-primary uppercase tracking-wider mb-1">Admin</p>
@@ -688,16 +679,6 @@ export default function GameTestPage() {
                   className="w-full px-3 py-2.5 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors text-sm font-bold text-primary flex items-center gap-2"
                 >
                   <Zap className="h-4 w-4" /> Jump to Next Tier
-                </button>
-                <button
-                  onClick={() => {
-                    const from = Math.max(0, level - 1);
-                    setLevelUpOverlay({ from, to: level });
-                    playLevelUpSound();
-                  }}
-                  className="w-full px-3 py-2.5 rounded-xl border border-foreground/10 bg-foreground/[0.03] hover:bg-foreground/[0.08] transition-colors text-sm font-bold text-foreground flex items-center gap-2"
-                >
-                  <Trophy className="h-4 w-4 text-primary" /> Test Level-Up Overlay
                 </button>
               </div>
             </div>

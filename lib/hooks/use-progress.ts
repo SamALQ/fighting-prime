@@ -63,11 +63,7 @@ export function useProgress() {
   const [serverAchievements, setServerAchievements] = useState<string[]>([]);
   const [continueWatching, setContinueWatching] = useState<ContinueWatchingItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [levelUpFrom, setLevelUpFrom] = useState<number | null>(null);
   const [newAchievements, setNewAchievements] = useState<string[]>([]);
-  const prevLevelRef = useRef<number>(0);
-  const levelMountedRef = useRef(false);
-
   const pendingRef = useRef<Record<string, PendingUpdate>>({});
   const watchEventRef = useRef<Record<string, WatchEventDelta>>({});
   const flushTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -193,12 +189,6 @@ export function useProgress() {
     const completionPoints = completedCount * POINTS_PER_COMPLETION;
     const totalPoints = watchPoints + completionPoints + serverAssignmentStats.points;
     const newLevel = getLevelFromPoints(totalPoints);
-
-    if (levelMountedRef.current && newLevel > prevLevelRef.current) {
-      setLevelUpFrom(prevLevelRef.current);
-    }
-    prevLevelRef.current = newLevel;
-    levelMountedRef.current = true;
 
     return {
       level: newLevel,
@@ -343,7 +333,6 @@ export function useProgress() {
     return `${minutes}m`;
   };
 
-  const dismissLevelUp = useCallback(() => setLevelUpFrom(null), []);
   const dismissNewAchievements = useCallback(() => setNewAchievements([]), []);
 
   const checkAchievementsNow = useCallback(async () => {
@@ -368,9 +357,7 @@ export function useProgress() {
     userStats: computeStats(),
     continueWatching,
     isLoading,
-    levelUpFrom,
     newAchievements,
-    dismissLevelUp,
     dismissNewAchievements,
     checkAchievementsNow,
     updateProgress,

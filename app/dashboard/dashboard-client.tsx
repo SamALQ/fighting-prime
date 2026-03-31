@@ -10,7 +10,7 @@ import { AchievementsGrid } from "@/components/ui/dashboard/achievements-grid";
 import { SubscriptionCard } from "@/components/ui/dashboard/subscription-card";
 import { ContinueWatching } from "@/components/ui/dashboard/continue-watching";
 import { StreakCard } from "@/components/ui/dashboard/streak-card";
-import { LevelUpOverlay, AchievementToast } from "@/components/ui/level-up-overlay";
+import { AchievementToast } from "@/components/ui/level-up-overlay";
 import { useProgress } from "@/lib/hooks/use-progress";
 import { playAchievementSound } from "@/lib/sounds";
 import type { Course } from "@/data/courses";
@@ -25,9 +25,7 @@ export function DashboardClient({ courses, episodes }: DashboardClientProps) {
   const {
     userStats,
     isLoading: isProgressLoading,
-    levelUpFrom,
     newAchievements,
-    dismissLevelUp,
     dismissNewAchievements,
     checkAchievementsNow,
   } = useProgress();
@@ -73,13 +71,6 @@ export function DashboardClient({ courses, episodes }: DashboardClientProps) {
 
   return (
     <MainLayout>
-      {levelUpFrom !== null && (
-        <LevelUpOverlay
-          fromLevel={levelUpFrom}
-          toLevel={userStats.level}
-          onDismiss={dismissLevelUp}
-        />
-      )}
       {newAchievements.length > 0 && (
         <AchievementToast
           achievementIds={newAchievements}
