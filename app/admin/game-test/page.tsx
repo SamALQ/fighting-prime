@@ -10,7 +10,8 @@ import {
 } from "@/lib/gamification";
 import type { Tier } from "@/lib/gamification";
 import { ACHIEVEMENTS, getAchievementIcon } from "@/lib/achievements";
-import { playPointsSound, playLevelUpSound, playTierSound, playAchievementSound } from "@/lib/sounds";
+import { startPointsBuildUp, stopPointsBuildUp, playPointsEnd, playLevelUpSound, playTierSound, playAchievementSound } from "@/lib/sounds";
+import type { PointsEndVariant } from "@/lib/sounds";
 import { cn } from "@/lib/utils";
 
 
@@ -88,10 +89,12 @@ function PointsBubble({
 
   // Phase 1: count up to base (or full amount if no multiplier)
   useEffect(() => {
+    if (countTarget > 1) startPointsBuildUp();
     const controls = animate(mv, countTarget, {
       duration: Math.min(1.5, 0.5 + countTarget / 200),
       ease: "easeOut",
       onComplete: () => {
+        stopPointsBuildUp();
         setPhase("lock");
         if (hasMultiplier) {
           setTimeout(() => {
@@ -109,7 +112,7 @@ function PointsBubble({
         }
       },
     });
-    return controls.stop;
+    return () => { stopPointsBuildUp(); controls.stop(); };
   }, [countTarget, mv, hasMultiplier]);
 
   // Phase 2: snap to final amount when multiplier is active
@@ -304,7 +307,6 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
         baseAmount: stats.streakMultiplier > 1 ? stats._lastBaseAmount : undefined,
         streakMultiplier: stats.streakMultiplier,
       });
-      playPointsSound();
     }
     prevAwardSeqRef.current = seq;
   }, [stats._pointsAwardSeq, stats._lastAwardAmount, stats._lastBaseAmount, stats.streakMultiplier, stats.points]);
@@ -323,10 +325,19 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
     setFrozenPoints(null);
     const realLevel = getLevelFromPoints(stats.points);
     const realTier = getTier(realLevel);
-    if (realLevel > animatedLevelRef.current) {
+    const didLevelUp = realLevel > animatedLevelRef.current;
+    const didTierUp = animatedTierRef.current !== realTier.slug;
+
+    let endVariant: PointsEndVariant = "default";
+    if (stats._lastAwardAmount >= 100) endVariant = "100";
+    if (didLevelUp) endVariant = "levelup";
+    if (didTierUp) endVariant = "tier";
+    setTimeout(() => playPointsEnd(endVariant), 50);
+
+    if (didLevelUp) {
       fireLevelUp();
     }
-    if (animatedTierRef.current !== realTier.slug) {
+    if (didTierUp) {
       const old = TIERS.find(t => t.slug === animatedTierRef.current);
       const data = {
         name: realTier.name, color: realTier.color, reward: realTier.rewardDescription,
@@ -340,7 +351,7 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
     }
     animatedLevelRef.current = realLevel;
     animatedTierRef.current = realTier.slug;
-  }, [stats.points, fireLevelUp]);
+  }, [stats.points, stats._lastAwardAmount, fireLevelUp]);
 
   const handleBubbleDone = useCallback(() => {
     setPointsEvent(null);

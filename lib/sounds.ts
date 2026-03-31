@@ -48,9 +48,34 @@ async function playSample(path: string, volume = 0.5) {
   source.start();
 }
 
-export function playPointsSound() {
-  playTone(880, "sine", 0.12, 0.15);
-  playTone(1100, "sine", 0.08, 0.12, 0.06);
+let buildUpTimer: ReturnType<typeof setInterval> | null = null;
+
+export function startPointsBuildUp(intervalMs = 130) {
+  stopPointsBuildUp();
+  playSample("/sounds/point-buildup.wav", 0.5);
+  buildUpTimer = setInterval(() => {
+    playSample("/sounds/point-buildup.wav", 0.5);
+  }, intervalMs);
+}
+
+export function stopPointsBuildUp() {
+  if (buildUpTimer !== null) {
+    clearInterval(buildUpTimer);
+    buildUpTimer = null;
+  }
+}
+
+export type PointsEndVariant = "default" | "100" | "levelup" | "tier";
+
+const POINTS_END_MAP: Record<PointsEndVariant, string> = {
+  default: "/sounds/point-end.wav",
+  "100": "/sounds/point-end-100.wav",
+  levelup: "/sounds/point-end-levelup.wav",
+  tier: "/sounds/point-end-tier.wav",
+};
+
+export function playPointsEnd(variant: PointsEndVariant = "default") {
+  playSample(POINTS_END_MAP[variant], 0.6);
 }
 
 export function playLevelUpSound() {

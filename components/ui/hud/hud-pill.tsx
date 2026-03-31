@@ -12,7 +12,8 @@ import { getTier, getXpProgress, getPointsToNextLevel, getNextTier, getLevelsToN
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-import { playPointsSound, playLevelUpSound, playTierSound, playAchievementSound } from "@/lib/sounds";
+import { startPointsBuildUp, stopPointsBuildUp, playPointsEnd, playLevelUpSound, playTierSound, playAchievementSound } from "@/lib/sounds";
+import type { PointsEndVariant } from "@/lib/sounds";
 
 const HIDDEN_ROUTES = ["/login", "/signup", "/onboarding", "/reset-password", "/forgot-password"];
 
@@ -100,10 +101,12 @@ function PointsBubble({
 
   // Phase 1: count up to base (or full amount if no multiplier)
   useEffect(() => {
+    if (countTarget > 1) startPointsBuildUp();
     const controls = animate(mv, countTarget, {
       duration: Math.min(1.5, 0.5 + countTarget / 200),
       ease: "easeOut",
       onComplete: () => {
+        stopPointsBuildUp();
         setPhase("lock");
         if (hasMultiplier) {
           setTimeout(() => {
@@ -121,7 +124,7 @@ function PointsBubble({
         }
       },
     });
-    return controls.stop;
+    return () => { stopPointsBuildUp(); controls.stop(); };
   }, [countTarget, mv, hasMultiplier]);
 
   // Phase 2: snap to final amount when multiplier is active
@@ -451,6 +454,7 @@ export function HudPill() {
   const [pointsEvent, setPointsEvent] = useState<{ amount: number; baseAmount?: number; streakMultiplier?: number } | null>(null);
   const [streakFlash, setStreakFlash] = useState(false);
   const pointsSeqRef = useRef(0);
+  const lastAwardAmountRef = useRef(0);
   const pendingLevelUpRef = useRef(false);
   const pendingTierRef = useRef(false);
   const prevUnreadRef = useRef(0);
@@ -470,8 +474,8 @@ export function HudPill() {
     if (prevCompletedRef.current >= 0 && completed > prevCompletedRef.current) {
       const delta = (completed - prevCompletedRef.current) * POINTS_PER_COMPLETION;
       pointsSeqRef.current++;
+      lastAwardAmountRef.current = delta;
       setPointsEvent({ amount: delta });
-      playPointsSound();
     }
     prevCompletedRef.current = completed;
   }, [userStats.episodesCompleted]);
@@ -481,8 +485,8 @@ export function HudPill() {
     if (prevAssignPtsRef.current >= 0 && pts > prevAssignPtsRef.current) {
       const delta = pts - prevAssignPtsRef.current;
       pointsSeqRef.current++;
+      lastAwardAmountRef.current = delta;
       setPointsEvent({ amount: delta });
-      playPointsSound();
     }
     prevAssignPtsRef.current = pts;
   }, [userStats.assignmentPoints]);
@@ -554,11 +558,20 @@ export function HudPill() {
   };
 
   const handleCountComplete = useCallback(() => {
-    if (pendingLevelUpRef.current) {
+    const didLevelUp = pendingLevelUpRef.current;
+    const didTierUp = pendingTierRef.current;
+
+    let endVariant: PointsEndVariant = "default";
+    if (lastAwardAmountRef.current >= 100) endVariant = "100";
+    if (didLevelUp) endVariant = "levelup";
+    if (didTierUp) endVariant = "tier";
+    setTimeout(() => playPointsEnd(endVariant), 50);
+
+    if (didLevelUp) {
       pendingLevelUpRef.current = false;
       fireLevelUpRef.current();
     }
-    if (pendingTierRef.current) {
+    if (didTierUp) {
       pendingTierRef.current = false;
       setTimeout(() => fireTierPromotionRef.current(), 1200);
     }
