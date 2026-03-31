@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useId } from "react";
 import { createPortal } from "react-dom";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { Flame, Bell, Trophy, RotateCcw, Plus, Minus, Zap } from "lucide-react";
@@ -259,13 +259,11 @@ function TierPromotionModal({ tier, onClose }: { tier: TierPromotionData; onClos
 /*  Sandboxed Mini XP Ring                                             */
 /* ------------------------------------------------------------------ */
 
-let ringId = 0;
 function MiniXpRing({ progress, size = 40, strokeWidth = 2.5, gradientStops }: { progress: number; size?: number; strokeWidth?: number; gradientStops: [string, string] }) {
-  const idRef = useRef(`gt-ring-${++ringId}`);
+  const gId = useId();
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const offset = circumference - (progress / 100) * circumference;
-  const gId = idRef.current;
   return (
     <svg width={size} height={size} className="absolute inset-0 -rotate-90">
       <defs>

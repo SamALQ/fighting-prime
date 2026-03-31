@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useId } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
@@ -34,13 +34,11 @@ function AnimatedNumber({ value }: { value: number }) {
   return <motion.span>{display}</motion.span>;
 }
 
-let ringIdCounter = 0;
 function MiniXpRing({ progress, size = 36, strokeWidth = 2.5, color, gradientStops }: { progress: number; size?: number; strokeWidth?: number; color?: string; gradientStops?: [string, string] }) {
-  const idRef = useRef(`xp-ring-${++ringIdCounter}`);
+  const gradId = useId();
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const offset = circumference - (progress / 100) * circumference;
-  const gradId = idRef.current;
   return (
     <svg width={size} height={size} className="absolute inset-0 -rotate-90">
       {gradientStops && (
