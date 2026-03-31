@@ -126,6 +126,7 @@ export function useProgress() {
       return;
     }
 
+    setIsLoading(true);
     let cancelled = false;
 
     (async () => {

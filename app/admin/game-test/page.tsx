@@ -13,6 +13,7 @@ import { ACHIEVEMENTS, getAchievementIcon } from "@/lib/achievements";
 import { startPointsBuildUp, stopPointsBuildUp, playPointsEnd, playLevelUpSound, playTierSound, playAchievementSound } from "@/lib/sounds";
 import type { PointsEndVariant } from "@/lib/sounds";
 import { cn } from "@/lib/utils";
+import { LevelUpOverlay } from "@/components/ui/level-up-overlay";
 
 
 /* ------------------------------------------------------------------ */
@@ -294,6 +295,7 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
   const [pointsEvent, setPointsEvent] = useState<{ amount: number; baseAmount?: number; streakMultiplier?: number } | null>(null);
   const [streakFlash, setStreakFlash] = useState(false);
   const [tierPromotion, setTierPromotion] = useState<TierPromotionData | null>(null);
+  const [levelUpOverlay, setLevelUpOverlay] = useState<{ from: number; to: number } | null>(null);
 
   const displayPoints = frozenPoints !== null ? frozenPoints : stats.points;
   const level = getLevelFromPoints(displayPoints);
@@ -376,6 +378,13 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
   return (
     <>
       {tierPromotion && <TierPromotionModal tier={tierPromotion} onClose={() => setTierPromotion(null)} />}
+      {levelUpOverlay && (
+        <LevelUpOverlay
+          fromLevel={levelUpOverlay.from}
+          toLevel={levelUpOverlay.to}
+          onDismiss={() => setLevelUpOverlay(null)}
+        />
+      )}
       <div ref={hudRef} className="flex justify-center">
         <motion.div
           initial={{ y: 20, opacity: 0 }}
@@ -679,6 +688,16 @@ export default function GameTestPage() {
                   className="w-full px-3 py-2.5 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors text-sm font-bold text-primary flex items-center gap-2"
                 >
                   <Zap className="h-4 w-4" /> Jump to Next Tier
+                </button>
+                <button
+                  onClick={() => {
+                    const from = Math.max(0, level - 1);
+                    setLevelUpOverlay({ from, to: level });
+                    playLevelUpSound();
+                  }}
+                  className="w-full px-3 py-2.5 rounded-xl border border-foreground/10 bg-foreground/[0.03] hover:bg-foreground/[0.08] transition-colors text-sm font-bold text-foreground flex items-center gap-2"
+                >
+                  <Trophy className="h-4 w-4 text-primary" /> Test Level-Up Overlay
                 </button>
               </div>
             </div>
