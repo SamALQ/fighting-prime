@@ -333,7 +333,7 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
     if (stats._lastAwardAmount >= 100) endVariant = "100";
     if (didLevelUp) endVariant = "levelup";
     if (didTierUp) endVariant = "tier";
-    setTimeout(() => playPointsEnd(endVariant), 50);
+    playPointsEnd(endVariant);
   }, [stats.points, stats._lastAwardAmount]);
 
   // All animation triggering happens here — when the bubble finishes counting

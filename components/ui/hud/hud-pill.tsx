@@ -565,7 +565,7 @@ export function HudPill() {
     if (lastAwardAmountRef.current >= 100) endVariant = "100";
     if (pendingLevelUpRef.current) endVariant = "levelup";
     if (pendingTierRef.current) endVariant = "tier";
-    setTimeout(() => playPointsEnd(endVariant), 50);
+    playPointsEnd(endVariant);
   }, []);
 
   const handleCountComplete = useCallback(() => {
