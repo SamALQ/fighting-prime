@@ -295,7 +295,6 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
   const [pointsEvent, setPointsEvent] = useState<{ amount: number; baseAmount?: number; streakMultiplier?: number } | null>(null);
   const [streakFlash, setStreakFlash] = useState(false);
   const [tierPromotion, setTierPromotion] = useState<TierPromotionData | null>(null);
-  const [levelUpOverlay, setLevelUpOverlay] = useState<{ from: number; to: number } | null>(null);
 
   const displayPoints = frozenPoints !== null ? frozenPoints : stats.points;
   const level = getLevelFromPoints(displayPoints);
@@ -378,13 +377,6 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
   return (
     <>
       {tierPromotion && <TierPromotionModal tier={tierPromotion} onClose={() => setTierPromotion(null)} />}
-      {levelUpOverlay && (
-        <LevelUpOverlay
-          fromLevel={levelUpOverlay.from}
-          toLevel={levelUpOverlay.to}
-          onDismiss={() => setLevelUpOverlay(null)}
-        />
-      )}
       <div ref={hudRef} className="flex justify-center">
         <motion.div
           initial={{ y: 20, opacity: 0 }}
@@ -553,6 +545,7 @@ function TierRoadmap({ currentLevel }: { currentLevel: number }) {
 
 export default function GameTestPage() {
   const [stats, setStats] = useState<LocalStats>(INITIAL_STATS);
+  const [levelUpOverlay, setLevelUpOverlay] = useState<{ from: number; to: number } | null>(null);
 
   const level = getLevelFromPoints(stats.points);
   const tier = getTier(level);
@@ -602,6 +595,13 @@ export default function GameTestPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {levelUpOverlay && (
+        <LevelUpOverlay
+          fromLevel={levelUpOverlay.from}
+          toLevel={levelUpOverlay.to}
+          onDismiss={() => setLevelUpOverlay(null)}
+        />
+      )}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <p className="text-xs font-bold text-primary uppercase tracking-wider mb-1">Admin</p>
