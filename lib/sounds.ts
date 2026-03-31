@@ -50,7 +50,7 @@ async function playSample(path: string, volume = 0.5) {
 
 let buildUpTimer: ReturnType<typeof setInterval> | null = null;
 
-export function startPointsBuildUp(intervalMs = 130) {
+export function startPointsBuildUp(intervalMs = 65) {
   stopPointsBuildUp();
   playSample("/sounds/point-buildup.wav", 0.5);
   buildUpTimer = setInterval(() => {
