@@ -56,6 +56,7 @@ function PointsBubble({
   streakMultiplier = 1,
   onDone,
   onCountComplete,
+  onPhaseOneDone,
   onStreakFlash,
 }: {
   amount: number;
@@ -63,6 +64,7 @@ function PointsBubble({
   streakMultiplier?: number;
   onDone: () => void;
   onCountComplete: () => void;
+  onPhaseOneDone?: () => void;
   onStreakFlash?: () => void;
 }) {
   const hasMultiplier = streakMultiplier > 1 && baseAmount !== undefined && baseAmount < amount;
@@ -70,9 +72,11 @@ function PointsBubble({
 
   const onDoneRef = useRef(onDone);
   const onCountCompleteRef = useRef(onCountComplete);
+  const onPhaseOneDoneRef = useRef(onPhaseOneDone);
   const onStreakFlashRef = useRef(onStreakFlash);
   onDoneRef.current = onDone;
   onCountCompleteRef.current = onCountComplete;
+  onPhaseOneDoneRef.current = onPhaseOneDone;
   onStreakFlashRef.current = onStreakFlash;
   const countFiredRef = useRef(false);
 
@@ -95,6 +99,7 @@ function PointsBubble({
       ease: "easeOut",
       onComplete: () => {
         stopPointsBuildUp();
+        onPhaseOneDoneRef.current?.();
         setPhase("lock");
         if (hasMultiplier) {
           setTimeout(() => {
@@ -320,9 +325,7 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
     setTimeout(() => setLevelGlimmer(false), 1000);
   }, []);
 
-  // All animation triggering happens here — when the bubble finishes counting
-  const handleCountComplete = useCallback(() => {
-    setFrozenPoints(null);
+  const handlePhaseOneDone = useCallback(() => {
     const realLevel = getLevelFromPoints(stats.points);
     const realTier = getTier(realLevel);
     const didLevelUp = realLevel > animatedLevelRef.current;
@@ -333,6 +336,15 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
     if (didLevelUp) endVariant = "levelup";
     if (didTierUp) endVariant = "tier";
     setTimeout(() => playPointsEnd(endVariant), 50);
+  }, [stats.points, stats._lastAwardAmount]);
+
+  // All animation triggering happens here — when the bubble finishes counting
+  const handleCountComplete = useCallback(() => {
+    setFrozenPoints(null);
+    const realLevel = getLevelFromPoints(stats.points);
+    const realTier = getTier(realLevel);
+    const didLevelUp = realLevel > animatedLevelRef.current;
+    const didTierUp = animatedTierRef.current !== realTier.slug;
 
     if (didLevelUp) {
       fireLevelUp();
@@ -351,7 +363,7 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
     }
     animatedLevelRef.current = realLevel;
     animatedTierRef.current = realTier.slug;
-  }, [stats.points, stats._lastAwardAmount, fireLevelUp]);
+  }, [stats.points, fireLevelUp]);
 
   const handleBubbleDone = useCallback(() => {
     setPointsEvent(null);
@@ -402,6 +414,7 @@ function GameTestHudPill({ stats }: { stats: LocalStats }) {
                     baseAmount={pointsEvent.baseAmount}
                     streakMultiplier={pointsEvent.streakMultiplier}
                     onCountComplete={handleCountComplete}
+                    onPhaseOneDone={handlePhaseOneDone}
                     onDone={handleBubbleDone}
                     onStreakFlash={handleStreakFlash}
                   />

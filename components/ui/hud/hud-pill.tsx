@@ -67,6 +67,7 @@ function PointsBubble({
   streakMultiplier = 1,
   onDone,
   onCountComplete,
+  onPhaseOneDone,
   onStreakFlash,
 }: {
   amount: number;
@@ -74,6 +75,7 @@ function PointsBubble({
   streakMultiplier?: number;
   onDone: () => void;
   onCountComplete: () => void;
+  onPhaseOneDone?: () => void;
   onStreakFlash?: () => void;
 }) {
   const hasMultiplier = streakMultiplier > 1 && baseAmount !== undefined && baseAmount < amount;
@@ -82,9 +84,11 @@ function PointsBubble({
   // Stable refs for callbacks to prevent animation restarts from identity changes
   const onDoneRef = useRef(onDone);
   const onCountCompleteRef = useRef(onCountComplete);
+  const onPhaseOneDoneRef = useRef(onPhaseOneDone);
   const onStreakFlashRef = useRef(onStreakFlash);
   onDoneRef.current = onDone;
   onCountCompleteRef.current = onCountComplete;
+  onPhaseOneDoneRef.current = onPhaseOneDone;
   onStreakFlashRef.current = onStreakFlash;
   const countFiredRef = useRef(false);
 
@@ -107,6 +111,7 @@ function PointsBubble({
       ease: "easeOut",
       onComplete: () => {
         stopPointsBuildUp();
+        onPhaseOneDoneRef.current?.();
         setPhase("lock");
         if (hasMultiplier) {
           setTimeout(() => {
@@ -557,21 +562,20 @@ export function HudPill() {
     playTierSound();
   };
 
-  const handleCountComplete = useCallback(() => {
-    const didLevelUp = pendingLevelUpRef.current;
-    const didTierUp = pendingTierRef.current;
-
+  const handlePhaseOneDone = useCallback(() => {
     let endVariant: PointsEndVariant = "default";
     if (lastAwardAmountRef.current >= 100) endVariant = "100";
-    if (didLevelUp) endVariant = "levelup";
-    if (didTierUp) endVariant = "tier";
+    if (pendingLevelUpRef.current) endVariant = "levelup";
+    if (pendingTierRef.current) endVariant = "tier";
     setTimeout(() => playPointsEnd(endVariant), 50);
+  }, []);
 
-    if (didLevelUp) {
+  const handleCountComplete = useCallback(() => {
+    if (pendingLevelUpRef.current) {
       pendingLevelUpRef.current = false;
       fireLevelUpRef.current();
     }
-    if (didTierUp) {
+    if (pendingTierRef.current) {
       pendingTierRef.current = false;
       setTimeout(() => fireTierPromotionRef.current(), 1200);
     }
@@ -671,6 +675,7 @@ export function HudPill() {
                     baseAmount={pointsEvent.baseAmount}
                     streakMultiplier={pointsEvent.streakMultiplier}
                     onCountComplete={handleCountComplete}
+                    onPhaseOneDone={handlePhaseOneDone}
                     onDone={handleBubbleDone}
                     onStreakFlash={handleStreakFlash}
                   />
