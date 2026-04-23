@@ -3,6 +3,11 @@ import { stripe } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getPlanFromPriceId } from "@/lib/stripe/config";
 import Stripe from "stripe";
+import {
+  fireTransactionalEmail,
+  emailSubscriptionCheckoutComplete,
+  emailSubscriptionCancelled,
+} from "@/lib/email-events";
 
 function extractPeriod(subscription: Stripe.Subscription) {
   const item = subscription.items.data[0];
@@ -89,6 +94,8 @@ export async function POST(request: NextRequest) {
           );
         }
 
+        fireTransactionalEmail(() => emailSubscriptionCheckoutComplete(userId));
+
         return NextResponse.json({ received: true, action: "subscription_created", userId });
       }
 
@@ -148,6 +155,16 @@ export async function POST(request: NextRequest) {
             { error: "Supabase update failed", detail: deleteError.message },
             { status: 500 }
           );
+        }
+
+        const { data: subRow } = await supabase
+          .from("subscriptions")
+          .select("user_id")
+          .eq("stripe_subscription_id", subscription.id)
+          .maybeSingle();
+
+        if (subRow?.user_id) {
+          fireTransactionalEmail(() => emailSubscriptionCancelled(subRow.user_id));
         }
 
         return NextResponse.json({ received: true, action: "subscription_deleted" });

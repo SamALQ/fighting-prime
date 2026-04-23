@@ -116,6 +116,25 @@ export function getPublicUrl(key: string): string {
   return `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
 }
 
+/** If `url` is a public URL for this app's bucket, return the S3 object key; otherwise null. */
+export function tryExtractS3KeyFromUrl(url: string, bucket = getBucket()): string | null {
+  if (!url || !url.startsWith("http")) return null;
+  try {
+    const u = new URL(url);
+    const host = u.hostname;
+    if (host === `${bucket}.s3.amazonaws.com` || host.startsWith(`${bucket}.s3.`)) {
+      const key = u.pathname.replace(/^\//, "");
+      return key || null;
+    }
+    if (host.startsWith("s3.") && u.pathname.startsWith(`/${bucket}/`)) {
+      return u.pathname.slice(`/${bucket}/`.length) || null;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * S3 key conventions:
  *

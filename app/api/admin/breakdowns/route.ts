@@ -73,6 +73,7 @@ export async function PATCH(request: NextRequest) {
   if (fields.thumbnail !== undefined) updates.thumbnail = fields.thumbnail;
   if (fields.releaseDate !== undefined) updates.release_date = fields.releaseDate;
   if (fields.author !== undefined) updates.author = fields.author;
+  if (fields.videoResolutions !== undefined) updates.video_resolutions = fields.videoResolutions;
 
   const { data, error: dbError } = await supabase
     .from("breakdowns")

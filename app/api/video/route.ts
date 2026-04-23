@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
-import { getPresignedViewUrl } from "@/lib/s3";
+import {
+  getPresignedViewUrl,
+  tryExtractS3KeyFromUrl,
+  buildBreakdownVideoKey,
+} from "@/lib/s3";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -25,14 +30,18 @@ export async function GET(request: NextRequest) {
   }
 
   if (breakdownId) {
-    return handleBreakdown(supabase, user, breakdownId);
+    return handleBreakdown(supabase, user, breakdownId, resolution);
   }
 
   return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function handleEpisode(supabase: any, user: any, episodeId: string, resolution: string | null) {
+async function handleEpisode(
+  supabase: SupabaseClient,
+  user: User | null,
+  episodeId: string,
+  resolution: string | null
+) {
   const { data: episode } = await supabase
     .from("episodes")
     .select("id, is_free, premium, video_url, video_resolutions, course_id")
@@ -104,8 +113,12 @@ async function handleEpisode(supabase: any, user: any, episodeId: string, resolu
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function handleBreakdown(supabase: any, user: any, breakdownId: string) {
+async function handleBreakdown(
+  supabase: SupabaseClient,
+  user: User | null,
+  breakdownId: string,
+  resolution: string | null
+) {
   if (!user) {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }
@@ -123,7 +136,7 @@ async function handleBreakdown(supabase: any, user: any, breakdownId: string) {
 
   const { data: breakdown } = await supabase
     .from("breakdowns")
-    .select("id, video_url")
+    .select("*")
     .eq("id", breakdownId)
     .maybeSingle();
 
@@ -131,9 +144,58 @@ async function handleBreakdown(supabase: any, user: any, breakdownId: string) {
     return NextResponse.json({ error: "Breakdown not found" }, { status: 404 });
   }
 
-  return NextResponse.json({
-    url: breakdown.video_url || null,
-    source: "direct",
-    resolutions: [],
-  });
+  let resolutions: { label: string; key: string }[] =
+    (breakdown as { video_resolutions?: { label: string; key: string }[] }).video_resolutions ?? [];
+
+  if (resolutions.length === 0 && breakdown.video_url) {
+    const fromUrl = tryExtractS3KeyFromUrl(breakdown.video_url);
+    if (fromUrl) {
+      resolutions = [{ label: "HD", key: fromUrl }];
+    }
+  }
+
+  if (resolutions.length === 0 && breakdown.slug) {
+    resolutions = [{ label: "HD", key: buildBreakdownVideoKey(breakdown.slug) }];
+  }
+
+  if (resolutions.length === 0) {
+    return NextResponse.json({
+      url: breakdown.video_url || null,
+      source: "direct",
+      resolutions: [],
+    });
+  }
+
+  let chosen = resolutions[0];
+  if (resolution) {
+    const match = resolutions.find((r: { label: string }) =>
+      r.label.toLowerCase() === resolution.toLowerCase()
+    );
+    if (match) chosen = match;
+  }
+
+  try {
+    const url = await getPresignedViewUrl(chosen.key, 3600);
+    return NextResponse.json(
+      {
+        url,
+        source: "presigned",
+        resolution: chosen.label,
+        resolutions: resolutions.map((r: { label: string }) => r.label),
+        expiresIn: 3600,
+      },
+      {
+        headers: {
+          "Cache-Control": "private, max-age=3000",
+        },
+      }
+    );
+  } catch (err) {
+    console.error("Breakdown presign failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({
+      url: breakdown.video_url || null,
+      source: "fallback",
+      resolutions: [],
+    });
+  }
 }

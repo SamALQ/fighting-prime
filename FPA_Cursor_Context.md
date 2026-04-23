@@ -148,15 +148,16 @@ Fighting Prime Academy is a premium online Muay Thai training platform built in 
 - Watch time daily aggregation via pg_cron
 
 ### Remaining / Future
-- **Video security** — Presigned URLs for premium content (videos are currently direct S3 URLs)
-- **Fighter Elite upload workflow** — Drag-and-drop UI exists but is not wired to real S3 uploads
+- **Video security** — Course episodes use presigned S3 via `/api/video`; breakdowns use the same API (subscription-gated). Long presign TTL + client refresh before expiry.
+- **Fighter Elite upload workflow** — Wired (presigned S3 + `elite_submissions`).
 - **Course forums** — Dedicated discussion threads per course (placeholder in instructor community)
-- **Assignments** — Episode assignment submission & feedback (UI placeholder exists)
+- **Assignments** — Student upload + instructor approve / revision + notifications (see `app/api/assignments`, `app/api/instructor/assignments`)
 - **Payout processing** — Actual payment distribution to instructors (tables exist, logic deferred)
-- **Admin CMS** — Upload/manage courses, episodes, breakdowns from admin panel
-- **Email notifications** — Transactional emails (welcome, subscription, etc.)
-- **Analytics** — Platform-wide analytics dashboard for admins
-- **Mobile navigation** — Hamburger/slide-out menu for small screens
+- **Admin CMS** — `/admin` courses, episodes, breakdowns, media
+- **Email notifications** — Resend-backed transactional mail when `RESEND_API_KEY` is set (`lib/email.ts`, Stripe webhook + instructor flows + optional welcome after signup)
+- **Analytics** — Platform-wide analytics dashboard for admins (`/admin/analytics`)
+- **Mobile navigation** — Hamburger drawer in `components/layout/navbar.tsx`
+- **Error monitoring** — Sentry when `NEXT_PUBLIC_SENTRY_DSN` is set (`instrumentation.ts`, `sentry.*.config.ts`, `app/global-error.tsx`)
 
 ---
 

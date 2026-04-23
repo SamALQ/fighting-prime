@@ -39,6 +39,8 @@ interface VideoSource {
 }
 
 const PREFERRED_RESOLUTION_KEY = "fpa-preferred-resolution";
+/** Refresh presigned URLs this many ms before they expire */
+const PRESIGN_REFRESH_BUFFER_MS = 120_000;
 
 function getPreferredResolution(): string | null {
   if (typeof window === "undefined") return null;
@@ -91,8 +93,12 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
   const isSeeking = useRef(false);
   const lastNaturalTime = useRef(0);
   const presignedExpiresAt = useRef(0);
+  const presignedRefreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  /** After silent presign refresh, restore playback position (see useEffect on videoSrc). */
+  const pendingResumeAfterSrcRef = useRef<{ time: number; play: boolean } | null>(null);
 
   const { isActive } = useSubscription();
+  const isBreakdownPlayback = episode.courseId === "__breakdown__";
   const { updateProgress, updateWatchTime, trackWatchEvent, getProgress, flush } = useProgress();
   const lastTickMs = useRef(0);
 
@@ -101,11 +107,18 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
   const fetchVideoSource = useCallback(
     async (resolution?: string): Promise<VideoSource | null> => {
       try {
-        const params = new URLSearchParams({ episodeId: episode.id });
+        const params = new URLSearchParams();
+        if (isBreakdownPlayback) {
+          params.set("breakdownId", episode.id);
+        } else {
+          params.set("episodeId", episode.id);
+        }
         if (resolution) params.set("resolution", resolution);
         const res = await fetch(`/api/video?${params}`);
         if (!res.ok) {
-          console.warn(`[VideoPlayer] /api/video responded ${res.status} for episode ${episode.id}`);
+          console.warn(
+            `[VideoPlayer] /api/video responded ${res.status} for ${isBreakdownPlayback ? "breakdown" : "episode"} ${episode.id}`
+          );
           return null;
         }
         return await res.json();
@@ -114,41 +127,61 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
         return null;
       }
     },
-    [episode.id]
+    [episode.id, isBreakdownPlayback]
   );
 
   useEffect(() => {
     if (locked) return;
 
     const hasS3Resolutions = episode.videoResolutions && episode.videoResolutions.length > 0;
+    const needsPresignApi = hasS3Resolutions || isBreakdownPlayback;
 
-    if (!hasS3Resolutions) {
-      setVideoSrc(episode.videoUrl);
-      setAvailableResolutions([]);
-      setActiveResolution(null);
+    if (!needsPresignApi) {
+      queueMicrotask(() => {
+        setVideoSrc(episode.videoUrl);
+        setAvailableResolutions([]);
+        setActiveResolution(null);
+        presignedExpiresAt.current = 0;
+      });
       return;
     }
 
-    setIsLoadingSource(true);
+    queueMicrotask(() => setIsLoadingSource(true));
     const preferred = getPreferredResolution();
     fetchVideoSource(preferred ?? undefined).then((source) => {
       if (source?.url) {
         setVideoSrc(source.url);
-        setAvailableResolutions(source.resolutions);
+        setAvailableResolutions(source.resolutions ?? []);
         setActiveResolution(source.resolution ?? null);
         if (source.expiresIn) {
           presignedExpiresAt.current = Date.now() + source.expiresIn * 1000;
+        } else {
+          presignedExpiresAt.current = 0;
         }
       } else {
         setVideoSrc(episode.videoUrl);
         setAvailableResolutions([]);
+        presignedExpiresAt.current = 0;
       }
       setIsLoadingSource(false);
     });
-  }, [episode.id, episode.videoUrl, episode.videoResolutions, locked, fetchVideoSource]);
+  }, [
+    episode.id,
+    episode.videoUrl,
+    episode.videoResolutions,
+    locked,
+    fetchVideoSource,
+    isBreakdownPlayback,
+  ]);
 
   useEffect(() => {
-    if (locked) return;
+    if (locked || isBreakdownPlayback) {
+      queueMicrotask(() => {
+        setBookmarks([]);
+        setChapters([]);
+      });
+      return;
+    }
     fetch(`/api/bookmarks?episodeId=${episode.id}`)
       .then((r) => r.json())
       .then((d) => setBookmarks(d.bookmarks ?? []))
@@ -157,7 +190,7 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
       .then((r) => r.json())
       .then((d) => setChapters(d.chapters ?? []))
       .catch(() => {});
-  }, [episode.id, locked]);
+  }, [episode.id, locked, isBreakdownPlayback]);
 
   const addBookmark = useCallback(async () => {
     const video = videoRef.current;
@@ -192,6 +225,8 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
         setPreferredResolution(resolution);
         if (source.expiresIn) {
           presignedExpiresAt.current = Date.now() + source.expiresIn * 1000;
+        } else {
+          presignedExpiresAt.current = 0;
         }
 
         await new Promise<void>((resolve) => {
@@ -220,6 +255,67 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
     },
     [fetchVideoSource, isPlaying]
   );
+
+  /** Restore time/play after `videoSrc` changes (used for presigned URL refresh). */
+  useEffect(() => {
+    const pending = pendingResumeAfterSrcRef.current;
+    if (!pending || !videoSrc || locked) return;
+    pendingResumeAfterSrcRef.current = null;
+    const v = videoRef.current;
+    if (!v) return;
+    const onLoaded = () => {
+      v.currentTime = pending.time;
+      if (pending.play) void v.play();
+    };
+    v.addEventListener("loadeddata", onLoaded, { once: true });
+    return () => v.removeEventListener("loadeddata", onLoaded);
+  }, [videoSrc, locked]);
+
+  useEffect(() => {
+    if (locked) return;
+
+    const tick = async () => {
+      const exp = presignedExpiresAt.current;
+      if (!exp || !videoSrc) return;
+      if (Date.now() < exp - PRESIGN_REFRESH_BUFFER_MS) return;
+
+      const video = videoRef.current;
+      const savedTime = video?.currentTime ?? 0;
+      const wasPlaying = video ? !video.paused : false;
+
+      const resPick =
+        availableResolutions.length > 1 && activeResolution
+          ? activeResolution
+          : getPreferredResolution() ?? activeResolution ?? undefined;
+
+      const source = await fetchVideoSource(resPick);
+      if (source?.url && source.source === "presigned") {
+        if (source.expiresIn) {
+          presignedExpiresAt.current = Date.now() + source.expiresIn * 1000;
+        }
+        pendingResumeAfterSrcRef.current = { time: savedTime, play: wasPlaying };
+        setVideoSrc(source.url);
+        if (source.resolutions?.length) {
+          setAvailableResolutions(source.resolutions);
+          setActiveResolution(source.resolution ?? activeResolution);
+        }
+      }
+    };
+
+    presignedRefreshTimerRef.current = setInterval(tick, 30_000);
+    return () => {
+      if (presignedRefreshTimerRef.current) {
+        clearInterval(presignedRefreshTimerRef.current);
+        presignedRefreshTimerRef.current = null;
+      }
+    };
+  }, [
+    locked,
+    videoSrc,
+    fetchVideoSource,
+    availableResolutions.length,
+    activeResolution,
+  ]);
 
   const resetControlsTimer = useCallback(() => {
     if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
@@ -260,17 +356,17 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
       }
       lastNaturalTime.current = seconds;
 
-      const isComplete = updateProgress(episode.id, percent, episode.courseId);
-      updateWatchTime(episode.id, seconds, episode.durationSeconds);
+      if (!isBreakdownPlayback) {
+        updateProgress(episode.id, percent, episode.courseId);
+        updateWatchTime(episode.id, seconds, episode.durationSeconds);
 
-      const now = performance.now();
-      if (lastTickMs.current > 0) {
-        const elapsed = (now - lastTickMs.current) / 1000;
-        trackWatchEvent(episode.id, episode.courseId, elapsed);
+        const now = performance.now();
+        if (lastTickMs.current > 0) {
+          const elapsed = (now - lastTickMs.current) / 1000;
+          trackWatchEvent(episode.id, episode.courseId, elapsed);
+        }
+        lastTickMs.current = now;
       }
-      lastTickMs.current = now;
-
-      
     };
 
     const handlePause = () => {
@@ -313,7 +409,19 @@ export function VideoPlayer({ episode, className }: VideoPlayerProps) {
       video.removeEventListener("ended", handleEnded);
       flush();
     };
-  }, [episode.id, episode.courseId, episode.durationSeconds, locked, isScrubbing, updateProgress, updateWatchTime, trackWatchEvent, getProgress, flush]);
+  }, [
+    episode.id,
+    episode.courseId,
+    episode.durationSeconds,
+    locked,
+    isScrubbing,
+    isBreakdownPlayback,
+    updateProgress,
+    updateWatchTime,
+    trackWatchEvent,
+    getProgress,
+    flush,
+  ]);
 
   useEffect(() => {
     const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);

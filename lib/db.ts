@@ -65,6 +65,7 @@ function mapBreakdown(row: any): Breakdown {
     title: row.title,
     description: row.description ?? "",
     videoUrl: row.video_url ?? "",
+    videoResolutions: row.video_resolutions ?? [],
     thumbnail: row.thumbnail ?? "",
     releaseDate: row.release_date ?? "",
     author: row.author ?? "",

@@ -29,7 +29,7 @@ export default function SignupPage() {
     }
 
     const supabase = createClient();
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -41,6 +41,10 @@ export default function SignupPage() {
       setError(signUpError.message);
       setIsSubmitting(false);
       return;
+    }
+
+    if (signUpData.session) {
+      void fetch("/api/email/welcome", { method: "POST" }).catch(() => {});
     }
 
     setIsSuccess(true);

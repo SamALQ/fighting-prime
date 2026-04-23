@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createNotification } from "@/lib/notifications";
+import { fireTransactionalEmail, emailEliteResponseReady } from "@/lib/email-events";
 import {
   getPresignedViewUrl,
   getPresignedUploadUrl,
@@ -188,6 +189,8 @@ export async function POST(request: NextRequest) {
       body: responseText?.trim() || "An instructor has reviewed your video.",
       link: "/fighter-elite",
     }).catch(() => {});
+
+    fireTransactionalEmail(() => emailEliteResponseReady(submission.user_id));
 
     return NextResponse.json({ success: true });
   }

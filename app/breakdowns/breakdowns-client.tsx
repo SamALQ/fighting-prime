@@ -17,7 +17,38 @@ interface BreakdownsClientProps {
 }
 
 export function BreakdownsClient({ breakdowns }: BreakdownsClientProps) {
-  const [selectedBreakdown, setSelectedBreakdown] = useState<Breakdown>(breakdowns[0]);
+  const [selectedId, setSelectedId] = useState<string>(() => breakdowns[0]?.id ?? "");
+
+  const resolvedId = useMemo(() => {
+    if (!breakdowns.length) return "";
+    if (breakdowns.some((b) => b.id === selectedId)) return selectedId;
+    return breakdowns[0].id;
+  }, [breakdowns, selectedId]);
+
+  const selectedBreakdown = useMemo(
+    () => breakdowns.find((b) => b.id === resolvedId) ?? breakdowns[0],
+    [breakdowns, resolvedId]
+  );
+
+  const episodeProxy = useMemo<Episode | null>(() => {
+    if (!selectedBreakdown) return null;
+    return {
+      id: selectedBreakdown.id,
+      slug: selectedBreakdown.slug,
+      courseId: "__breakdown__",
+      title: selectedBreakdown.title,
+      order: 0,
+      isFree: false,
+      premium: true,
+      videoUrl: selectedBreakdown.videoUrl,
+      description: selectedBreakdown.description,
+      videoResolutions: selectedBreakdown.videoResolutions ?? [],
+      durationSeconds: 0,
+      keyTakeaways: [],
+      releaseDate: selectedBreakdown.releaseDate,
+      thumbnail: selectedBreakdown.thumbnail,
+    };
+  }, [selectedBreakdown]);
 
   if (!breakdowns.length) {
     return (
@@ -31,22 +62,17 @@ export function BreakdownsClient({ breakdowns }: BreakdownsClientProps) {
     );
   }
 
-  const episodeProxy = useMemo<Episode>(() => ({
-    id: selectedBreakdown.id,
-    slug: selectedBreakdown.slug,
-    courseId: "__breakdown__",
-    title: selectedBreakdown.title,
-    order: 0,
-    isFree: true,
-    premium: false,
-    videoUrl: selectedBreakdown.videoUrl,
-    description: selectedBreakdown.description,
-    videoResolutions: [],
-    durationSeconds: 0,
-    keyTakeaways: [],
-    releaseDate: selectedBreakdown.releaseDate,
-    thumbnail: selectedBreakdown.thumbnail,
-  }), [selectedBreakdown]);
+  if (!selectedBreakdown || !episodeProxy) {
+    return (
+      <MainLayout>
+        <Section className="pb-24">
+          <Container>
+            <p className="text-foreground/40 text-center py-12">No breakdowns available yet.</p>
+          </Container>
+        </Section>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
@@ -119,10 +145,9 @@ export function BreakdownsClient({ breakdowns }: BreakdownsClientProps) {
                 <div className="rounded-2xl border border-foreground/[0.06] bg-foreground/[0.02] p-6">
                   <BreakdownList
                     breakdowns={breakdowns}
-                    selectedId={selectedBreakdown.id}
+                    selectedId={resolvedId}
                     onSelect={(id) => {
-                      const found = breakdowns.find((b) => b.id === id);
-                      if (found) setSelectedBreakdown(found);
+                      setSelectedId(id);
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }}
                   />

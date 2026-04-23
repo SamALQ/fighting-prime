@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getPresignedViewUrl } from "@/lib/s3";
 import { createNotification } from "@/lib/notifications";
+import {
+  fireTransactionalEmail,
+  emailAssignmentApproved,
+  emailAssignmentRevisionRequested,
+} from "@/lib/email-events";
 
 async function requireInstructor(supabase: ReturnType<typeof createClient> extends Promise<infer T> ? T : never) {
   const {
@@ -116,6 +121,10 @@ export async function POST(request: NextRequest) {
       link: "/dashboard",
     }).catch(() => {});
 
+    fireTransactionalEmail(() =>
+      emailAssignmentApproved(submission.user_id, points, feedback?.trim() || "")
+    );
+
     return NextResponse.json({ success: true, points_awarded: points });
   }
 
@@ -146,6 +155,10 @@ export async function POST(request: NextRequest) {
       body: feedback.trim(),
       link: "/dashboard",
     }).catch(() => {});
+
+    fireTransactionalEmail(() =>
+      emailAssignmentRevisionRequested(submission.user_id, feedback.trim())
+    );
 
     return NextResponse.json({ success: true });
   }
