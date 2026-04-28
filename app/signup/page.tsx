@@ -43,6 +43,20 @@ export default function SignupPage() {
       return;
     }
 
+    // Supabase returns success with `user.identities = []` when the email is
+    // already registered (anti-enumeration default). Surface a clear error.
+    if (
+      signUpData.user &&
+      Array.isArray(signUpData.user.identities) &&
+      signUpData.user.identities.length === 0
+    ) {
+      setError(
+        "An account with this email already exists. Try logging in or resetting your password."
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
     if (signUpData.session) {
       void fetch("/api/email/welcome", { method: "POST" }).catch(() => {});
     }
@@ -145,8 +159,19 @@ export default function SignupPage() {
                   />
                 </div>
                 {error && (
-                  <div className="text-sm text-destructive bg-destructive/5 border border-destructive/20 rounded-lg p-3">
-                    {error}
+                  <div className="text-sm text-destructive bg-destructive/5 border border-destructive/20 rounded-lg p-3 space-y-2">
+                    <p>{error}</p>
+                    {error.startsWith("An account with this email") && (
+                      <p className="text-xs text-foreground/60">
+                        <Link href="/login" className="text-primary hover:underline font-medium">
+                          Log in
+                        </Link>
+                        {" · "}
+                        <Link href="/forgot-password" className="text-primary hover:underline font-medium">
+                          Forgot password?
+                        </Link>
+                      </p>
+                    )}
                   </div>
                 )}
                 <Button type="submit" className="w-full h-11 font-bold shadow-lg shadow-primary/25" disabled={isSubmitting}>
