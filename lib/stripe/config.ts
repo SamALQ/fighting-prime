@@ -34,7 +34,12 @@ const LIVE_PRODUCTS = {
   fighterElite: "prod_SO09Z0C2JLNvbU",
 } as const;
 
-const USE_LIVE = (process.env.STRIPE_SECRET_KEY ?? "").startsWith("sk_live_");
+// Use the publishable key (NEXT_PUBLIC_*) to gate test vs live so the same value
+// is selected in both server and client bundles. The secret key is server-only
+// and would resolve to "" in the browser, causing client/server price mismatches.
+const USE_LIVE = (process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "").startsWith(
+  "pk_live_"
+);
 
 export const STRIPE_PRICES = USE_LIVE ? LIVE_PRICES : TEST_PRICES;
 export const STRIPE_PRODUCTS = USE_LIVE ? LIVE_PRODUCTS : TEST_PRODUCTS;
