@@ -1,20 +1,22 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { GoogleButton } from "@/components/auth/google-button";
 import { useAuth } from "@/lib/hooks/use-auth";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(() => searchParams.get("error") ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -49,7 +51,15 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <div className="rounded-2xl border border-foreground/[0.06] bg-foreground/[0.02] backdrop-blur-sm p-8">
+            <div className="rounded-2xl border border-foreground/[0.06] bg-foreground/[0.02] backdrop-blur-sm p-8 space-y-5">
+              <GoogleButton onError={setError} />
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-foreground/[0.08]" />
+                <span className="text-[10px] font-bold tracking-[0.2em] text-foreground/40 uppercase">
+                  Or
+                </span>
+                <div className="h-px flex-1 bg-foreground/[0.08]" />
+              </div>
               <form onSubmit={handleLogin} className="space-y-5">
                 <div>
                   <label htmlFor="email" className="text-sm font-medium mb-2 block">
@@ -110,5 +120,13 @@ export default function LoginPage() {
         </Container>
       </section>
     </MainLayout>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

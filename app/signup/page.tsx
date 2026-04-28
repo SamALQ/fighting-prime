@@ -5,6 +5,7 @@ import { MainLayout } from "@/components/layout/main-layout";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { GoogleButton } from "@/components/auth/google-button";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
@@ -113,7 +114,15 @@ export default function SignupPage() {
               </p>
             </div>
 
-            <div className="rounded-2xl border border-foreground/[0.06] bg-foreground/[0.02] backdrop-blur-sm p-8">
+            <div className="rounded-2xl border border-foreground/[0.06] bg-foreground/[0.02] backdrop-blur-sm p-8 space-y-5">
+              <GoogleButton label="Sign up with Google" onError={setError} />
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-foreground/[0.08]" />
+                <span className="text-[10px] font-bold tracking-[0.2em] text-foreground/40 uppercase">
+                  Or
+                </span>
+                <div className="h-px flex-1 bg-foreground/[0.08]" />
+              </div>
               <form onSubmit={handleSignup} className="space-y-5">
                 <div>
                   <label htmlFor="fullName" className="text-sm font-medium mb-2 block">
